@@ -5,15 +5,13 @@
   <title>UAT Control</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-  <!-- PWA bits (paths for /uat-app) -->
-  <link rel="manifest" href="/uat-app/manifest.webmanifest">
-  <link rel="icon" sizes="192x192" href="/uat-app/icons/icon-192.png">
-  <link rel="icon" sizes="512x512" href="/uat-app/icons/icon-512.png">
-  <link rel="apple-touch-icon" href="/uat-app/icons/icon-180.png">
+  <!-- PWA (all paths relative to /uat-app/) -->
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="icon" sizes="512x512" href="./icons/icon-512.png">
+  <link rel="apple-touch-icon" href="./icons/icon-180.png">
   <meta name="theme-color" content="#111827">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="UAT Control">
+  <meta name="mobile-web-app-capable" content="yes">
 
   <!-- Tailwind (CDN) -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -28,22 +26,19 @@
     .badge-uat { @apply bg-indigo-50 text-indigo-700; }
     .kpi { @apply text-sm text-gray-500; }
     .kpi-value { @apply text-2xl font-semibold text-gray-900; }
-
-    /* Lock chart height */
     .chart-wrap { position: relative; height: 260px; }
     .chart-wrap > canvas { position:absolute; inset:0; width:100% !important; height:100% !important; display:block; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-900">
 <div class="max-w-6xl mx-auto p-4" x-data="app()">
-  <!-- Header -->
   <header class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
     <div>
       <h1 class="text-2xl font-bold tracking-tight">UAT Control</h1>
       <div class="mt-1 flex gap-2 items-center">
         <span class="badge badge-uat">UAT</span>
         <span class="text-xs text-gray-500">Last update: <span x-text="lastUpdate || '—'"></span></span>
-        <span class="text-xs text-gray-400">v0.7</span>
+        <span class="text-xs text-gray-400">v0.8</span>
       </div>
     </div>
     <div class="flex flex-wrap gap-2">
@@ -60,7 +55,6 @@
     </div>
   </header>
 
-  <!-- KPIs -->
   <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
     <div class="card"><div class="kpi">In Scope</div><div class="kpi-value" x-text="kpis.inScope"></div></div>
     <div class="card"><div class="kpi">Executed %</div><div class="kpi-value" x-text="fmtPct(kpis.executedPct)"></div></div>
@@ -69,7 +63,6 @@
     <div class="card"><div class="kpi">Critical</div><div class="kpi-value" :class="kpis.critical > 0 ? 'text-red-600' : 'text-emerald-600'" x-text="kpis.critical"></div></div>
   </section>
 
-  <!-- Charts -->
   <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
     <div class="card">
       <div class="mb-2 font-medium">Execution Over Time</div>
@@ -81,7 +74,6 @@
     </div>
   </section>
 
-  <!-- Issues -->
   <section class="card mb-4">
     <div class="flex items-center justify-between mb-2">
       <div class="font-medium">Top Open Issues</div>
@@ -108,7 +100,6 @@
     </div>
   </section>
 
-  <!-- Teams & Key Dates -->
   <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-20">
     <div class="card">
       <div class="font-medium mb-2">Teams & Contacts</div>
@@ -136,7 +127,6 @@
     </div>
   </section>
 
-  <!-- Modal: Report -->
   <div x-show="reportOpen" style="display:none" class="fixed inset-0 bg-black/40 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl p-4">
       <div class="flex items-center justify-between mb-2">
@@ -169,7 +159,7 @@ function app(){
 
     async init(){
       try {
-        const res = await fetch('/uat-app/uat.json?v=' + Date.now(), { cache:'no-store' });
+        const res = await fetch('./uat.json?v=' + Date.now(), { cache:'no-store' });
         if (res.ok) this.raw = await res.json();
       } catch(e){ console.error('Failed to load uat.json', e); }
       this.lastUpdate = this.raw.overview?.lastUpdate || '';
@@ -203,7 +193,6 @@ function app(){
 
     resetFilters(){ this.filters={country:'',team:''}; this.applyFilters(); },
 
-    // Weighted aggregation by date
     aggregateByDate(rows){
       const map = new Map();
       for (const r of rows){
@@ -257,7 +246,7 @@ function app(){
 
       this.execChart = new Chart(execCtx, {
         type:'line',
-        data:{ datasets:[
+        data:{ labels:[], datasets:[
           { label:'Executed %', data:[], parsing:false, tension:.25, borderWidth:2, fill:false,
             borderColor:'#3b82f6', backgroundColor:'#3b82f6', pointRadius:2, spanGaps:true },
           { label:'Pass %', data:[], parsing:false, tension:.25, borderWidth:2, fill:false,
@@ -272,7 +261,7 @@ function app(){
 
       this.defectChart = new Chart(defectCtx, {
         type:'line',
-        data:{ datasets:[
+        data:{ labels:[], datasets:[
           { label:'Open defects', data:[], parsing:false, tension:.25, borderWidth:2, fill:false,
             borderColor:'#0284c7', backgroundColor:'#0284c7', pointRadius:2, spanGaps:true }
         ]},
@@ -289,18 +278,19 @@ function app(){
     updateCharts(){
       const agg = this.aggregateByDate(this.filtered.progressDaily.length ? this.filtered.progressDaily : this.raw.progressDaily);
 
-      // Build explicit {x, y} points
       const labels = agg.map(r => r.date.slice(5));
       const execPts = labels.map((x,i) => ({ x, y: Number((agg[i].executedPct ?? 0).toFixed(1)) }));
       const passPts = labels.map((x,i) => ({ x, y: Number((agg[i].passPct ?? 0).toFixed(1)) }));
       const openPts = labels.map((x,i) => ({ x, y: Number(agg[i].openDefects ?? 0) }));
 
       if (this.execChart){
+        this.execChart.data.labels = labels;   // <-- set labels explicitly
         this.execChart.data.datasets[0].data = execPts;
         this.execChart.data.datasets[1].data = passPts;
         this.execChart.update();
       }
       if (this.defectChart){
+        this.defectChart.data.labels = labels; // <-- set labels explicitly
         this.defectChart.data.datasets[0].data = openPts;
         this.defectChart.update();
       }
@@ -333,10 +323,10 @@ function app(){
   }
 }
 
-// Register the service worker for /uat-app/
+// Register SW with relative scope (works under /uat-app/)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/uat-app/service-worker.js', { scope: '/uat-app/' })
+    navigator.serviceWorker.register('./service-worker.js', { scope: './' })
       .catch(err => console.error('SW registration failed:', err));
   });
 }

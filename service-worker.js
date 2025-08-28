@@ -1,11 +1,11 @@
-const CACHE_NAME = 'uat-shell-v1';
+const CACHE_NAME = 'uat-shell-v2';
 const SHELL = [
-  '/uat-app/',
-  '/uat-app/index.html',
-  '/uat-app/manifest.webmanifest',
-  '/uat-app/icons/icon-192.png',
-  '/uat-app/icons/icon-512.png',
-  '/uat-app/icons/icon-180.png',
+  './',
+  './index.html',
+  './manifest.webmanifest',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/icon-180.png',
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js'
@@ -25,7 +25,7 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-  const isUatJson = url.pathname === '/uat-app/uat.json';
+  const isUatJson = url.pathname.endsWith('/uat.json') || url.pathname.endsWith('uat.json');
 
   if (isUatJson) {
     event.respondWith(
