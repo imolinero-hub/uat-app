@@ -29,7 +29,7 @@
     .kpi { @apply text-sm text-gray-500; }
     .kpi-value { @apply text-2xl font-semibold text-gray-900; }
 
-    /* Lock chart height to avoid growth / reflow quirks */
+    /* Lock chart height */
     .chart-wrap { position: relative; height: 260px; }
     .chart-wrap > canvas { position:absolute; inset:0; width:100% !important; height:100% !important; display:block; }
   </style>
@@ -43,7 +43,7 @@
       <div class="mt-1 flex gap-2 items-center">
         <span class="badge badge-uat">UAT</span>
         <span class="text-xs text-gray-500">Last update: <span x-text="lastUpdate || '—'"></span></span>
-        <span class="text-xs text-gray-400">v0.6</span>
+        <span class="text-xs text-gray-400">v0.7</span>
       </div>
     </div>
     <div class="flex flex-wrap gap-2">
@@ -169,7 +169,6 @@ function app(){
 
     async init(){
       try {
-        // cache-bust to ensure fresh data behind SW/CDNs
         const res = await fetch('/uat-app/uat.json?v=' + Date.now(), { cache:'no-store' });
         if (res.ok) this.raw = await res.json();
       } catch(e){ console.error('Failed to load uat.json', e); }
@@ -204,7 +203,7 @@ function app(){
 
     resetFilters(){ this.filters={country:'',team:''}; this.applyFilters(); },
 
-    // Weighted aggregation by date (handles multiple rows per day)
+    // Weighted aggregation by date
     aggregateByDate(rows){
       const map = new Map();
       for (const r of rows){
@@ -250,7 +249,6 @@ function app(){
 
     // ----- Charts -----
     drawCharts(){
-      // destroy if re-rendering
       if (this.execChart) { this.execChart.destroy(); this.execChart = null; }
       if (this.defectChart){ this.defectChart.destroy(); this.defectChart = null; }
 
@@ -259,29 +257,29 @@ function app(){
 
       this.execChart = new Chart(execCtx, {
         type:'line',
-        data:{ labels:[], datasets:[
-          { label:'Executed %', data:[], tension:.25, borderWidth:2, fill:false,
+        data:{ datasets:[
+          { label:'Executed %', data:[], parsing:false, tension:.25, borderWidth:2, fill:false,
             borderColor:'#3b82f6', backgroundColor:'#3b82f6', pointRadius:2, spanGaps:true },
-          { label:'Pass %', data:[], tension:.25, borderWidth:2, fill:false,
+          { label:'Pass %', data:[], parsing:false, tension:.25, borderWidth:2, fill:false,
             borderColor:'#ec4899', backgroundColor:'#ec4899', pointRadius:2, spanGaps:true }
         ]},
         options:{
           responsive:true, maintainAspectRatio:false, animation:false,
           plugins:{ legend:{ position:'bottom' }, tooltip:{ mode:'index', intersect:false } },
-          scales:{ y:{ ticks:{ callback:(v)=>v+'%' }, beginAtZero:true, suggestedMax:100 } }
+          scales:{ x:{ type:'category' }, y:{ ticks:{ callback:(v)=>v+'%' }, beginAtZero:true, suggestedMax:100 } }
         }
       });
 
       this.defectChart = new Chart(defectCtx, {
         type:'line',
-        data:{ labels:[], datasets:[
-          { label:'Open defects', data:[], tension:.25, borderWidth:2, fill:false,
+        data:{ datasets:[
+          { label:'Open defects', data:[], parsing:false, tension:.25, borderWidth:2, fill:false,
             borderColor:'#0284c7', backgroundColor:'#0284c7', pointRadius:2, spanGaps:true }
         ]},
         options:{
           responsive:true, maintainAspectRatio:false, animation:false,
           plugins:{ legend:{ position:'bottom' }, tooltip:{ mode:'index', intersect:false } },
-          scales:{ y:{ beginAtZero:true } }
+          scales:{ x:{ type:'category' }, y:{ beginAtZero:true } }
         }
       });
 
@@ -291,20 +289,19 @@ function app(){
     updateCharts(){
       const agg = this.aggregateByDate(this.filtered.progressDaily.length ? this.filtered.progressDaily : this.raw.progressDaily);
 
+      // Build explicit {x, y} points
       const labels = agg.map(r => r.date.slice(5));
-      const exec   = agg.map(r => Number((r.executedPct ?? 0).toFixed(1)));
-      const pass   = agg.map(r => Number((r.passPct ?? 0).toFixed(1)));
-      const open   = agg.map(r => Number(r.openDefects ?? 0));
+      const execPts = labels.map((x,i) => ({ x, y: Number((agg[i].executedPct ?? 0).toFixed(1)) }));
+      const passPts = labels.map((x,i) => ({ x, y: Number((agg[i].passPct ?? 0).toFixed(1)) }));
+      const openPts = labels.map((x,i) => ({ x, y: Number(agg[i].openDefects ?? 0) }));
 
       if (this.execChart){
-        this.execChart.data.labels = labels;
-        this.execChart.data.datasets[0].data = exec;
-        this.execChart.data.datasets[1].data = pass;
+        this.execChart.data.datasets[0].data = execPts;
+        this.execChart.data.datasets[1].data = passPts;
         this.execChart.update();
       }
       if (this.defectChart){
-        this.defectChart.data.labels = labels;
-        this.defectChart.data.datasets[0].data = open;
+        this.defectChart.data.datasets[0].data = openPts;
         this.defectChart.update();
       }
     },
