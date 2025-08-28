@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>UAT Control</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Alpine.js -->
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <!-- PWA -->
+  <link rel="manifest" href="/uat-app/manifest.webmanifest">
+  <link rel="icon" sizes="192x192" href="/uat-app/icons/icon-192.png">
+  <link rel="icon" sizes="512x512" href="/uat-app/icons/icon-512.png">
+  <link rel="apple-touch-icon" href="/uat-app/icons/icon-180.png">
+
+  <meta name="theme-color" content="#111827"> <!-- slate-900 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="UAT Control">
+
+  <style>
+    .card { @apply bg-white rounded-2xl shadow p-4; }
+    .badge { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium; }
+    .badge-uat { @apply bg-indigo-50 text-indigo-700; }
+    .kpi { @apply text-sm text-gray-500; }
+    .kpi-value { @apply text-2xl font-semibold text-gray-900; }
+    /* Hard-lock chart container height to prevent growth */
+    .chart-wrap { position: relative; height: 260px; } /* adjust as needed */
+    .chart-wrap > canvas { position:absolute; inset:0; width:100% !important; height:100% !important; display:block; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+<div class="max-w-6xl mx-auto p-4" x-data="app()">
+  <!-- Header -->
+  <header class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">UAT Control</h1>
+      <div class="mt-1 flex gap-2 items-center">
+        <span class="badge badge-uat">UAT</span>
+        <span class="text-xs text-gray-500">Last update: <span x-text="lastUpdate || '—'"></span></span>
+        <span class="text-xs text-gray-400">v0.5</span>
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <select class="card py-2" x-model="filters.country" @change="applyFilters()">
+        <option value="">All countries</option>
+        <template x-for="c in countries" :key="c"><option x-text="c"></option></template>
+      </select>
+      <select class="card py-2" x-model="filters.team" @change="applyFilters()">
+        <option value="">All teams</option>
+        <template x-for="t in teams" :key="t"><option x-text="t"></option></template>
+      </select>
+      <button class="card hover:bg-slate-100" @click="resetFilters()">Reset</button>
+      <button class="card hover:bg-slate-100" @click="generateReport()">Generate Status (MD)</button>
+    </div>
+  </header>
+
+  <!-- KPIs -->
+  <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+    <div class="card"><div class="kpi">In Scope</div><div class="kpi-value" x-text="kpis.inScope"></div></div>
+    <div class="card"><div class="kpi">Executed %</div><div class="kpi-value" x-text="fmtPct(kpis.executedPct)"></div></div>
+    <div class="card"><div class="kpi">Pass %</div><div class="kpi-value" x-text="fmtPct(kpis.passPct)"></div></div>
+    <div class="card"><div class="kpi">Open Defects</div><div class="kpi-value" x-text="kpis.openDefects"></div></div>
+    <div class="card"><div class="kpi">Critical</div><div class="kpi-value" :class="kpis.critical > 0 ? 'text-red-600' : 'text-emerald-600'" x-text="kpis.critical"></div></div>
+  </section>
+
+  <!-- Charts -->
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+    <div class="card">
+      <div class="mb-2 font-medium">Execution Over Time</div>
+      <div class="chart-wrap"><canvas id="execChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="mb-2 font-medium">Defect Burndown</div>
+      <div class="chart-wrap"><canvas id="defectChart"></canvas></div>
+    </div>
+  </section>
+
+  <!-- Issues -->
+  <section class="card mb-4">
+    <div class="flex items-center justify-between mb-2">
+      <div class="font-medium">Top Open Issues</div>
+      <div class="text-xs text-gray-500" x-text="`Showing ${issues.length} of ${raw.issues.length}`"></div>
+    </div>
+    <div class="overflow-auto">
+      <table class="min-w-full text-sm">
+        <thead class="text-left text-gray-500">
+          <tr><th class="py-2 pr-4">Key</th><th class="py-2 pr-4">Severity</th><th class="py-2 pr-4">Summary</th><th class="py-2 pr-4">Owner</th><th class="py-2 pr-4">Team</th><th class="py-2 pr-4">Country</th></tr>
+        </thead>
+        <tbody>
+          <template x-for="i in issues" :key="i.key">
+            <tr class="border-t">
+              <td class="py-2 pr-4"><a :href="i.link" target="_blank" class="text-indigo-600 hover:underline" x-text="i.key"></a></td>
+              <td class="py-2 pr-4"><span class="badge" :class="sevClass(i.severity)" x-text="i.severity"></span></td>
+              <td class="py-2 pr-4" x-text="i.summary"></td>
+              <td class="py-2 pr-4" x-text="i.owner || '—'"></td>
+              <td class="py-2 pr-4" x-text="i.team || '—'"></td>
+              <td class="py-2 pr-4" x-text="i.country || '—'"></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Teams & Key Dates -->
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-20">
+    <div class="card">
+      <div class="font-medium mb-2">Teams & Contacts</div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <template x-for="t in raw.teams" :key="t.name">
+          <div class="border rounded-xl p-3">
+            <div class="font-semibold" x-text="t.name"></div>
+            <div class="text-xs text-gray-500" x-text="t.country"></div>
+            <div class="mt-1 text-sm"><span class="text-gray-500">Lead: </span><span x-text="t.lead"></span></div>
+            <div class="text-sm"><span class="text-gray-500">Email: </span><a :href="`mailto:${t.email}`" class="text-indigo-600 hover:underline" x-text="t.email"></a></div>
+          </div>
+        </template>
+      </div>
+    </div>
+    <div class="card">
+      <div class="font-medium mb-2">Key Dates</div>
+      <ul class="space-y-2">
+        <template x-for="d in raw.keyDates" :key="d.label">
+          <li class="flex items-center justify-between">
+            <div><div class="font-medium" x-text="d.label"></div><div class="text-xs text-gray-500" x-text="d.notes || ''"></div></div>
+            <div class="text-sm" x-text="d.date"></div>
+          </li>
+        </template>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Modal: Report -->
+  <div x-show="reportOpen" style="display:none" class="fixed inset-0 bg-black/40 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl p-4">
+      <div class="flex items-center justify-between mb-2">
+        <div class="font-semibold">Generated Status (Markdown)</div>
+        <button class="text-sm text-gray-500 hover:text-gray-700" @click="reportOpen=false">Close</button>
+      </div>
+      <textarea class="w-full h-64 border rounded-xl p-3 text-sm font-mono" x-text="reportMD"></textarea>
+      <div class="mt-3 flex gap-2">
+        <button class="card hover:bg-slate-100" @click="copyReport()">Copy</button>
+        <button class="card hover:bg-slate-100" @click="downloadReport()">Download .md</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function app(){
+  return {
+    raw: { overview:{}, progressDaily:[], issues:[], teams:[], keyDates:[] },
+    filtered: { progressDaily:[] },
+    issues: [],
+    countries: [],
+    teams: [],
+    filters: { country:'', team:'' },
+    kpis: { inScope:0, executedPct:0, passPct:0, openDefects:0, critical:0 },
+    lastUpdate: '',
+    reportOpen:false,
+    reportMD:'',
+    execChart:null, defectChart:null,
+    _updating:false,  // guard
+
+    async init(){
+      try {
+        const res = await fetch('./uat.json', {cache:'no-store'});
+        if (res.ok) this.raw = await res.json();
+      } catch(e){ console.error("uat.json not found or invalid", e); }
+      this.lastUpdate = this.raw.overview?.lastUpdate || '';
+      this.buildFilters(); 
+      this.applyFilters();
+      this.drawCharts();
+    },
+
+    buildFilters(){
+      const cset = new Set(this.raw.teams.map(t=>t.country).filter(Boolean));
+      const tset = new Set(this.raw.teams.map(t=>t.name).filter(Boolean));
+      this.raw.issues.forEach(i=>{ if(i.country) cset.add(i.country); if(i.team) tset.add(i.team); });
+      this.countries = [...cset].sort(); 
+      this.teams = [...tset].sort();
+    },
+
+    applyFilters(){
+      const {country, team} = this.filters;
+      const match = (row)=> (!country || row.country===country) && (!team || row.team===team);
+
+      this.filtered.progressDaily = this.raw.progressDaily.filter(match);
+      if (!this.filtered.progressDaily.length) this.filtered.progressDaily = this.raw.progressDaily;
+
+      this.issues = this.raw.issues.filter(match).sort((a,b)=>{
+        const sevRank = {Critical:1, High:2, Medium:3, Low:4};
+        return (sevRank[a.severity]||9)-(sevRank[b.severity]||9);
+      }).slice(0,15);
+
+      this.computeKpis(); 
+      this.updateCharts();
+    },
+
+    resetFilters(){ this.filters={country:'',team:''}; this.applyFilters(); },
+
+    aggregateByDate(rows){
+      const map = new Map();
+      for (const r of rows){
+        const d = r.date;
+        const b = map.get(d) || { inScope:0, exec:0, pass:0, open:0 };
+        const inScope = +r.inScope||0;
+        b.inScope+=inScope;
+        b.exec+= (r.executedPct||0)/100 * inScope;
+        b.pass+= (r.passPct||0)/100 * inScope;
+        b.open+= +r.openDefects||0;
+        map.set(d,b);
+      }
+      return [...map.entries()].map(([date,b])=>({
+        date,
+        executedPct: b.inScope?(b.exec/b.inScope)*100:0,
+        passPct: b.inScope?(b.pass/b.inScope)*100:0,
+        openDefects:b.open
+      })).sort((a,b)=>a.date.localeCompare(b.date));
+    },
+
+    computeKpis(){
+      const agg=this.aggregateByDate(this.filtered.progressDaily.length?this.filtered.progressDaily:this.raw.progressDaily);
+      const latest=agg[agg.length-1]||{};
+      this.kpis.inScope=this.raw.overview.inScope||0;
+      this.kpis.executedPct=latest.executedPct||0;
+      this.kpis.passPct=latest.passPct||0;
+      const open=this.raw.issues.filter(i=>{
+        const m=(!this.filters.country||i.country===this.filters.country)&&(!this.filters.team||i.team===this.filters.team);
+        return m && (!i.status||i.status.toLowerCase()!=='closed');
+      });
+      this.kpis.openDefects=open.length; 
+      this.kpis.critical=open.filter(i=>i.severity==='Critical').length;
+    },
+
+    fmtPct(v){ return (v??0).toFixed(0)+'%'; },
+    sevClass(s){ return s==='Critical'?'bg-red-50 text-red-700':s==='High'?'bg-orange-50 text-orange-700':s==='Medium'?'bg-amber-50 text-amber-700':'bg-slate-100 text-slate-700'; },
+
+    drawCharts(){
+      // create once
+      const execCtx = document.getElementById('execChart');
+      const defectCtx = document.getElementById('defectChart');
+
+      if (this.execChart) this.execChart.destroy();
+      if (this.defectChart) this.defectChart.destroy();
+
+      this.execChart = new Chart(execCtx, {
+        type:'line',
+        data:{ labels:[], datasets:[
+          { label:'Executed %', data:[], tension:.25, normalized:true },
+          { label:'Pass %', data:[], tension:.25, normalized:true }
+        ]},
+        options:{
+          responsive:true, maintainAspectRatio:false, animation:false,
+          plugins:{ legend:{ position:'bottom' }, tooltip:{ mode:'index', intersect:false } },
+          scales:{ y:{ ticks:{ callback:(v)=>v+'%' }, beginAtZero:true, suggestedMax:100 } }
+        }
+      });
+
+      this.defectChart = new Chart(defectCtx, {
+        type:'line',
+        data:{ labels:[], datasets:[ { label:'Open defects', data:[], tension:.25, normalized:true } ]},
+        options:{
+          responsive:true, maintainAspectRatio:false, animation:false,
+          plugins:{ legend:{ position:'bottom' }, tooltip:{ mode:'index', intersect:false } },
+          scales:{ y:{ beginAtZero:true } }
+        }
+      });
+
+      this.updateCharts();
+    },
+
+    updateCharts(){
+      if (this._updating) return; // guard re-entrancy
+      this._updating = true;
+
+      const agg=this.aggregateByDate(this.filtered.progressDaily.length?this.filtered.progressDaily:this.raw.progressDaily);
+      const labels = agg.map(r=>r.date.slice(5));
+      const exec   = agg.map(r=> +(r.executedPct||0).toFixed(1));
+      const pass   = agg.map(r=> +(r.passPct||0).toFixed(1));
+      const open   = agg.map(r=> r.openDefects||0);
+
+      // Replace datasets entirely to avoid residual data
+      if (this.execChart){
+        this.execChart.data = {
+          labels,
+          datasets: [
+            { label:'Executed %', data: exec, tension:.25, normalized:true },
+            { label:'Pass %', data: pass, tension:.25, normalized:true }
+          ]
+        };
+        this.execChart.update('none');
+      }
+      if (this.defectChart){
+        this.defectChart.data = {
+          labels,
+          datasets: [
+            { label:'Open defects', data: open, tension:.25, normalized:true }
+          ]
+        };
+        this.defectChart.update('none');
+      }
+
+      // ensure sizing is applied
+      this.execChart && this.execChart.resize();
+      this.defectChart && this.defectChart.resize();
+
+      this._updating = false;
+    },
+
+    generateReport(){
+      const md=[`# UAT Status – ${this.raw.overview.release||'Release'} (${this.lastUpdate})`,``,
+        `**Scope:** ${this.kpis.inScope} | **Executed:** ${this.fmtPct(this.kpis.executedPct)} | **Pass:** ${this.fmtPct(this.kpis.passPct)} | **Open defects:** ${this.kpis.openDefects} | **Critical:** ${this.kpis.critical}`,
+        ``,
+        `## Top Open Issues`,
+        `| Key | Severity | Summary | Owner | Team | Country |`,
+        `|---|---|---|---|---|---|`,
+        ...this.issues.map(i=>`| [${i.key}](${i.link||''}) | ${i.severity} | ${i.summary} | ${i.owner||''} | ${i.team||''} | ${i.country||''} |`)
+      ].join('\n');
+      this.reportMD=md; this.reportOpen=true;
+    },
+    copyReport(){navigator.clipboard.writeText(this.reportMD);},
+    downloadReport(){const b=new Blob([this.reportMD],{type:'text/markdown'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='UAT_Status.md';a.click();URL.revokeObjectURL(a.href);}
+  }
+}
+document.addEventListener('alpine:init',()=>{Alpine.data('app',app)})
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js', { scope: '/uat-app/' })
+      .catch(err => console.error('SW registration failed:', err));
+  });
+}
+</script>
+
+</body>
+</html>

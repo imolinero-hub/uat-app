@@ -1,0 +1,98 @@
+{
+  "overview": {
+    "release": "RI-4",
+    "inScope": 1240,
+    "lastUpdate": "2025-08-27 10:00"
+  },
+  "progressDaily": [],
+
+  "issues": [
+    {
+      "key": "UAT-201",
+      "severity": "Critical",
+      "summary": "Checkout fails when applying loyalty points",
+      "owner": "Helena",
+      "team": "eCommerce",
+      "country": "DE",
+      "status": "Open",
+      "link": "https://jira.example.com/browse/UAT-201"
+    },
+    {
+      "key": "UAT-178",
+      "severity": "High",
+      "summary": "iOS app crashes on product detail page",
+      "owner": "Jakub",
+      "team": "Mobile",
+      "country": "FR",
+      "status": "In Progress",
+      "link": "https://jira.example.com/browse/UAT-178"
+    },
+    {
+      "key": "UAT-162",
+      "severity": "Medium",
+      "summary": "Translation missing for 'Add to Cart' button (IT)",
+      "owner": "Juan",
+      "team": "Localization",
+      "country": "IT",
+      "status": "Open",
+      "link": "https://jira.example.com/browse/UAT-162"
+    }
+  ],
+
+  "teams": [
+    {
+      "name": "Sales",
+      "lead": "Anna",
+      "email": "anna@example.com",
+      "country": "DE"
+    },
+    {
+      "name": "Marketing",
+      "lead": "Carmen",
+      "email": "carmen@example.com",
+      "country": "FR"
+    },
+    {
+      "name": "Technology",
+      "lead": "Jose",
+      "email": "jose@example.com",
+      "country": "ES"
+    },
+    {
+      "name": "eCommerce",
+      "lead": "Helena",
+      "email": "helena@example.com",
+      "country": "DE"
+    },
+    {
+      "name": "Mobile",
+      "lead": "Jakub",
+      "email": "jakub@example.com",
+      "country": "PL"
+    },
+    {
+      "name": "Localization",
+      "lead": "Juan",
+      "email": "juan@example.com",
+      "country": "IT"
+    }
+  ],
+
+  "keyDates": [
+    {
+      "label": "Kick-off",
+      "date": "2025-09-01",
+      "notes": "All testers start"
+    },
+    {
+      "label": "Mid-Review",
+      "date": "2025-09-10",
+      "notes": "Focus on open defects"
+    },
+    {
+      "label": "Go / No-Go",
+      "date": "2025-09-18",
+      "notes": "Final leadership decision"
+    }
+  ]
+}
