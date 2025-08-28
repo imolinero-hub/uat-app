@@ -1,32 +1,31 @@
 {
   "overview": {
     "release": "RI-4",
-    "inScope": 1240,
+    "inScope": 3249,
     "lastUpdate": "2025-08-27 10:00"
   },
   "progressDaily": [
-    {"date":"2025-10-13","country":"ALL","team":"ALL","inScope":3249,"executedPct":4,"passPct":3,"openDefects":null},
-    {"date":"2025-10-14","country":"ALL","team":"ALL","inScope":3230,"executedPct":14,"passPct":12,"openDefects":null},
-    {"date":"2025-10-15","country":"ALL","team":"ALL","inScope":3225,"executedPct":24,"passPct":20,"openDefects":null},
-    {"date":"2025-10-16","country":"ALL","team":"ALL","inScope":3220,"executedPct":33,"passPct":28,"openDefects":null},
-    {"date":"2025-10-17","country":"ALL","team":"ALL","inScope":3220,"executedPct":39,"passPct":33,"openDefects":null},
-    {"date":"2025-10-20","country":"ALL","team":"ALL","inScope":3204,"executedPct":52,"passPct":45,"openDefects":null},
-    {"date":"2025-10-21","country":"ALL","team":"ALL","inScope":3211,"executedPct":63,"passPct":61,"openDefects":null},
-    {"date":"2025-10-22","country":"ALL","team":"ALL","inScope":3124,"executedPct":78,"passPct":71,"openDefects":null},
-    {"date":"2025-10-23","country":"ALL","team":"ALL","inScope":3120,"executedPct":85,"passPct":77,"openDefects":null},
-    {"date":"2025-10-24","country":"ALL","team":"ALL","inScope":3108,"executedPct":93,"passPct":85,"openDefects":null},
-    {"date":"2025-10-27","country":"ALL","team":"ALL","inScope":3083,"executedPct":97,"passPct":88,"openDefects":null},
-    {"date":"2025-10-28","country":"ALL","team":"ALL","inScope":3071,"executedPct":98,"passPct":90,"openDefects":null},
-    {"date":"2025-10-29","country":"ALL","team":"ALL","inScope":3068,"executedPct":99,"passPct":92,"openDefects":null},
-    {"date":"2025-10-30","country":"ALL","team":"ALL","inScope":3068,"executedPct":99,"passPct":93,"openDefects":null},
-    {"date":"2025-10-31","country":"ALL","team":"ALL","inScope":3063,"executedPct":99,"passPct":93,"openDefects":null},
-    {"date":"2025-11-01","country":"ALL","team":"ALL","inScope":3063,"executedPct":100,"passPct":95,"openDefects":null},
-    {"date":"2025-11-04","country":"ALL","team":"ALL","inScope":3063,"executedPct":100,"passPct":95,"openDefects":null},
-    {"date":"2025-11-05","country":"ALL","team":"ALL","inScope":3063,"executedPct":100,"passPct":96,"openDefects":null},
-    {"date":"2025-11-06","country":"ALL","team":"ALL","inScope":3063,"executedPct":100,"passPct":97,"openDefects":null},
-    {"date":"2025-11-07","country":"ALL","team":"ALL","inScope":3063,"executedPct":100,"passPct":97,"openDefects":null}
-  ]
-
+    { "date": "2025-10-13", "country": "ALL", "team": "ALL", "inScope": 3249, "executedPct": 4, "passPct": 3, "openDefects": null },
+    { "date": "2025-10-14", "country": "ALL", "team": "ALL", "inScope": 3230, "executedPct": 14, "passPct": 12, "openDefects": null },
+    { "date": "2025-10-15", "country": "ALL", "team": "ALL", "inScope": 3225, "executedPct": 24, "passPct": 20, "openDefects": null },
+    { "date": "2025-10-16", "country": "ALL", "team": "ALL", "inScope": 3220, "executedPct": 33, "passPct": 28, "openDefects": null },
+    { "date": "2025-10-17", "country": "ALL", "team": "ALL", "inScope": 3220, "executedPct": 39, "passPct": 33, "openDefects": null },
+    { "date": "2025-10-20", "country": "ALL", "team": "ALL", "inScope": 3204, "executedPct": 52, "passPct": 45, "openDefects": null },
+    { "date": "2025-10-21", "country": "ALL", "team": "ALL", "inScope": 3211, "executedPct": 63, "passPct": 61, "openDefects": null },
+    { "date": "2025-10-22", "country": "ALL", "team": "ALL", "inScope": 3124, "executedPct": 78, "passPct": 71, "openDefects": null },
+    { "date": "2025-10-23", "country": "ALL", "team": "ALL", "inScope": 3120, "executedPct": 85, "passPct": 77, "openDefects": null },
+    { "date": "2025-10-24", "country": "ALL", "team": "ALL", "inScope": 3108, "executedPct": 93, "passPct": 85, "openDefects": null },
+    { "date": "2025-10-27", "country": "ALL", "team": "ALL", "inScope": 3083, "executedPct": 97, "passPct": 88, "openDefects": null },
+    { "date": "2025-10-28", "country": "ALL", "team": "ALL", "inScope": 3071, "executedPct": 98, "passPct": 90, "openDefects": null },
+    { "date": "2025-10-29", "country": "ALL", "team": "ALL", "inScope": 3068, "executedPct": 99, "passPct": 92, "openDefects": null },
+    { "date": "2025-10-30", "country": "ALL", "team": "ALL", "inScope": 3068, "executedPct": 99, "passPct": 93, "openDefects": null },
+    { "date": "2025-10-31", "country": "ALL", "team": "ALL", "inScope": 3063, "executedPct": 99, "passPct": 93, "openDefects": null },
+    { "date": "2025-11-01", "country": "ALL", "team": "ALL", "inScope": 3063, "executedPct": 100, "passPct": 95, "openDefects": null },
+    { "date": "2025-11-04", "country": "ALL", "team": "ALL", "inScope": 3063, "executedPct": 100, "passPct": 95, "openDefects": null },
+    { "date": "2025-11-05", "country": "ALL", "team": "ALL", "inScope": 3063, "executedPct": 100, "passPct": 96, "openDefects": null },
+    { "date": "2025-11-06", "country": "ALL", "team": "ALL", "inScope": 3063, "executedPct": 100, "passPct": 97, "openDefects": null },
+    { "date": "2025-11-07", "country": "ALL", "team": "ALL", "inScope": 3063, "executedPct": 100, "passPct": 97, "openDefects": null }
+  ],
   "issues": [
     {
       "key": "UAT-201",
@@ -59,61 +58,17 @@
       "link": "https://jira.example.com/browse/UAT-162"
     }
   ],
-
   "teams": [
-    {
-      "name": "Sales",
-      "lead": "Anna",
-      "email": "anna@example.com",
-      "country": "DE"
-    },
-    {
-      "name": "Marketing",
-      "lead": "Carmen",
-      "email": "carmen@example.com",
-      "country": "FR"
-    },
-    {
-      "name": "Technology",
-      "lead": "Jose",
-      "email": "jose@example.com",
-      "country": "ES"
-    },
-    {
-      "name": "eCommerce",
-      "lead": "Helena",
-      "email": "helena@example.com",
-      "country": "DE"
-    },
-    {
-      "name": "Mobile",
-      "lead": "Jakub",
-      "email": "jakub@example.com",
-      "country": "PL"
-    },
-    {
-      "name": "Localization",
-      "lead": "Juan",
-      "email": "juan@example.com",
-      "country": "IT"
-    }
+    { "name": "Sales", "lead": "Anna", "email": "anna@example.com", "country": "DE" },
+    { "name": "Marketing", "lead": "Carmen", "email": "carmen@example.com", "country": "FR" },
+    { "name": "Technology", "lead": "Jose", "email": "jose@example.com", "country": "ES" },
+    { "name": "eCommerce", "lead": "Helena", "email": "helena@example.com", "country": "DE" },
+    { "name": "Mobile", "lead": "Jakub", "email": "jakub@example.com", "country": "PL" },
+    { "name": "Localization", "lead": "Juan", "email": "juan@example.com", "country": "IT" }
   ],
-
   "keyDates": [
-    {
-      "label": "Kick-off",
-      "date": "2025-09-01",
-      "notes": "All testers start"
-    },
-    {
-      "label": "Mid-Review",
-      "date": "2025-09-10",
-      "notes": "Focus on open defects"
-    },
-    {
-      "label": "Go / No-Go",
-      "date": "2025-09-18",
-      "notes": "Final leadership decision"
-    }
+    { "label": "Kick-off", "date": "2025-09-01", "notes": "All testers start" },
+    { "label": "Mid-Review", "date": "2025-09-10", "notes": "Focus on open defects" },
+    { "label": "Go / No-Go", "date": "2025-09-18", "notes": "Final leadership decision" }
   ]
 }
