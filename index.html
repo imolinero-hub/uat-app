@@ -13,13 +13,10 @@
   <meta name="theme-color" content="#111827">
   <meta name="mobile-web-app-capable" content="yes">
 
-  <!-- Tailwind -->
+  <!-- Tailwind (CDN) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Alpine.js -->
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <!-- Chart.js + time adapter -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
 
   <style>
     .card { @apply bg-white rounded-2xl shadow p-4; }
@@ -27,8 +24,8 @@
     .badge-uat { @apply bg-indigo-50 text-indigo-700; }
     .kpi { @apply text-sm text-gray-500; }
     .kpi-value { @apply text-2xl font-semibold text-gray-900; }
-    .chart-wrap { position: relative; height: 260px; }
-    .chart-wrap > canvas { position:absolute; inset:0; width:100% !important; height:100% !important; display:block; }
+    .img-wrap { @apply rounded-xl border; overflow: hidden; }
+    .img-note { @apply text-xs text-gray-500 mt-2; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-900">
@@ -40,7 +37,7 @@
       <div class="mt-1 flex gap-2 items-center">
         <span class="badge badge-uat">UAT</span>
         <span class="text-xs text-gray-500">Last update: <span x-text="lastUpdate || '—'"></span></span>
-        <span class="text-xs text-gray-400">v0.9</span>
+        <span class="text-xs text-gray-400">v1.0 (image charts)</span>
       </div>
     </div>
     <div class="flex flex-wrap gap-2">
@@ -66,15 +63,23 @@
     <div class="card"><div class="kpi">Critical</div><div class="kpi-value" :class="kpis.critical > 0 ? 'text-red-600' : 'text-emerald-600'" x-text="kpis.critical"></div></div>
   </section>
 
-  <!-- Charts -->
+  <!-- Charts (now images) -->
   <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
     <div class="card">
       <div class="mb-2 font-medium">Execution Over Time</div>
-      <div class="chart-wrap"><canvas id="execChart"></canvas></div>
+      <div class="img-wrap">
+        <img src="./charts/execution.png" alt="Execution Over Time chart" class="w-full" loading="lazy"
+             onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'p-6 text-sm text-gray-500',textContent:'Chart image not found. Upload /charts/execution.png'}));">
+      </div>
+      <div class="img-note">Source: Excel snapshot</div>
     </div>
     <div class="card">
       <div class="mb-2 font-medium">Defect Burndown</div>
-      <div class="chart-wrap"><canvas id="defectChart"></canvas></div>
+      <div class="img-wrap">
+        <img src="./charts/defects.png" alt="Defect Burndown chart" class="w-full" loading="lazy"
+             onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'p-6 text-sm text-gray-500',textContent:'Chart image not found. Upload /charts/defects.png'}));">
+      </div>
+      <div class="img-note">Source: Excel snapshot</div>
     </div>
   </section>
 
@@ -162,27 +167,30 @@ function app(){
     lastUpdate: '',
     reportOpen:false,
     reportMD:'',
-    execChart:null, defectChart:null,
 
     async init(){
       try {
         const res = await fetch('./uat.json?v=' + Date.now(), { cache:'no-store' });
         if (res.ok) this.raw = await res.json();
       } catch(e){ console.error('Failed to load uat.json', e); }
+
       this.lastUpdate = this.raw.overview?.lastUpdate || '';
-      this.buildFilters(); this.applyFilters(); this.drawCharts();
+      this.buildFilters(); 
+      this.applyFilters();
     },
 
     buildFilters(){
       const cset = new Set(this.raw.teams.map(t=>t.country).filter(Boolean));
       const tset = new Set(this.raw.teams.map(t=>t.name).filter(Boolean));
       this.raw.issues.forEach(i=>{ if(i.country) cset.add(i.country); if(i.team) tset.add(i.team); });
-      this.countries = [...cset].sort(); this.teams = [...tset].sort();
+      this.countries = [...cset].sort(); 
+      this.teams = [...tset].sort();
     },
 
     applyFilters(){
       const {country, team} = this.filters;
       const match = (row)=> (!country || row.country===country) && (!team || row.team===team);
+
       this.filtered.progressDaily = this.raw.progressDaily.filter(match);
       if (!this.filtered.progressDaily.length) this.filtered.progressDaily = this.raw.progressDaily;
 
@@ -191,18 +199,17 @@ function app(){
         return (sevRank[a.severity]||9)-(sevRank[b.severity]||9);
       }).slice(0,15);
 
-      this.computeKpis(); this.updateCharts();
+      this.computeKpis();
     },
 
     resetFilters(){ this.filters={country:'',team:''}; this.applyFilters(); },
 
-    // aggregate to one row per date
     aggregateByDate(rows){
       const map = new Map();
       for (const r of rows){
         const d = r.date;
-        const inScope = Number(r.inScope) || 0;
         const b = map.get(d) || { inScope:0, exec:0, pass:0, open:0 };
+        const inScope = Number(r.inScope) || 0;
         b.inScope += inScope;
         b.exec    += (Number(r.executedPct)||0)/100 * inScope;
         b.pass    += (Number(r.passPct)||0)/100 * inScope;
@@ -218,106 +225,56 @@ function app(){
     },
 
     computeKpis(){
-      const agg=this.aggregateByDate(this.filtered.progressDaily.length?this.filtered.progressDaily:this.raw.progressDaily);
-      const latest=agg[agg.length-1]||{};
-      this.kpis.inScope=this.raw.overview.inScope||0;
-      this.kpis.executedPct=latest.executedPct||0;
-      this.kpis.passPct=latest.passPct||0;
-      const open=this.raw.issues.filter(i=>{
-        const m=(!this.filters.country||i.country===this.filters.country)&&(!this.filters.team||i.team===this.filters.team);
-        return m && (!i.status||i.status.toLowerCase()!=='closed');
+      const agg = this.aggregateByDate(this.filtered.progressDaily.length ? this.filtered.progressDaily : this.raw.progressDaily);
+      const latest = agg[agg.length-1] || {};
+      this.kpis.inScope     = this.raw.overview.inScope || 0;
+      this.kpis.executedPct = latest.executedPct || 0;
+      this.kpis.passPct     = latest.passPct || 0;
+
+      const open = this.raw.issues.filter(i=>{
+        const m = (!this.filters.country || i.country===this.filters.country) && (!this.filters.team || i.team===this.filters.team);
+        return m && (!i.status || i.status.toLowerCase()!=='closed');
       });
-      this.kpis.openDefects=open.length; this.kpis.critical=open.filter(i=>i.severity==='Critical').length;
+      this.kpis.openDefects = open.length;
+      this.kpis.critical    = open.filter(i=>i.severity==='Critical').length;
+    },
+
+    // Report
+    generateReport(){
+      const md = [
+        `# UAT Status – ${this.raw.overview.release || 'Release'} (${this.lastUpdate})`,
+        ``,
+        `**Scope:** ${this.kpis.inScope} | **Executed:** ${this.fmtPct(this.kpis.executedPct)} | **Pass:** ${this.fmtPct(this.kpis.passPct)} | **Open defects:** ${this.kpis.openDefects} | **Critical:** ${this.kpis.critical}`,
+        ``,
+        `## Top Open Issues`,
+        `| Key | Severity | Summary | Owner | Team | Country |`,
+        `|---|---|---|---|---|---|`,
+        ...this.issues.map(i=>`| [${i.key}](${i.link||''}) | ${i.severity} | ${i.summary.replace(/\|/g,'/')} | ${i.owner||''} | ${i.team||''} | ${i.country||''} |`)
+      ].join('\n');
+      this.reportMD = md; 
+      this.reportOpen = true;
+    },
+    copyReport(){ navigator.clipboard.writeText(this.reportMD); },
+    downloadReport(){
+      const blob = new Blob([this.reportMD], {type:'text/markdown'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `UAT_Status_${(this.lastUpdate||'').replace(/[: ]/g,'_')}.md`;
+      a.click();
+      URL.revokeObjectURL(a.href);
     },
 
     fmtPct(v){ return (v??0).toFixed(0)+'%'; },
-    sevClass(s){ return s==='Critical'?'bg-red-50 text-red-700':s==='High'?'bg-orange-50 text-orange-700':s==='Medium'?'bg-amber-50 text-amber-700':'bg-slate-100 text-slate-700'; },
-
-    // ----- Charts: SCATTER + TIME SCALE -----
-    drawCharts(){
-      if (this.execChart) { this.execChart.destroy(); this.execChart=null; }
-      if (this.defectChart){ this.defectChart.destroy(); this.defectChart=null; }
-
-      const execCtx = document.getElementById('execChart');
-      const defectCtx = document.getElementById('defectChart');
-
-      this.execChart = new Chart(execCtx, {
-        type: 'scatter',
-        data: { datasets: [
-          { label:'Executed %', data: [], showLine:true, tension:.25, borderWidth:2, fill:false,
-            borderColor:'#3b82f6', backgroundColor:'#3b82f6', pointRadius:2, spanGaps:true },
-          { label:'Pass %', data: [], showLine:true, tension:.25, borderWidth:2, fill:false,
-            borderColor:'#ec4899', backgroundColor:'#ec4899', pointRadius:2, spanGaps:true }
-        ]},
-        options:{
-          responsive:true, maintainAspectRatio:false, animation:false,
-          parsing:false,
-          scales:{
-            x:{ type:'time', time:{ unit:'day' } },
-            y:{ beginAtZero:true, suggestedMax:100, ticks:{ callback:v=>v+'%' } }
-          },
-          plugins:{ legend:{ position:'bottom' } }
-        }
-      });
-
-      this.defectChart = new Chart(defectCtx, {
-        type: 'scatter',
-        data: { datasets: [
-          { label:'Open defects', data: [], showLine:true, tension:.25, borderWidth:2, fill:false,
-            borderColor:'#0284c7', backgroundColor:'#0284c7', pointRadius:2, spanGaps:true }
-        ]},
-        options:{
-          responsive:true, maintainAspectRatio:false, animation:false,
-          parsing:false,
-          scales:{
-            x:{ type:'time', time:{ unit:'day' } },
-            y:{ beginAtZero:true }
-          },
-          plugins:{ legend:{ position:'bottom' } }
-        }
-      });
-
-      this.updateCharts();
-    },
-
-    updateCharts(){
-      try{
-        const agg=this.aggregateByDate(this.filtered.progressDaily.length?this.filtered.progressDaily:this.raw.progressDaily);
-
-        // Build {x, y} with ISO date for time scale
-        const execPts = agg.map(r => ({ x: r.date, y: Number((r.executedPct||0).toFixed(1)) }));
-        const passPts = agg.map(r => ({ x: r.date, y: Number((r.passPct||0).toFixed(1)) }));
-        const openPts = agg.map(r => ({ x: r.date, y: Number(r.openDefects||0) }));
-
-        if (this.execChart){
-          this.execChart.data.datasets[0].data = execPts;
-          this.execChart.data.datasets[1].data = passPts;
-          this.execChart.update();
-        }
-        if (this.defectChart){
-          this.defectChart.data.datasets[0].data = openPts;
-          this.defectChart.update();
-        }
-      }catch(e){
-        console.error('updateCharts error', e);
-      }
-    },
-
-    // ----- Report -----
-    generateReport(){
-      const md=[`# UAT Status – ${this.raw.overview.release||'Release'} (${this.lastUpdate})`,``,
-        `**Scope:** ${this.kpis.inScope} | **Executed:** ${this.fmtPct(this.kpis.executedPct)} | **Pass:** ${this.fmtPct(this.kpis.passPct)} | **Open defects:** ${this.kpis.openDefects} | **Critical:** ${this.kpis.critical}`,``,
-        `## Top Open Issues`,`| Key | Severity | Summary | Owner | Team | Country |`,`|---|---|---|---|---|---|`,
-        ...this.issues.map(i=>`| [${i.key}](${i.link||''}) | ${i.severity} | ${i.summary.replace(/\|/g,'/')} | ${i.owner||''} | ${i.team||''} | ${i.country||''} |`)
-      ].join('\n');
-      this.reportMD=md; this.reportOpen=true;
-    },
-    copyReport(){navigator.clipboard.writeText(this.reportMD);},
-    downloadReport(){const b=new Blob([this.reportMD],{type:'text/markdown'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`UAT_Status_${(this.lastUpdate||'').replace(/[: ]/g,'_')}.md`;a.click();URL.revokeObjectURL(a.href);}
+    sevClass(s){
+      return s==='Critical' ? 'bg-red-50 text-red-700'
+           : s==='High'     ? 'bg-orange-50 text-orange-700'
+           : s==='Medium'   ? 'bg-amber-50 text-amber-700'
+           : 'bg-slate-100 text-slate-700';
+    }
   }
 }
 
-// Register SW (relative scope works under /uat-app/)
+// Register the service worker (relative scope under /uat-app/)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./service-worker.js', { scope: './' })
@@ -325,7 +282,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-document.addEventListener('alpine:init',()=>{Alpine.data('app',app)})
+document.addEventListener('alpine:init',()=>{Alpine.data('app', app)})
 </script>
 </body>
 </html>
