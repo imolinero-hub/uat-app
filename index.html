@@ -28,6 +28,7 @@
     .kpi-value { @apply text-2xl font-semibold text-gray-900; }
     .chart-wrap { position: relative; height: 260px; }
     .chart-wrap > canvas { position:absolute; inset:0; width:100% !important; height:100% !important; display:block; }
+
   </style>
 </head>
 <body class="bg-slate-50 text-slate-900">
@@ -247,22 +248,23 @@ function app(){
       this.execChart = new Chart(execCtx, {
         type:'line',
         data:{ labels:[], datasets:[
-          { label:'Executed %', data:[], parsing:false, tension:.25, borderWidth:2, fill:false,
+          { label:'Executed %', data:[], tension:.25, borderWidth:2, fill:false,
             borderColor:'#3b82f6', backgroundColor:'#3b82f6', pointRadius:2, spanGaps:true },
-          { label:'Pass %', data:[], parsing:false, tension:.25, borderWidth:2, fill:false,
+          { label:'Pass %', data:[], tension:.25, borderWidth:2, fill:false,
             borderColor:'#ec4899', backgroundColor:'#ec4899', pointRadius:2, spanGaps:true }
         ]},
         options:{
           responsive:true, maintainAspectRatio:false, animation:false,
           plugins:{ legend:{ position:'bottom' }, tooltip:{ mode:'index', intersect:false } },
-          scales:{ x:{ type:'category' }, y:{ ticks:{ callback:(v)=>v+'%' }, beginAtZero:true, suggestedMax:100 } }
+          scales:{ x:{ type:'category' }, y:{ beginAtZero:true, suggestedMax:100,
+            ticks:{ callback:(v)=>v+'%' } } }
         }
       });
 
       this.defectChart = new Chart(defectCtx, {
         type:'line',
         data:{ labels:[], datasets:[
-          { label:'Open defects', data:[], parsing:false, tension:.25, borderWidth:2, fill:false,
+          { label:'Open defects', data:[], tension:.25, borderWidth:2, fill:false,
             borderColor:'#0284c7', backgroundColor:'#0284c7', pointRadius:2, spanGaps:true }
         ]},
         options:{
@@ -276,23 +278,34 @@ function app(){
     },
 
     updateCharts(){
-      const agg = this.aggregateByDate(this.filtered.progressDaily.length ? this.filtered.progressDaily : this.raw.progressDaily);
+      try {
+        const rows = this.filtered.progressDaily.length ? this.filtered.progressDaily : this.raw.progressDaily;
+        const agg  = this.aggregateByDate(rows);
 
-      const labels = agg.map(r => r.date.slice(5));
-      const execPts = labels.map((x,i) => ({ x, y: Number((agg[i].executedPct ?? 0).toFixed(1)) }));
-      const passPts = labels.map((x,i) => ({ x, y: Number((agg[i].passPct ?? 0).toFixed(1)) }));
-      const openPts = labels.map((x,i) => ({ x, y: Number(agg[i].openDefects ?? 0) }));
+        const labels = agg.map(r => (r.date || '').slice(5)); // e.g., "10-13"
+        const exec   = agg.map(r => Number(r.executedPct || 0));
+        const pass   = agg.map(r => Number(r.passPct || 0));
+        const open   = agg.map(r => Number(r.openDefects || 0));
 
-      if (this.execChart){
-        this.execChart.data.labels = labels;   // <-- set labels explicitly
-        this.execChart.data.datasets[0].data = execPts;
-        this.execChart.data.datasets[1].data = passPts;
-        this.execChart.update();
-      }
-      if (this.defectChart){
-        this.defectChart.data.labels = labels; // <-- set labels explicitly
-        this.defectChart.data.datasets[0].data = openPts;
-        this.defectChart.update();
+        // Guard: if labels mismatch, bail gracefully
+        if (!labels.length || exec.length !== labels.length || pass.length !== labels.length) {
+          console.warn('Chart skipped due to inconsistent data', {labels, exec, pass});
+          return;
+        }
+
+        if (this.execChart){
+          this.execChart.data.labels = labels;
+          this.execChart.data.datasets[0].data = exec;
+          this.execChart.data.datasets[1].data = pass;
+          this.execChart.update();
+        }
+        if (this.defectChart){
+          this.defectChart.data.labels = labels;
+          this.defectChart.data.datasets[0].data = open;
+          this.defectChart.update();
+        }
+      } catch (e){
+        console.error('updateCharts error', e);
       }
     },
 
