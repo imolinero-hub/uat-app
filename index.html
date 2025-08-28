@@ -4,23 +4,23 @@
   <meta charset="utf-8" />
   <title>UAT Control</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <!-- PWA bits (paths for /uat-app) -->
+  <link rel="manifest" href="/uat-app/manifest.webmanifest">
+  <link rel="icon" sizes="192x192" href="/uat-app/icons/icon-192.png">
+  <link rel="icon" sizes="512x512" href="/uat-app/icons/icon-512.png">
+  <link rel="apple-touch-icon" href="/uat-app/icons/icon-180.png">
+  <meta name="theme-color" content="#111827">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="UAT Control">
+
   <!-- Tailwind (CDN) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Alpine.js -->
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  
-  <!-- PWA -->
-  <link rel="manifest" href="/uat-app/manifest.webmanifest">
-  <link rel="icon" sizes="192x192" href="/uat-app/icons/icon-192.png">
-  <link rel="icon" sizes="512x512" href="/uat-app/icons/icon-512.png">
-  <link rel="apple-touch-icon" href="/uat-app/icons/icon-180.png">
-
-  <meta name="theme-color" content="#111827"> <!-- slate-900 -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="UAT Control">
 
   <style>
     .card { @apply bg-white rounded-2xl shadow p-4; }
@@ -28,8 +28,9 @@
     .badge-uat { @apply bg-indigo-50 text-indigo-700; }
     .kpi { @apply text-sm text-gray-500; }
     .kpi-value { @apply text-2xl font-semibold text-gray-900; }
-    /* Hard-lock chart container height to prevent growth */
-    .chart-wrap { position: relative; height: 260px; } /* adjust as needed */
+
+    /* Lock chart height to avoid growth / reflow quirks */
+    .chart-wrap { position: relative; height: 260px; }
     .chart-wrap > canvas { position:absolute; inset:0; width:100% !important; height:100% !important; display:block; }
   </style>
 </head>
@@ -42,7 +43,7 @@
       <div class="mt-1 flex gap-2 items-center">
         <span class="badge badge-uat">UAT</span>
         <span class="text-xs text-gray-500">Last update: <span x-text="lastUpdate || '—'"></span></span>
-        <span class="text-xs text-gray-400">v0.5</span>
+        <span class="text-xs text-gray-400">v0.6</span>
       </div>
     </div>
     <div class="flex flex-wrap gap-2">
@@ -165,15 +166,15 @@ function app(){
     reportOpen:false,
     reportMD:'',
     execChart:null, defectChart:null,
-    _updating:false,  // guard
 
     async init(){
       try {
-        const res = await fetch('./uat.json', {cache:'no-store'});
+        // cache-bust to ensure fresh data behind SW/CDNs
+        const res = await fetch('/uat-app/uat.json?v=' + Date.now(), { cache:'no-store' });
         if (res.ok) this.raw = await res.json();
-      } catch(e){ console.error("uat.json not found or invalid", e); }
+      } catch(e){ console.error('Failed to load uat.json', e); }
       this.lastUpdate = this.raw.overview?.lastUpdate || '';
-      this.buildFilters(); 
+      this.buildFilters();
       this.applyFilters();
       this.drawCharts();
     },
@@ -189,7 +190,6 @@ function app(){
     applyFilters(){
       const {country, team} = this.filters;
       const match = (row)=> (!country || row.country===country) && (!team || row.team===team);
-
       this.filtered.progressDaily = this.raw.progressDaily.filter(match);
       if (!this.filtered.progressDaily.length) this.filtered.progressDaily = this.raw.progressDaily;
 
@@ -198,62 +198,72 @@ function app(){
         return (sevRank[a.severity]||9)-(sevRank[b.severity]||9);
       }).slice(0,15);
 
-      this.computeKpis(); 
+      this.computeKpis();
       this.updateCharts();
     },
 
     resetFilters(){ this.filters={country:'',team:''}; this.applyFilters(); },
 
+    // Weighted aggregation by date (handles multiple rows per day)
     aggregateByDate(rows){
       const map = new Map();
       for (const r of rows){
         const d = r.date;
         const b = map.get(d) || { inScope:0, exec:0, pass:0, open:0 };
-        const inScope = +r.inScope||0;
-        b.inScope+=inScope;
-        b.exec+= (r.executedPct||0)/100 * inScope;
-        b.pass+= (r.passPct||0)/100 * inScope;
-        b.open+= +r.openDefects||0;
+        const inScope = Number(r.inScope) || 0;
+        b.inScope += inScope;
+        b.exec    += (Number(r.executedPct)||0)/100 * inScope;
+        b.pass    += (Number(r.passPct)||0)/100 * inScope;
+        b.open    += Number(r.openDefects)||0;
         map.set(d,b);
       }
       return [...map.entries()].map(([date,b])=>({
         date,
-        executedPct: b.inScope?(b.exec/b.inScope)*100:0,
-        passPct: b.inScope?(b.pass/b.inScope)*100:0,
-        openDefects:b.open
-      })).sort((a,b)=>a.date.localeCompare(b.date));
+        executedPct: b.inScope ? (b.exec/b.inScope)*100 : 0,
+        passPct:     b.inScope ? (b.pass/b.inScope)*100 : 0,
+        openDefects: b.open
+      })).sort((a,b)=> a.date.localeCompare(b.date));
     },
 
     computeKpis(){
-      const agg=this.aggregateByDate(this.filtered.progressDaily.length?this.filtered.progressDaily:this.raw.progressDaily);
-      const latest=agg[agg.length-1]||{};
-      this.kpis.inScope=this.raw.overview.inScope||0;
-      this.kpis.executedPct=latest.executedPct||0;
-      this.kpis.passPct=latest.passPct||0;
-      const open=this.raw.issues.filter(i=>{
-        const m=(!this.filters.country||i.country===this.filters.country)&&(!this.filters.team||i.team===this.filters.team);
-        return m && (!i.status||i.status.toLowerCase()!=='closed');
+      const agg = this.aggregateByDate(this.filtered.progressDaily.length ? this.filtered.progressDaily : this.raw.progressDaily);
+      const latest = agg[agg.length-1] || {};
+      this.kpis.inScope     = this.raw.overview.inScope || 0;
+      this.kpis.executedPct = latest.executedPct || 0;
+      this.kpis.passPct     = latest.passPct || 0;
+
+      const open = this.raw.issues.filter(i=>{
+        const m = (!this.filters.country || i.country===this.filters.country) && (!this.filters.team || i.team===this.filters.team);
+        return m && (!i.status || i.status.toLowerCase()!=='closed');
       });
-      this.kpis.openDefects=open.length; 
-      this.kpis.critical=open.filter(i=>i.severity==='Critical').length;
+      this.kpis.openDefects = open.length;
+      this.kpis.critical    = open.filter(i=>i.severity==='Critical').length;
     },
 
     fmtPct(v){ return (v??0).toFixed(0)+'%'; },
-    sevClass(s){ return s==='Critical'?'bg-red-50 text-red-700':s==='High'?'bg-orange-50 text-orange-700':s==='Medium'?'bg-amber-50 text-amber-700':'bg-slate-100 text-slate-700'; },
+    sevClass(s){
+      return s==='Critical' ? 'bg-red-50 text-red-700'
+           : s==='High'     ? 'bg-orange-50 text-orange-700'
+           : s==='Medium'   ? 'bg-amber-50 text-amber-700'
+           : 'bg-slate-100 text-slate-700';
+    },
 
+    // ----- Charts -----
     drawCharts(){
-      // create once
+      // destroy if re-rendering
+      if (this.execChart) { this.execChart.destroy(); this.execChart = null; }
+      if (this.defectChart){ this.defectChart.destroy(); this.defectChart = null; }
+
       const execCtx = document.getElementById('execChart');
       const defectCtx = document.getElementById('defectChart');
-
-      if (this.execChart) this.execChart.destroy();
-      if (this.defectChart) this.defectChart.destroy();
 
       this.execChart = new Chart(execCtx, {
         type:'line',
         data:{ labels:[], datasets:[
-          { label:'Executed %', data:[], tension:.25, normalized:true },
-          { label:'Pass %', data:[], tension:.25, normalized:true }
+          { label:'Executed %', data:[], tension:.25, borderWidth:2, fill:false,
+            borderColor:'#3b82f6', backgroundColor:'#3b82f6', pointRadius:2, spanGaps:true },
+          { label:'Pass %', data:[], tension:.25, borderWidth:2, fill:false,
+            borderColor:'#ec4899', backgroundColor:'#ec4899', pointRadius:2, spanGaps:true }
         ]},
         options:{
           responsive:true, maintainAspectRatio:false, animation:false,
@@ -264,7 +274,10 @@ function app(){
 
       this.defectChart = new Chart(defectCtx, {
         type:'line',
-        data:{ labels:[], datasets:[ { label:'Open defects', data:[], tension:.25, normalized:true } ]},
+        data:{ labels:[], datasets:[
+          { label:'Open defects', data:[], tension:.25, borderWidth:2, fill:false,
+            borderColor:'#0284c7', backgroundColor:'#0284c7', pointRadius:2, spanGaps:true }
+        ]},
         options:{
           responsive:true, maintainAspectRatio:false, animation:false,
           plugins:{ legend:{ position:'bottom' }, tooltip:{ mode:'index', intersect:false } },
@@ -276,69 +289,62 @@ function app(){
     },
 
     updateCharts(){
-      if (this._updating) return; // guard re-entrancy
-      this._updating = true;
+      const agg = this.aggregateByDate(this.filtered.progressDaily.length ? this.filtered.progressDaily : this.raw.progressDaily);
 
-      const agg=this.aggregateByDate(this.filtered.progressDaily.length?this.filtered.progressDaily:this.raw.progressDaily);
-      const labels = agg.map(r=>r.date.slice(5));
-      const exec   = agg.map(r=> +(r.executedPct||0).toFixed(1));
-      const pass   = agg.map(r=> +(r.passPct||0).toFixed(1));
-      const open   = agg.map(r=> r.openDefects||0);
+      const labels = agg.map(r => r.date.slice(5));
+      const exec   = agg.map(r => Number((r.executedPct ?? 0).toFixed(1)));
+      const pass   = agg.map(r => Number((r.passPct ?? 0).toFixed(1)));
+      const open   = agg.map(r => Number(r.openDefects ?? 0));
 
-      // Replace datasets entirely to avoid residual data
       if (this.execChart){
-        this.execChart.data = {
-          labels,
-          datasets: [
-            { label:'Executed %', data: exec, tension:.25, normalized:true },
-            { label:'Pass %', data: pass, tension:.25, normalized:true }
-          ]
-        };
-        this.execChart.update('none');
+        this.execChart.data.labels = labels;
+        this.execChart.data.datasets[0].data = exec;
+        this.execChart.data.datasets[1].data = pass;
+        this.execChart.update();
       }
       if (this.defectChart){
-        this.defectChart.data = {
-          labels,
-          datasets: [
-            { label:'Open defects', data: open, tension:.25, normalized:true }
-          ]
-        };
-        this.defectChart.update('none');
+        this.defectChart.data.labels = labels;
+        this.defectChart.data.datasets[0].data = open;
+        this.defectChart.update();
       }
-
-      // ensure sizing is applied
-      this.execChart && this.execChart.resize();
-      this.defectChart && this.defectChart.resize();
-
-      this._updating = false;
     },
 
+    // ----- Report -----
     generateReport(){
-      const md=[`# UAT Status – ${this.raw.overview.release||'Release'} (${this.lastUpdate})`,``,
+      const md = [
+        `# UAT Status – ${this.raw.overview.release || 'Release'} (${this.lastUpdate})`,
+        ``,
         `**Scope:** ${this.kpis.inScope} | **Executed:** ${this.fmtPct(this.kpis.executedPct)} | **Pass:** ${this.fmtPct(this.kpis.passPct)} | **Open defects:** ${this.kpis.openDefects} | **Critical:** ${this.kpis.critical}`,
         ``,
         `## Top Open Issues`,
         `| Key | Severity | Summary | Owner | Team | Country |`,
         `|---|---|---|---|---|---|`,
-        ...this.issues.map(i=>`| [${i.key}](${i.link||''}) | ${i.severity} | ${i.summary} | ${i.owner||''} | ${i.team||''} | ${i.country||''} |`)
+        ...this.issues.map(i=>`| [${i.key}](${i.link||''}) | ${i.severity} | ${i.summary.replace(/\|/g,'/')} | ${i.owner||''} | ${i.team||''} | ${i.country||''} |`)
       ].join('\n');
-      this.reportMD=md; this.reportOpen=true;
+      this.reportMD = md; 
+      this.reportOpen = true;
     },
-    copyReport(){navigator.clipboard.writeText(this.reportMD);},
-    downloadReport(){const b=new Blob([this.reportMD],{type:'text/markdown'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='UAT_Status.md';a.click();URL.revokeObjectURL(a.href);}
+    copyReport(){ navigator.clipboard.writeText(this.reportMD); },
+    downloadReport(){
+      const blob = new Blob([this.reportMD], {type:'text/markdown'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `UAT_Status_${(this.lastUpdate||'').replace(/[: ]/g,'_')}.md`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
   }
 }
-document.addEventListener('alpine:init',()=>{Alpine.data('app',app)})
-</script>
 
-<script>
+// Register the service worker for /uat-app/
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js', { scope: '/uat-app/' })
+    navigator.serviceWorker.register('/uat-app/service-worker.js', { scope: '/uat-app/' })
       .catch(err => console.error('SW registration failed:', err));
   });
 }
-</script>
 
+document.addEventListener('alpine:init',()=>{Alpine.data('app', app)})
+</script>
 </body>
 </html>
