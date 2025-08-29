@@ -1,10 +1,10 @@
 {
-  "name": "UAT Control",
+  "name": "UAT Dashboard",
   "short_name": "UAT",
   "description": "Internal dashboard for UAT scope, issues, teams and key dates.",
   "start_url": "./index.html",
   "scope": "./",
-  "display": "Standalone",
+  "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#111827",
   "icons": [

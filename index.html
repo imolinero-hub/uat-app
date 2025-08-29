@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>UAT Control</title>
+  <title>UAT Dashboard</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
 
   <!-- PWA (paths relative to /uat-app/) -->
@@ -17,13 +17,18 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Alpine.js -->
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <!-- Chart.js + time adapter -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
 
   <style>
     .card { @apply bg-white rounded-2xl shadow p-4; }
     .badge { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium; }
     .badge-uat { @apply bg-indigo-50 text-indigo-700; }
-    .kpi { @apply text-sm text-gray-500; }
+    .kpi { @apply text-sm text-gray-500 font-semibold; } /* bold headers */
     .kpi-value { @apply text-2xl font-semibold text-gray-900; }
+    .chart-wrap { position: relative; height: 260px; }
+    .chart-wrap > canvas { position:absolute; inset:0; width:100% !important; height:100% !important; display:block; }
     .img-wrap { @apply rounded-xl border; overflow: hidden; }
     .img-note { @apply text-xs text-gray-500 mt-2; }
   </style>
@@ -33,23 +38,30 @@
   <!-- Header -->
   <header class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
     <div>
-      <h1 class="text-2xl font-bold tracking-tight">UAT Control</h1>
+      <h1 class="text-2xl font-bold tracking-tight">UAT Dashboard</h1>
       <div class="mt-1 flex gap-2 items-center">
         <span class="badge badge-uat">UAT</span>
         <span class="text-xs text-gray-500">Last update: <span x-text="lastUpdate || '—'"></span></span>
-        <span class="text-xs text-gray-400">v1.0 (image charts)</span>
+        <span class="text-xs text-gray-400">v1.2 (hybrid charts)</span>
       </div>
     </div>
     <div class="flex flex-wrap gap-2">
-      <select class="card py-2" x-model="filters.country" @change="applyFilters()">
-        <option value="">All countries</option>
-        <template x-for="c in countries" :key="c"><option x-text="c"></option></template>
+      <!-- Platforms/Channels -->
+      <select class="card py-2" x-model="filters.platform" @change="applyFilters()">
+        <option value="">All platforms</option>
+        <template x-for="p in platforms" :key="p"><option x-text="p"></option></template>
       </select>
+      <!-- Teams -->
       <select class="card py-2" x-model="filters.team" @change="applyFilters()">
         <option value="">All teams</option>
         <template x-for="t in teams" :key="t"><option x-text="t"></option></template>
       </select>
-      <button class="card hover:bg-slate-100" @click="resetFilters()">Reset</button>
+
+      <!-- Toggle image/live -->
+      <button class="card hover:bg-slate-100" @click="useImageCharts = !useImageCharts">
+        <span x-text="useImageCharts ? 'Show Live Charts' : 'Show Images'"></span>
+      </button>
+
       <button class="card hover:bg-slate-100" @click="generateReport()">Generate Status (MD)</button>
     </div>
   </header>
@@ -60,49 +72,86 @@
     <div class="card"><div class="kpi">Executed %</div><div class="kpi-value" x-text="fmtPct(kpis.executedPct)"></div></div>
     <div class="card"><div class="kpi">Pass %</div><div class="kpi-value" x-text="fmtPct(kpis.passPct)"></div></div>
     <div class="card"><div class="kpi">Open Defects</div><div class="kpi-value" x-text="kpis.openDefects"></div></div>
-    <div class="card"><div class="kpi">Critical</div><div class="kpi-value" :class="kpis.critical > 0 ? 'text-red-600' : 'text-emerald-600'" x-text="kpis.critical"></div></div>
-  </section>
-
-  <!-- Charts (now images) -->
-  <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
     <div class="card">
-      <div class="mb-2 font-medium">Execution Over Time</div>
-      <div class="img-wrap">
-        <img src="./charts/execution.png" alt="Execution Over Time chart" class="w-full" loading="lazy"
-             onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'p-6 text-sm text-gray-500',textContent:'Chart image not found. Upload /charts/execution.png'}));">
-      </div>
-      <div class="img-note">Source: Excel snapshot</div>
-    </div>
-    <div class="card">
-      <div class="mb-2 font-medium">Defect Burndown</div>
-      <div class="img-wrap">
-        <img src="./charts/defects.png" alt="Defect Burndown chart" class="w-full" loading="lazy"
-             onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'p-6 text-sm text-gray-500',textContent:'Chart image not found. Upload /charts/defects.png'}));">
-      </div>
-      <div class="img-note">Source: Excel snapshot</div>
+      <div class="kpi">Blocker / Critical</div>
+      <div class="kpi-value" :class="kpis.critical > 0 ? 'text-red-600' : 'text-emerald-600'" x-text="kpis.critical"></div>
     </div>
   </section>
 
-  <!-- Issues -->
+  <!-- Charts (hybrid: live Chart.js with automatic image fallback) -->
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4" x-data @chart-error.window="useImageCharts = true">
+    <!-- Execution -->
+    <div class="card">
+      <div class="mb-2 font-medium flex items-center justify-between">
+        <span>Execution Over Time</span>
+        <span class="text-xs text-gray-500" x-show="useImageCharts">(image)</span>
+      </div>
+
+      <template x-if="!useImageCharts">
+        <div class="chart-wrap"><canvas id="execChart"></canvas></div>
+      </template>
+
+      <template x-if="useImageCharts">
+        <div class="img-wrap">
+          <img src="./charts/execution.png" alt="Execution Over Time chart" class="w-full" loading="lazy"
+               onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'p-6 text-sm text-gray-500',textContent:'Chart image not found. Upload /charts/execution.png'}));">
+        </div>
+      </template>
+
+      <div class="img-note">Source: Excel snapshot</div>
+    </div>
+
+    <!-- Defects -->
+    <div class="card">
+      <div class="mb-2 font-medium flex items-center justify-between">
+        <span>Defect Burndown</span>
+        <span class="text-xs text-gray-500" x-show="useImageCharts">(image)</span>
+      </div>
+
+      <template x-if="!useImageCharts">
+        <div class="chart-wrap"><canvas id="defectChart"></canvas></div>
+      </template>
+
+      <template x-if="useImageCharts">
+        <div class="img-wrap">
+          <img src="./charts/defects.png" alt="Defect Burndown chart" class="w-full" loading="lazy"
+               onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'p-6 text-sm text-gray-500',textContent:'Chart image not found. Upload /charts/defects.png'}));">
+        </div>
+      </template>
+
+      <div class="img-note">Source: Excel snapshot</div>
+    </div>
+  </section>
+
+  <!-- Top Open Issues (Blocker/Critical only) -->
   <section class="card mb-4">
     <div class="flex items-center justify-between mb-2">
       <div class="font-medium">Top Open Issues</div>
-      <div class="text-xs text-gray-500" x-text="`Showing ${issues.length} of ${raw.issues.length}`"></div>
+      <div class="text-xs text-gray-500" x-text="`Showing ${issues.length} of ${issuesTotal} (Blocker/Critical)`"></div>
     </div>
     <div class="overflow-auto">
       <table class="min-w-full text-sm">
         <thead class="text-left text-gray-500">
-          <tr><th class="py-2 pr-4">Key</th><th class="py-2 pr-4">Severity</th><th class="py-2 pr-4">Summary</th><th class="py-2 pr-4">Owner</th><th class="py-2 pr-4">Team</th><th class="py-2 pr-4">Country</th></tr>
+          <tr>
+            <th class="py-2 pr-4">Key</th>
+            <th class="py-2 pr-4">Priority</th>
+            <th class="py-2 pr-4">Summary</th>
+            <th class="py-2 pr-4">Owner</th>
+            <th class="py-2 pr-4">Team</th>
+            <th class="py-2 pr-4">Platform</th>
+          </tr>
         </thead>
         <tbody>
           <template x-for="i in issues" :key="i.key">
             <tr class="border-t">
               <td class="py-2 pr-4"><a :href="i.link" target="_blank" class="text-indigo-600 hover:underline" x-text="i.key"></a></td>
-              <td class="py-2 pr-4"><span class="badge" :class="sevClass(i.severity)" x-text="i.severity"></span></td>
+              <td class="py-2 pr-4">
+                <span class="badge" :class="sevClass(i.priority || i.severity)" x-text="i.priority || i.severity"></span>
+              </td>
               <td class="py-2 pr-4" x-text="i.summary"></td>
               <td class="py-2 pr-4" x-text="i.owner || '—'"></td>
               <td class="py-2 pr-4" x-text="i.team || '—'"></td>
-              <td class="py-2 pr-4" x-text="i.country || '—'"></td>
+              <td class="py-2 pr-4" x-text="i.platform || i.country || '—'"></td>
             </tr>
           </template>
         </tbody>
@@ -118,9 +167,11 @@
         <template x-for="t in raw.teams" :key="t.name">
           <div class="border rounded-xl p-3">
             <div class="font-semibold" x-text="t.name"></div>
-            <div class="text-xs text-gray-500" x-text="t.country"></div>
+            <div class="text-xs text-gray-500" x-text="t.platform || t.country || ''"></div>
             <div class="mt-1 text-sm"><span class="text-gray-500">Lead: </span><span x-text="t.lead"></span></div>
-            <div class="text-sm"><span class="text-gray-500">Email: </span><a :href="`mailto:${t.email}`" class="text-indigo-600 hover:underline" x-text="t.email"></a></div>
+            <div class="text-sm"><span class="text-gray-500">Email: </span>
+              <a :href="`mailto:${t.email}`" class="text-indigo-600 hover:underline" x-text="t.email"></a>
+            </div>
           </div>
         </template>
       </div>
@@ -130,7 +181,10 @@
       <ul class="space-y-2">
         <template x-for="d in raw.keyDates" :key="d.label">
           <li class="flex items-center justify-between">
-            <div><div class="font-medium" x-text="d.label"></div><div class="text-xs text-gray-500" x-text="d.notes || ''"></div></div>
+            <div>
+              <div class="font-medium" x-text="d.label"></div>
+              <div class="text-xs text-gray-500" x-text="d.notes || ''"></div>
+            </div>
             <div class="text-sm" x-text="d.date"></div>
           </li>
         </template>
@@ -160,13 +214,17 @@ function app(){
     raw: { overview:{}, progressDaily:[], issues:[], teams:[], keyDates:[] },
     filtered: { progressDaily:[] },
     issues: [],
-    countries: [],
+    issuesTotal: 0,
+    platforms: [],
     teams: [],
-    filters: { country:'', team:'' },
+    filters: { platform:'', team:'' },
     kpis: { inScope:0, executedPct:0, passPct:0, openDefects:0, critical:0 },
     lastUpdate: '',
     reportOpen:false,
     reportMD:'',
+    // hybrid chart bits
+    useImageCharts:false,
+    execChart:null, defectChart:null,
 
     async init(){
       try {
@@ -177,39 +235,49 @@ function app(){
       this.lastUpdate = this.raw.overview?.lastUpdate || '';
       this.buildFilters(); 
       this.applyFilters();
+      this.drawCharts();   // will no-op if images selected
     },
 
     buildFilters(){
-      const cset = new Set(this.raw.teams.map(t=>t.country).filter(Boolean));
-      const tset = new Set(this.raw.teams.map(t=>t.name).filter(Boolean));
-      this.raw.issues.forEach(i=>{ if(i.country) cset.add(i.country); if(i.team) tset.add(i.team); });
-      this.countries = [...cset].sort(); 
+      const pset = new Set(this.raw.teams.map(t => t.platform || t.country).filter(Boolean));
+      this.raw.issues.forEach(i => { if (i.platform || i.country) pset.add(i.platform || i.country); });
+      this.platforms = [...pset].sort();
+      if (!this.platforms.length) this.platforms = ['Web','App','BOSS'];
+
+      const tset = new Set(this.raw.teams.map(t => t.name).filter(Boolean));
       this.teams = [...tset].sort();
     },
 
     applyFilters(){
-      const {country, team} = this.filters;
-      const match = (row)=> (!country || row.country===country) && (!team || row.team===team);
+      const {platform, team} = this.filters;
+      const match = (row)=>{
+        const p = row.platform || row.country || '';
+        const t = row.team || row.name || '';
+        return (!platform || p === platform) && (!team || t === team);
+      };
 
       this.filtered.progressDaily = this.raw.progressDaily.filter(match);
       if (!this.filtered.progressDaily.length) this.filtered.progressDaily = this.raw.progressDaily;
 
-      this.issues = this.raw.issues.filter(match).sort((a,b)=>{
-        const sevRank = {Critical:1, High:2, Medium:3, Low:4};
-        return (sevRank[a.severity]||9)-(sevRank[b.severity]||9);
-      }).slice(0,15);
+      const sevKeep = new Set(['Blocker','Critical']);
+      const issuesFiltered = this.raw.issues.filter(i => match(i) && sevKeep.has((i.priority || i.severity || '').trim()));
+      this.issuesTotal = issuesFiltered.length;
+      this.issues = issuesFiltered.sort((a,b)=>{
+        const rank = {Blocker:1, Critical:2, High:3, Medium:4, Low:5};
+        return (rank[a.priority || a.severity] || 9) - (rank[b.priority || b.severity] || 9);
+      });
 
       this.computeKpis();
+      this.updateCharts(); // safe; guarded below
     },
 
-    resetFilters(){ this.filters={country:'',team:''}; this.applyFilters(); },
-
+    // Aggregation for KPIs and charts
     aggregateByDate(rows){
       const map = new Map();
       for (const r of rows){
         const d = r.date;
-        const b = map.get(d) || { inScope:0, exec:0, pass:0, open:0 };
         const inScope = Number(r.inScope) || 0;
+        const b = map.get(d) || { inScope:0, exec:0, pass:0, open:0 };
         b.inScope += inScope;
         b.exec    += (Number(r.executedPct)||0)/100 * inScope;
         b.pass    += (Number(r.passPct)||0)/100 * inScope;
@@ -232,24 +300,102 @@ function app(){
       this.kpis.passPct     = latest.passPct || 0;
 
       const open = this.raw.issues.filter(i=>{
-        const m = (!this.filters.country || i.country===this.filters.country) && (!this.filters.team || i.team===this.filters.team);
-        return m && (!i.status || i.status.toLowerCase()!=='closed');
+        const p = i.platform || i.country || '';
+        const t = i.team || '';
+        const m = (!this.filters.platform || p===this.filters.platform) && (!this.filters.team || t===this.filters.team);
+        return m && (!i.status || i.status.toLowerCase() !== 'closed');
       });
       this.kpis.openDefects = open.length;
-      this.kpis.critical    = open.filter(i=>i.severity==='Critical').length;
+      this.kpis.critical    = open.filter(i=>{
+        const sev = (i.priority || i.severity || '').trim();
+        return sev === 'Blocker' || sev === 'Critical';
+      }).length;
     },
 
-    // Report
+    // ---------- Charts (live) ----------
+    drawCharts(){
+      if (this.useImageCharts) return;
+
+      try {
+        if (this.execChart) { this.execChart.destroy(); this.execChart=null; }
+        if (this.defectChart){ this.defectChart.destroy(); this.defectChart=null; }
+
+        const execCtx = document.getElementById('execChart');
+        const defectCtx = document.getElementById('defectChart');
+
+        // scatter + time scale is the most stable
+        this.execChart = new Chart(execCtx, {
+          type: 'scatter',
+          data: { datasets: [
+            { label:'Executed %', data: [], showLine:true, tension:.25, borderWidth:2, fill:false,
+              borderColor:'#3b82f6', backgroundColor:'#3b82f6', pointRadius:2, spanGaps:true },
+            { label:'Pass %', data: [], showLine:true, tension:.25, borderWidth:2, fill:false,
+              borderColor:'#ec4899', backgroundColor:'#ec4899', pointRadius:2, spanGaps:true }
+          ]},
+          options:{
+            responsive:true, maintainAspectRatio:false, animation:false, parsing:false,
+            scales:{ x:{ type:'time', time:{ unit:'day' } }, y:{ beginAtZero:true, suggestedMax:100, ticks:{ callback:v=>v+'%' } } },
+            plugins:{ legend:{ position:'bottom' } }
+          }
+        });
+
+        this.defectChart = new Chart(defectCtx, {
+          type: 'scatter',
+          data: { datasets: [
+            { label:'Open defects', data: [], showLine:true, tension:.25, borderWidth:2, fill:false,
+              borderColor:'#0284c7', backgroundColor:'#0284c7', pointRadius:2, spanGaps:true }
+          ]},
+          options:{
+            responsive:true, maintainAspectRatio:false, animation:false, parsing:false,
+            scales:{ x:{ type:'time', time:{ unit:'day' } }, y:{ beginAtZero:true } },
+            plugins:{ legend:{ position:'bottom' } }
+          }
+        });
+
+        this.updateCharts();
+      } catch(e){
+        console.error('drawCharts error', e);
+        this.useImageCharts = true;
+        window.dispatchEvent(new CustomEvent('chart-error'));
+      }
+    },
+
+    updateCharts(){
+      if (this.useImageCharts) return;
+
+      try{
+        const agg = this.aggregateByDate(this.filtered.progressDaily.length ? this.filtered.progressDaily : this.raw.progressDaily);
+        const execPts = agg.map(r => ({ x: r.date, y: Number((r.executedPct||0).toFixed(1)) }));
+        const passPts = agg.map(r => ({ x: r.date, y: Number((r.passPct||0).toFixed(1)) }));
+        const openPts = agg.map(r => ({ x: r.date, y: Number(r.openDefects||0) }));
+
+        if (this.execChart){
+          this.execChart.data.datasets[0].data = execPts;
+          this.execChart.data.datasets[1].data = passPts;
+          this.execChart.update();
+        }
+        if (this.defectChart){
+          this.defectChart.data.datasets[0].data = openPts;
+          this.defectChart.update();
+        }
+      }catch(e){
+        console.error('updateCharts error', e);
+        this.useImageCharts = true;
+        window.dispatchEvent(new CustomEvent('chart-error'));
+      }
+    },
+
+    // ---------- Report ----------
     generateReport(){
       const md = [
         `# UAT Status – ${this.raw.overview.release || 'Release'} (${this.lastUpdate})`,
         ``,
-        `**Scope:** ${this.kpis.inScope} | **Executed:** ${this.fmtPct(this.kpis.executedPct)} | **Pass:** ${this.fmtPct(this.kpis.passPct)} | **Open defects:** ${this.kpis.openDefects} | **Critical:** ${this.kpis.critical}`,
+        `**Scope:** ${this.kpis.inScope} | **Executed:** ${this.fmtPct(this.kpis.executedPct)} | **Pass:** ${this.fmtPct(this.kpis.passPct)} | **Open defects:** ${this.kpis.openDefects} | **Blocker/Critical:** ${this.kpis.critical}`,
         ``,
-        `## Top Open Issues`,
-        `| Key | Severity | Summary | Owner | Team | Country |`,
+        `## Top Open Issues (Blocker/Critical)`,
+        `| Key | Priority | Summary | Owner | Team | Platform |`,
         `|---|---|---|---|---|---|`,
-        ...this.issues.map(i=>`| [${i.key}](${i.link||''}) | ${i.severity} | ${i.summary.replace(/\|/g,'/')} | ${i.owner||''} | ${i.team||''} | ${i.country||''} |`)
+        ...this.issues.map(i=>`| [${i.key}](${i.link||''}) | ${(i.priority||i.severity)} | ${i.summary.replace(/\|/g,'/')} | ${i.owner||''} | ${i.team||''} | ${i.platform||i.country||''} |`)
       ].join('\n');
       this.reportMD = md; 
       this.reportOpen = true;
@@ -266,15 +412,17 @@ function app(){
 
     fmtPct(v){ return (v??0).toFixed(0)+'%'; },
     sevClass(s){
-      return s==='Critical' ? 'bg-red-50 text-red-700'
-           : s==='High'     ? 'bg-orange-50 text-orange-700'
-           : s==='Medium'   ? 'bg-amber-50 text-amber-700'
+      const sev = (s||'').trim();
+      return sev==='Blocker' ? 'bg-red-100 text-red-700'
+           : sev==='Critical'? 'bg-red-50 text-red-700'
+           : sev==='High'     ? 'bg-orange-50 text-orange-700'
+           : sev==='Medium'   ? 'bg-amber-50 text-amber-700'
            : 'bg-slate-100 text-slate-700';
     }
   }
 }
 
-// Register the service worker (relative scope under /uat-app/)
+// Register SW (relative scope under /uat-app/)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./service-worker.js', { scope: './' })
