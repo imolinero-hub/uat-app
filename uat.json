@@ -95,10 +95,10 @@
   ],
 
   "teams": [
-    { "name": "eCommerce",   "platform": "Web",  "lead": "Helena", "email": "helena@example.com" },
-    { "name": "Mobile",      "platform": "App",  "lead": "Jakub",  "email": "jakub@example.com" },
-    { "name": "Localization","platform": "Web",  "lead": "Juan",   "email": "juan@example.com" },
-    { "name": "BOSS Ops",    "platform": "BOSS", "lead": "Marco",  "email": "marco@example.com" }
+    { "name": "eCommerce",    "platform": "Web",  "lead": "Helena", "email": "helena@example.com" },
+    { "name": "Mobile",       "platform": "App",  "lead": "Jakub",  "email": "jakub@example.com" },
+    { "name": "Localization", "platform": "Web",  "lead": "Juan",   "email": "juan@example.com" },
+    { "name": "BOSS Ops",     "platform": "BOSS", "lead": "Marco",  "email": "marco@example.com" }
   ],
 
   "keyDates": [
