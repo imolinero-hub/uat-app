@@ -89,8 +89,10 @@
     { "name": "Localization", "lead": "Maria", "email": "maria@example.com", "platform": "Web" }
   ],
   "keyDates": [
-    { "label": "Kick-off", "date": "2025-09-01", "notes": "All testers start" },
-    { "label": "Mid-Review", "date": "2025-09-10", "notes": "Focus on open defects" },
-    { "label": "Go / No-Go", "date": "2025-09-18", "notes": "Final leadership decision" }
+    { "label": "Kick-off", "date": "2025-10-10", "notes": "All testers are onboarded" },
+    { "label": "UAT period", "date": "2025-10-13 to 2025-11-06", "notes": "Testing period for the UAT" },
+    { "label": "Alpha Demo", "date": "2025-11-04 to 2025-11-05", "notes": "First testing with the ABOs" },
+    { "label": "Go / No-Go", "date": "2025-12-08", "notes": "Final leadership decision" }
+    { "label": "Go Live", "date": "2025-12-10", "notes": "Go Live of the RI-4" }
   ]
 }
