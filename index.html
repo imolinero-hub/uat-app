@@ -243,23 +243,39 @@ function app(){
     chartsInitialized:false,
     chartUpdatesPaused:false,
 
+    // Replace your init method with this version:
     async init(){
+      // Clear any previous error flags
+      window.chartErrorOccurred = false;
+      
       try {
         const res = await fetch('./uat.json?v=' + Date.now(), { cache:'no-store' });
         if (res.ok) this.raw = await res.json();
-      } catch(e){ console.error('Failed to load uat.json', e); }
+      } catch(e){ 
+        console.error('Failed to load uat.json', e); 
+      }
 
       this.lastUpdate = this.raw.overview?.lastUpdate || '';
       this.buildFilters(); 
       this.applyFilters();
       
-      // Initialize charts after a small delay to ensure DOM is ready
-      setTimeout(() => {
-        if (!this.useImageCharts) {
-          this.drawCharts();
-        }
-      }, 100);
-    },
+      // Only try to initialize charts if not in image mode and no errors occurred
+      if (!this.useImageCharts && !window.chartErrorOccurred) {
+        // Wait for DOM to be fully ready and Chart.js to load
+        setTimeout(() => {
+          if (!this.useImageCharts && !window.chartErrorOccurred) {
+            this.drawCharts();
+            
+            // Initial data update after another small delay
+            setTimeout(() => {
+              if (this.chartsInitialized && !this.useImageCharts) {
+                this.updateCharts();
+              }
+            }, 100);
+          }
+        }, 200);
+      }
+    }, 
 
     buildFilters(){
       const pset = new Set(this.raw.teams.map(t => t.platform || t.country).filter(Boolean));
@@ -271,10 +287,10 @@ function app(){
       this.teams = [...tset].sort();
     },
 
+    // Replace your applyFilters method with this safer version:
     applyFilters(){
-      // Prevent recursive calls
-      if (this.isApplyingFilters) {
-        console.warn('applyFilters already in progress, skipping');
+      // Prevent recursive calls and early exit for error states
+      if (this.isApplyingFilters || window.chartErrorOccurred) {
         return;
       }
       
@@ -288,35 +304,66 @@ function app(){
           return (!platform || p === platform) && (!team || t === team);
         };
 
-        // execution series
-        this.filtered.progressDaily = this.raw.progressDaily.filter(match);
-        if (!this.filtered.progressDaily.length) this.filtered.progressDaily = this.raw.progressDaily;
+        // execution series with safety checks
+        if (Array.isArray(this.raw.progressDaily)) {
+          this.filtered.progressDaily = this.raw.progressDaily.filter(match);
+          if (!this.filtered.progressDaily.length) {
+            this.filtered.progressDaily = this.raw.progressDaily;
+          }
+        } else {
+          this.filtered.progressDaily = [];
+        }
 
-        // defects series
-        this.filtered.defectsDaily = (this.raw.defectsDaily || []).filter(match);
-        if (!this.filtered.defectsDaily.length) this.filtered.defectsDaily = this.raw.defectsDaily || [];
+        // defects series with safety checks
+        if (Array.isArray(this.raw.defectsDaily)) {
+          this.filtered.defectsDaily = this.raw.defectsDaily.filter(match);
+          if (!this.filtered.defectsDaily.length) {
+            this.filtered.defectsDaily = this.raw.defectsDaily;
+          }
+        } else {
+          this.filtered.defectsDaily = [];
+        }
 
-        // Only Blocker/Critical
+        // Issues filtering
         const sevKeep = new Set(['Blocker','Critical']);
-        const issuesFiltered = this.raw.issues.filter(i => match(i) && sevKeep.has((i.priority || i.severity || '').trim()));
-        this.issuesTotal = issuesFiltered.length;
-        this.issues = issuesFiltered.sort((a,b)=>{
-          const rank = {Blocker:1, Critical:2, High:3, Medium:4, Low:5};
-          return (rank[a.priority || a.severity] || 9) - (rank[b.priority || b.severity] || 9);
-        });
+        if (Array.isArray(this.raw.issues)) {
+          const issuesFiltered = this.raw.issues.filter(i => {
+            return match(i) && sevKeep.has((i.priority || i.severity || '').trim());
+          });
+          
+          this.issuesTotal = issuesFiltered.length;
+          this.issues = issuesFiltered.sort((a,b)=>{
+            const rank = {Blocker:1, Critical:2, High:3, Medium:4, Low:5};
+            return (rank[a.priority || a.severity] || 9) - (rank[b.priority || b.severity] || 9);
+          });
+        } else {
+          this.issues = [];
+          this.issuesTotal = 0;
+        }
 
         this.computeKpis();
         
-        // Only update charts if they're initialized and not in image mode
-        if (this.chartsInitialized && !this.useImageCharts && !this.chartUpdatesPaused) {
-          this.updateCharts();
+        // Only update charts if safe to do so
+        if (this.chartsInitialized && 
+            !this.useImageCharts && 
+            !this.chartUpdatesPaused && 
+            !window.chartErrorOccurred &&
+            !this.isUpdatingCharts) {
+          
+          // Use setTimeout to prevent any blocking
+          setTimeout(() => {
+            if (!this.useImageCharts && !window.chartErrorOccurred) {
+              this.updateCharts();
+            }
+          }, 10);
         }
+        
       } catch(e) {
         console.error('Error in applyFilters:', e);
       } finally {
         this.isApplyingFilters = false;
       }
-    },
+    }, 
 
     // Aggregation methods remain the same...
     aggregateByDate(rows){
@@ -374,143 +421,241 @@ function app(){
     },
 
     // ---------- Charts (live) ----------
+// Replace the drawCharts and updateCharts methods with these safer versions:
+
     drawCharts(){
       if (this.useImageCharts || this.chartUpdatesPaused) return;
 
+      // Add a global flag to prevent any chart operations during errors
+      if (window.chartErrorOccurred) {
+        this.useImageCharts = true;
+        return;
+      }
+
       try {
-        // Clean up existing charts
-        if (this.execChart) { 
-          this.execChart.destroy(); 
-          this.execChart = null; 
-        }
-        if (this.defectChart) { 
-          this.defectChart.destroy(); 
-          this.defectChart = null; 
-        }
+        // Clean up existing charts with more thorough cleanup
+        this.destroyCharts();
 
         const execCtx = document.getElementById('execChart');
         const defectCtx = document.getElementById('defectChart');
 
         if (!execCtx || !defectCtx) {
-          console.warn('Chart canvases not found');
+          console.warn('Chart canvases not found, switching to image mode');
           this.useImageCharts = true;
           return;
         }
 
-        // Create charts with error handling
-        this.execChart = new Chart(execCtx, {
-          type: 'scatter',
-          data: { datasets: [
-            { label:'Executed %', data: [], showLine:true, tension:.25, borderWidth:2, fill:false,
-              borderColor:'#3b82f6', backgroundColor:'#3b82f6', pointRadius:2, spanGaps:true },
-            { label:'Pass %', data: [], showLine:true, tension:.25, borderWidth:2, fill:false,
-              borderColor:'#ec4899', backgroundColor:'#ec4899', pointRadius:2, spanGaps:true }
-          ]},
-          options:{
-            responsive:true, maintainAspectRatio:false, animation:false, parsing:false,
-            scales:{ x:{ type:'time', time:{ unit:'day' } }, y:{ beginAtZero:true, suggestedMax:100, ticks:{ callback:v=>v+'%' } } },
-            plugins:{ legend:{ position:'bottom' } }
-          }
-        });
+        // Test Chart.js availability
+        if (typeof Chart === 'undefined') {
+          console.warn('Chart.js not loaded, switching to image mode');
+          this.useImageCharts = true;
+          return;
+        }
 
-        this.defectChart = new Chart(defectCtx, {
-          type: 'scatter',
-          data: { datasets: [
-            { label:'Open defects', data: [], showLine:true, tension:.25, borderWidth:2, fill:false,
-              borderColor:'#0284c7', backgroundColor:'#0284c7', pointRadius:2, spanGaps:true }
-          ]},
-          options:{
-            responsive:true, maintainAspectRatio:false, animation:false, parsing:false,
-            scales:{ x:{ type:'time', time:{ unit:'day' } }, y:{ beginAtZero:true } },
-            plugins:{ legend:{ position:'bottom' } }
+        // Wrap each chart creation in its own try-catch
+        try {
+          this.execChart = new Chart(execCtx, {
+            type: 'scatter',
+            data: { datasets: [
+              { label:'Executed %', data: [], showLine:true, tension:.25, borderWidth:2, fill:false,
+                borderColor:'#3b82f6', backgroundColor:'#3b82f6', pointRadius:2, spanGaps:true },
+              { label:'Pass %', data: [], showLine:true, tension:.25, borderWidth:2, fill:false,
+                borderColor:'#ec4899', backgroundColor:'#ec4899', pointRadius:2, spanGaps:true }
+            ]},
+            options:{
+              responsive:true, maintainAspectRatio:false, animation:false, parsing:false,
+              scales:{ x:{ type:'time', time:{ unit:'day' } }, y:{ beginAtZero:true, suggestedMax:100, ticks:{ callback:v=>v+'%' } } },
+              plugins:{ legend:{ position:'bottom' } }
+            }
+          });
+        } catch(e) {
+          console.error('Failed to create execution chart:', e);
+          throw e;
+        }
+
+        try {
+          this.defectChart = new Chart(defectCtx, {
+            type: 'scatter',
+            data: { datasets: [
+              { label:'Open defects', data: [], showLine:true, tension:.25, borderWidth:2, fill:false,
+                borderColor:'#0284c7', backgroundColor:'#0284c7', pointRadius:2, spanGaps:true }
+            ]},
+            options:{
+              responsive:true, maintainAspectRatio:false, animation:false, parsing:false,
+              scales:{ x:{ type:'time', time:{ unit:'day' } }, y:{ beginAtZero:true } },
+              plugins:{ legend:{ position:'bottom' } }
+            }
+          });
+        } catch(e) {
+          console.error('Failed to create defect chart:', e);
+          if (this.execChart) {
+            this.execChart.destroy();
+            this.execChart = null;
           }
-        });
+          throw e;
+        }
 
         this.chartsInitialized = true;
-        
-        // Initial update
-        setTimeout(() => this.updateCharts(), 50);
+        console.log('Charts initialized successfully');
         
       } catch(e){
-        console.error('drawCharts error', e);
+        console.error('drawCharts failed completely:', e);
+        window.chartErrorOccurred = true;
         this.chartUpdatesPaused = true;
         this.useImageCharts = true;
         this.chartsInitialized = false;
+        this.destroyCharts();
       }
     },
 
+    destroyCharts() {
+      if (this.execChart) {
+        try { 
+          this.execChart.destroy(); 
+        } catch(e) { 
+          console.warn('Error destroying execChart:', e); 
+        }
+        this.execChart = null;
+      }
+      if (this.defectChart) {
+        try { 
+          this.defectChart.destroy(); 
+        } catch(e) { 
+          console.warn('Error destroying defectChart:', e); 
+        }
+        this.defectChart = null;
+      }
+      this.chartsInitialized = false;
+    },
+
     updateCharts(){
-      // Multiple safety checks
-      if (this.useImageCharts || this.chartUpdatesPaused || !this.chartsInitialized) {
-        return;
-      }
+      // Multiple early exits to prevent any possibility of recursion
+      if (this.useImageCharts) return;
+      if (this.chartUpdatesPaused) return;
+      if (!this.chartsInitialized) return;
+      if (this.isUpdatingCharts) return;
+      if (window.chartErrorOccurred) return;
 
-      if (this.isUpdatingCharts) {
-        console.warn('Chart update already in progress, skipping');
-        return;
-      }
-
+      // Check if charts still exist and are valid
       if (!this.execChart || !this.defectChart) {
-        console.warn('Charts not initialized, skipping update');
+        console.warn('Charts missing during update, switching to image mode');
+        this.useImageCharts = true;
         return;
       }
 
-      const validPoint = (p) => p && isFinite(p.y) && !isNaN(p.y) && p.x && !isNaN(new Date(p.x).getTime());
-      const dedupe = (arr) => arr.filter((p,i,a)=> i===0 || a[i-1].x !== p.x);
+      // Check if charts are destroyed
+      if (this.execChart.destroyed || this.defectChart.destroyed) {
+        console.warn('Charts destroyed, switching to image mode');
+        this.useImageCharts = true;
+        return;
+      }
+
+      const validPoint = (p) => {
+        return p && 
+              typeof p === 'object' && 
+              isFinite(p.y) && 
+              !isNaN(p.y) && 
+              p.x && 
+              !isNaN(new Date(p.x).getTime());
+      };
+      
+      const dedupe = (arr) => {
+        if (!Array.isArray(arr)) return [];
+        return arr.filter((p,i,a)=> i===0 || a[i-1].x !== p.x);
+      };
 
       try {
         this.isUpdatingCharts = true;
 
-        // Execution series
-        const execAgg = this.aggregateByDate(
-          this.filtered.progressDaily.length ? this.filtered.progressDaily : this.raw.progressDaily
-        );
-        let execPts = execAgg.map(r => ({ x: r.date, y: Number((r.executedPct ?? 0)) })).filter(validPoint);
-        let passPts = execAgg.map(r => ({ x: r.date, y: Number((r.passPct ?? 0)) })).filter(validPoint);
+        // Get data with more defensive checks
+        const rawProgressData = this.filtered.progressDaily.length ? 
+          this.filtered.progressDaily : 
+          (this.raw.progressDaily || []);
+        
+        if (!Array.isArray(rawProgressData)) {
+          console.warn('Invalid progress data, skipping chart update');
+          return;
+        }
 
-        // Defects series
-        const defectsAggSrc = (this.filtered.defectsDaily && this.filtered.defectsDaily.length)
+        const execAgg = this.aggregateByDate(rawProgressData);
+        
+        if (!Array.isArray(execAgg)) {
+          console.warn('Failed to aggregate execution data');
+          return;
+        }
+
+        // Build data points with more validation
+        let execPts = [];
+        let passPts = [];
+        
+        for (const r of execAgg) {
+          if (!r || typeof r !== 'object') continue;
+          
+          const execPt = { x: r.date, y: Number(r.executedPct || 0) };
+          const passPt = { x: r.date, y: Number(r.passPct || 0) };
+          
+          if (validPoint(execPt)) execPts.push(execPt);
+          if (validPoint(passPt)) passPts.push(passPt);
+        }
+
+        // Defects data
+        const rawDefectsData = (this.filtered.defectsDaily && this.filtered.defectsDaily.length)
           ? this.filtered.defectsDaily
           : (this.raw.defectsDaily || []);
-        const defectsAgg = defectsAggSrc.length ? this.aggregateDefectsByDate(defectsAggSrc) : execAgg;
-        let openPts = defectsAgg.map(r => ({ x: r.date, y: Number(r.openDefects ?? 0) })).filter(validPoint);
+        
+        const defectsAgg = Array.isArray(rawDefectsData) && rawDefectsData.length ? 
+          this.aggregateDefectsByDate(rawDefectsData) : 
+          execAgg;
+        
+        let openPts = [];
+        for (const r of (defectsAgg || [])) {
+          if (!r || typeof r !== 'object') continue;
+          const openPt = { x: r.date, y: Number(r.openDefects || 0) };
+          if (validPoint(openPt)) openPts.push(openPt);
+        }
 
-        execPts = dedupe(execPts); 
-        passPts = dedupe(passPts); 
+        // Deduplicate
+        execPts = dedupe(execPts);
+        passPts = dedupe(passPts);
         openPts = dedupe(openPts);
 
-        // Update charts with additional safety checks
-        if (this.execChart && !this.execChart.destroyed && this.execChart.data) {
-          this.execChart.data.datasets[0].data = execPts;
-          this.execChart.data.datasets[1].data = passPts;
-          this.execChart.update('none');
+        // Update charts with additional safety
+        if (this.execChart && !this.execChart.destroyed && this.execChart.data && this.execChart.data.datasets) {
+          try {
+            this.execChart.data.datasets[0].data = execPts;
+            this.execChart.data.datasets[1].data = passPts;
+            this.execChart.update('none');
+          } catch(e) {
+            console.error('Error updating execution chart:', e);
+            throw e;
+          }
         }
         
-        if (this.defectChart && !this.defectChart.destroyed && this.defectChart.data) {
-          this.defectChart.data.datasets[0].data = openPts;
-          this.defectChart.update('none');
+        if (this.defectChart && !this.defectChart.destroyed && this.defectChart.data && this.defectChart.data.datasets) {
+          try {
+            this.defectChart.data.datasets[0].data = openPts;
+            this.defectChart.update('none');
+          } catch(e) {
+            console.error('Error updating defect chart:', e);
+            throw e;
+          }
         }
         
       } catch(e) {
-        console.error('updateCharts error', e);
+        console.error('Critical error in updateCharts:', e);
+        
+        // Set global error flag to prevent any future chart operations
+        window.chartErrorOccurred = true;
         this.chartUpdatesPaused = true;
         this.useImageCharts = true;
         
-        // Clean up broken charts
-        if (this.execChart) {
-          try { this.execChart.destroy(); } catch(e2) {}
-          this.execChart = null;
-        }
-        if (this.defectChart) {
-          try { this.defectChart.destroy(); } catch(e2) {}
-          this.defectChart = null;
-        }
-        this.chartsInitialized = false;
+        // Clean up everything
+        this.destroyCharts();
+        
       } finally {
         this.isUpdatingCharts = false;
       }
-    },
-
+    }, 
     // Rest of your methods remain the same...
     generateReport(){
       const md = [
