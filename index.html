@@ -42,7 +42,7 @@
       <div class="mt-1 flex gap-2 items-center">
         <span class="badge badge-uat">UAT</span>
         <span class="text-xs text-gray-500">Last update: <span x-text="lastUpdate || '—'"></span></span>
-        <span class="text-xs text-gray-400">v1.3 (hybrid charts + defectsDaily)</span>
+        <span class="text-xs text-gray-400">v1.4 (hybrid charts + fixes)</span>
       </div>
     </div>
     <div class="flex flex-wrap gap-2">
@@ -176,19 +176,29 @@
         </template>
       </div>
     </div>
+
     <div class="card">
       <div class="font-medium mb-2">Key Dates</div>
-      <ul class="space-y-2">
-        <template x-for="d in raw.keyDates" :key="d.label">
-          <li class="flex items-center justify-between">
-            <div>
-              <div class="font-medium" x-text="d.label"></div>
-              <div class="text-xs text-gray-500" x-text="d.notes || ''"></div>
-            </div>
-            <div class="text-sm" x-text="d.date"></div>
-          </li>
-        </template>
-      </ul>
+
+      <!-- Empty state -->
+      <template x-if="!raw.keyDates || !raw.keyDates.length">
+        <div class="text-sm text-gray-500 p-3">No key dates loaded. Check <code>uat.json</code>.</div>
+      </template>
+
+      <!-- List -->
+      <template x-if="raw.keyDates && raw.keyDates.length">
+        <ul class="space-y-2">
+          <template x-for="d in raw.keyDates" :key="d.label">
+            <li class="flex items-center justify-between">
+              <div>
+                <div class="font-medium" x-text="d.label"></div>
+                <div class="text-xs text-gray-500" x-text="d.notes || ''"></div>
+              </div>
+              <div class="text-sm" x-text="d.date || d.dateRange || ''"></div>
+            </li>
+          </template>
+        </ul>
+      </template>
     </div>
   </section>
 
@@ -225,6 +235,9 @@ function app(){
     // hybrid chart bits
     useImageCharts:false,
     execChart:null, defectChart:null,
+    // guard against re-entrancy
+    isUpdatingCharts:false,
+    pendingChartUpdate:null,
 
     async init(){
       try {
@@ -344,7 +357,7 @@ function app(){
         const execCtx = document.getElementById('execChart');
         const defectCtx = document.getElementById('defectChart');
 
-        // scatter + time scale
+        // scatter + time scale for stability
         this.execChart = new Chart(execCtx, {
           type: 'scatter',
           data: { datasets: [
@@ -381,37 +394,58 @@ function app(){
       }
     },
 
+    // Re-entrancy-safe updates + data sanitization
     updateCharts(){
       if (this.useImageCharts) return;
 
+      // prevent re-entrancy (coalesce multiple calls)
+      if (this.isUpdatingCharts){
+        if (!this.pendingChartUpdate){
+          this.pendingChartUpdate = requestAnimationFrame(() => {
+            this.pendingChartUpdate = null;
+            this.updateCharts();
+          });
+        }
+        return;
+      }
+
+      const validPoint = (p) => p && isFinite(p.y) && !isNaN(p.y) && p.x && !isNaN(new Date(p.x).getTime());
+      const dedupe = (arr) => arr.filter((p,i,a)=> i===0 || a[i-1].x !== p.x);
+
       try{
+        this.isUpdatingCharts = true;
+
         // Execution series
         const execAgg = this.aggregateByDate(
           this.filtered.progressDaily.length ? this.filtered.progressDaily : this.raw.progressDaily
         );
-        const execPts = execAgg.map(r => ({ x: r.date, y: Number((r.executedPct||0).toFixed(1)) }));
-        const passPts = execAgg.map(r => ({ x: r.date, y: Number((r.passPct||0).toFixed(1)) }));
+        let execPts = execAgg.map(r => ({ x: r.date, y: Number((r.executedPct ?? 0)) })).filter(validPoint);
+        let passPts = execAgg.map(r => ({ x: r.date, y: Number((r.passPct ?? 0)) })).filter(validPoint);
 
         // Defects series: prefer defectsDaily, fallback to execAgg
         const defectsAggSrc = (this.filtered.defectsDaily && this.filtered.defectsDaily.length)
           ? this.filtered.defectsDaily
           : (this.raw.defectsDaily || []);
         const defectsAgg = defectsAggSrc.length ? this.aggregateDefectsByDate(defectsAggSrc) : execAgg;
-        const openPts = defectsAgg.map(r => ({ x: r.date, y: Number(r.openDefects || 0) }));
+        let openPts = defectsAgg.map(r => ({ x: r.date, y: Number(r.openDefects ?? 0) })).filter(validPoint);
+
+        execPts = dedupe(execPts); passPts = dedupe(passPts); openPts = dedupe(openPts);
 
         if (this.execChart){
           this.execChart.data.datasets[0].data = execPts;
           this.execChart.data.datasets[1].data = passPts;
-          this.execChart.update();
+          this.execChart.update('none'); // no animation for stability
         }
         if (this.defectChart){
           this.defectChart.data.datasets[0].data = openPts;
-          this.defectChart.update();
+          this.defectChart.update('none');
         }
       }catch(e){
         console.error('updateCharts error', e);
         this.useImageCharts = true;
         window.dispatchEvent(new CustomEvent('chart-error'));
+      }finally{
+        this.isUpdatingCharts = false;
       }
     },
 
