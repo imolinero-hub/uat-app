@@ -395,17 +395,26 @@ function app(){
     },
 
     // Re-entrancy-safe updates + data sanitization
-    updateCharts(){
+      updateCharts(){
       if (this.useImageCharts) return;
 
-      // prevent re-entrancy (coalesce multiple calls)
+      // Re-entrancy guard with additional safety check
       if (this.isUpdatingCharts){
         if (!this.pendingChartUpdate){
           this.pendingChartUpdate = requestAnimationFrame(() => {
             this.pendingChartUpdate = null;
-            this.updateCharts();
+            // Add safety check before recursive call
+            if (!this.useImageCharts && this.execChart && this.defectChart) {
+              this.updateCharts();
+            }
           });
         }
+        return;
+      }
+
+      // Additional safety checks
+      if (!this.execChart || !this.defectChart) {
+        console.warn('Charts not initialized, skipping update');
         return;
       }
 
@@ -431,23 +440,26 @@ function app(){
 
         execPts = dedupe(execPts); passPts = dedupe(passPts); openPts = dedupe(openPts);
 
-        if (this.execChart){
+        // Additional safety checks before updating
+        if (this.execChart && !this.execChart.destroyed){
           this.execChart.data.datasets[0].data = execPts;
           this.execChart.data.datasets[1].data = passPts;
           this.execChart.update('none'); // no animation for stability
         }
-        if (this.defectChart){
+        if (this.defectChart && !this.defectChart.destroyed){
           this.defectChart.data.datasets[0].data = openPts;
           this.defectChart.update('none');
         }
       }catch(e){
         console.error('updateCharts error', e);
+        // Prevent further chart operations
         this.useImageCharts = true;
-        window.dispatchEvent(new CustomEvent('chart-error'));
+        // Don't dispatch the event to avoid potential loops
+        // window.dispatchEvent(new CustomEvent('chart-error'));
       }finally{
         this.isUpdatingCharts = false;
       }
-    },
+    }, 
 
     // ---------- Report ----------
     generateReport(){
