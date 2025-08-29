@@ -42,7 +42,7 @@
       <div class="mt-1 flex gap-2 items-center">
         <span class="badge badge-uat">UAT</span>
         <span class="text-xs text-gray-500">Last update: <span x-text="lastUpdate || '—'"></span></span>
-        <span class="text-xs text-gray-400">v1.2 (hybrid charts)</span>
+        <span class="text-xs text-gray-400">v1.3 (hybrid charts + defectsDaily)</span>
       </div>
     </div>
     <div class="flex flex-wrap gap-2">
@@ -78,7 +78,7 @@
     </div>
   </section>
 
-  <!-- Charts (hybrid: live Chart.js with automatic image fallback) -->
+  <!-- Charts (hybrid: live with fallback images) -->
   <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4" x-data @chart-error.window="useImageCharts = true">
     <!-- Execution -->
     <div class="card">
@@ -211,8 +211,8 @@
 <script>
 function app(){
   return {
-    raw: { overview:{}, progressDaily:[], issues:[], teams:[], keyDates:[] },
-    filtered: { progressDaily:[] },
+    raw: { overview:{}, progressDaily:[], defectsDaily:[], issues:[], teams:[], keyDates:[] },
+    filtered: { progressDaily:[], defectsDaily:[] },
     issues: [],
     issuesTotal: 0,
     platforms: [],
@@ -256,9 +256,15 @@ function app(){
         return (!platform || p === platform) && (!team || t === team);
       };
 
+      // execution series
       this.filtered.progressDaily = this.raw.progressDaily.filter(match);
       if (!this.filtered.progressDaily.length) this.filtered.progressDaily = this.raw.progressDaily;
 
+      // defects series
+      this.filtered.defectsDaily = (this.raw.defectsDaily || []).filter(match);
+      if (!this.filtered.defectsDaily.length) this.filtered.defectsDaily = this.raw.defectsDaily || [];
+
+      // Only Blocker/Critical
       const sevKeep = new Set(['Blocker','Critical']);
       const issuesFiltered = this.raw.issues.filter(i => match(i) && sevKeep.has((i.priority || i.severity || '').trim()));
       this.issuesTotal = issuesFiltered.length;
@@ -271,7 +277,7 @@ function app(){
       this.updateCharts(); // safe; guarded below
     },
 
-    // Aggregation for KPIs and charts
+    // Aggregation for execution charts/KPIs
     aggregateByDate(rows){
       const map = new Map();
       for (const r of rows){
@@ -292,9 +298,24 @@ function app(){
       })).sort((a,b)=> a.date.localeCompare(b.date));
     },
 
+    // Aggregation for defects burndown
+    aggregateDefectsByDate(rows){
+      if (!rows || !rows.length) return [];
+      const map = new Map();
+      for (const r of rows){
+        const d = r.date;
+        const b = map.get(d) || { open:0 };
+        b.open += Number(r.openDefects) || 0;
+        map.set(d, b);
+      }
+      return [...map.entries()]
+        .map(([date,b]) => ({ date, openDefects: b.open }))
+        .sort((a,b)=> a.date.localeCompare(b.date));
+    },
+
     computeKpis(){
-      const agg = this.aggregateByDate(this.filtered.progressDaily.length ? this.filtered.progressDaily : this.raw.progressDaily);
-      const latest = agg[agg.length-1] || {};
+      const execAgg = this.aggregateByDate(this.filtered.progressDaily.length ? this.filtered.progressDaily : this.raw.progressDaily);
+      const latest = execAgg[execAgg.length-1] || {};
       this.kpis.inScope     = this.raw.overview.inScope || 0;
       this.kpis.executedPct = latest.executedPct || 0;
       this.kpis.passPct     = latest.passPct || 0;
@@ -323,7 +344,7 @@ function app(){
         const execCtx = document.getElementById('execChart');
         const defectCtx = document.getElementById('defectChart');
 
-        // scatter + time scale is the most stable
+        // scatter + time scale
         this.execChart = new Chart(execCtx, {
           type: 'scatter',
           data: { datasets: [
@@ -364,10 +385,19 @@ function app(){
       if (this.useImageCharts) return;
 
       try{
-        const agg = this.aggregateByDate(this.filtered.progressDaily.length ? this.filtered.progressDaily : this.raw.progressDaily);
-        const execPts = agg.map(r => ({ x: r.date, y: Number((r.executedPct||0).toFixed(1)) }));
-        const passPts = agg.map(r => ({ x: r.date, y: Number((r.passPct||0).toFixed(1)) }));
-        const openPts = agg.map(r => ({ x: r.date, y: Number(r.openDefects||0) }));
+        // Execution series
+        const execAgg = this.aggregateByDate(
+          this.filtered.progressDaily.length ? this.filtered.progressDaily : this.raw.progressDaily
+        );
+        const execPts = execAgg.map(r => ({ x: r.date, y: Number((r.executedPct||0).toFixed(1)) }));
+        const passPts = execAgg.map(r => ({ x: r.date, y: Number((r.passPct||0).toFixed(1)) }));
+
+        // Defects series: prefer defectsDaily, fallback to execAgg
+        const defectsAggSrc = (this.filtered.defectsDaily && this.filtered.defectsDaily.length)
+          ? this.filtered.defectsDaily
+          : (this.raw.defectsDaily || []);
+        const defectsAgg = defectsAggSrc.length ? this.aggregateDefectsByDate(defectsAggSrc) : execAgg;
+        const openPts = defectsAgg.map(r => ({ x: r.date, y: Number(r.openDefects || 0) }));
 
         if (this.execChart){
           this.execChart.data.datasets[0].data = execPts;
