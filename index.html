@@ -4,8 +4,6 @@
   <meta charset="utf-8" />
   <title>UAT Dashboard</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-
-  <!-- PWA (paths relative to /uat-app/) -->
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" sizes="192x192" href="./icons/icon-192.png">
   <link rel="icon" sizes="512x512" href="./icons/icon-512.png">
@@ -13,11 +11,11 @@
   <meta name="theme-color" content="#111827">
   <meta name="mobile-web-app-capable" content="yes">
 
-  <!-- Tailwind (CDN) -->
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Alpine.js -->
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <!-- Chart.js + time adapter -->
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
 
@@ -25,12 +23,10 @@
     .card { @apply bg-white rounded-2xl shadow p-4; }
     .badge { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium; }
     .badge-uat { @apply bg-indigo-50 text-indigo-700; }
-    .kpi { @apply text-sm text-gray-500 font-semibold; } /* bold headers */
+    .kpi { @apply text-sm text-gray-500 font-semibold; }
     .kpi-value { @apply text-2xl font-semibold text-gray-900; }
-    .chart-wrap { position: relative; height: 260px; }
+    .chart-wrap { position: relative; height: 220px; }
     .chart-wrap > canvas { position:absolute; inset:0; width:100% !important; height:100% !important; display:block; }
-    .img-wrap { @apply rounded-xl border; overflow: hidden; }
-    .img-note { @apply text-xs text-gray-500 mt-2; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-900">
@@ -38,30 +34,19 @@
   <!-- Header -->
   <header class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
     <div>
-      <h1 class="text-2xl font-bold tracking-tight">UAT Dashboard</h1>
+      <h1 class="text-2xl font-bold">UAT Dashboard</h1>
       <div class="mt-1 flex gap-2 items-center">
         <span class="badge badge-uat">UAT</span>
         <span class="text-xs text-gray-500">Last update: <span x-text="lastUpdate || '—'"></span></span>
-        <span class="text-xs text-gray-400">v1.4 (hybrid charts + fixes)</span>
       </div>
     </div>
+
+    <!-- Controls: Platform + Generate Status -->
     <div class="flex flex-wrap gap-2">
-      <!-- Platforms/Channels -->
-      <select class="card py-2" x-model="filters.platform" @change="applyFilters()">
+      <select class="card py-2" x-model="filters.platform" @change="onFilterChange()">
         <option value="">All platforms</option>
         <template x-for="p in platforms" :key="p"><option x-text="p"></option></template>
       </select>
-      <!-- Teams -->
-      <select class="card py-2" x-model="filters.team" @change="applyFilters()">
-        <option value="">All teams</option>
-        <template x-for="t in teams" :key="t"><option x-text="t"></option></template>
-      </select>
-
-      <!-- Toggle image/live -->
-      <button class="card hover:bg-slate-100" @click="useImageCharts = !useImageCharts">
-        <span x-text="useImageCharts ? 'Show Live Charts' : 'Show Images'"></span>
-      </button>
-
       <button class="card hover:bg-slate-100" @click="generateReport()">Generate Status (MD)</button>
     </div>
   </header>
@@ -78,129 +63,64 @@
     </div>
   </section>
 
-  <!-- Charts (hybrid: live with fallback images) -->
-  <!-- <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4" x-data @chart-error.window="useImageCharts = true"> -->
+  <!-- Charts -->
   <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-    <!-- Execution -->
     <div class="card">
-      <div class="mb-2 font-medium flex items-center justify-between">
-        <span>Execution Over Time</span>
-        <span class="text-xs text-gray-500" x-show="useImageCharts">(image)</span>
-      </div>
-
-      <template x-if="!useImageCharts">
-        <div class="chart-wrap"><canvas id="execChart"></canvas></div>
-      </template>
-
-      <template x-if="useImageCharts">
-        <div class="img-wrap">
-          <img src="./charts/execution.png" alt="Execution Over Time chart" class="w-full" loading="lazy"
-               onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'p-6 text-sm text-gray-500',textContent:'Chart image not found. Upload /charts/execution.png'}));">
-        </div>
-      </template>
-
-      <div class="img-note">Source: Excel snapshot</div>
+      <div class="mb-2 font-medium">Execution Over Time</div>
+      <div class="chart-wrap"><canvas id="execChart"></canvas></div>
     </div>
-
-    <!-- Defects -->
     <div class="card">
-      <div class="mb-2 font-medium flex items-center justify-between">
-        <span>Defect Burndown</span>
-        <span class="text-xs text-gray-500" x-show="useImageCharts">(image)</span>
-      </div>
-
-      <template x-if="!useImageCharts">
-        <div class="chart-wrap"><canvas id="defectChart"></canvas></div>
-      </template>
-
-      <template x-if="useImageCharts">
-        <div class="img-wrap">
-          <img src="./charts/defects.png" alt="Defect Burndown chart" class="w-full" loading="lazy"
-               onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'p-6 text-sm text-gray-500',textContent:'Chart image not found. Upload /charts/defects.png'}));">
-        </div>
-      </template>
-
-      <div class="img-note">Source: Excel snapshot</div>
+      <div class="mb-2 font-medium">Defect Burndown</div>
+      <div class="chart-wrap"><canvas id="defectChart"></canvas></div>
     </div>
   </section>
 
-  <!-- Top Open Issues (Blocker/Critical only) -->
+  <!-- Issues -->
   <section class="card mb-4">
     <div class="flex items-center justify-between mb-2">
       <div class="font-medium">Top Open Issues</div>
-      <div class="text-xs text-gray-500" x-text="`Showing ${issues.length} of ${issuesTotal} (Blocker/Critical)`"></div>
+      <div class="text-xs text-gray-500" x-text="`Showing ${issues.length} (Blocker/Critical)`"></div>
     </div>
-    <div class="overflow-auto">
-      <table class="min-w-full text-sm">
-        <thead class="text-left text-gray-500">
-          <tr>
-            <th class="py-2 pr-4">Key</th>
-            <th class="py-2 pr-4">Priority</th>
-            <th class="py-2 pr-4">Summary</th>
-            <th class="py-2 pr-4">Owner</th>
-            <th class="py-2 pr-4">Team</th>
-            <th class="py-2 pr-4">Platform</th>
+    <table class="min-w-full text-sm">
+      <thead class="text-left text-gray-500">
+        <tr><th>Key</th><th>Priority</th><th>Summary</th><th>Owner</th><th>Team</th><th>Platform</th></tr>
+      </thead>
+      <tbody>
+        <template x-for="i in issues" :key="i.key">
+          <tr class="border-t">
+            <td><a :href="i.link" target="_blank" class="text-indigo-600 hover:underline" x-text="i.key"></a></td>
+            <td x-text="i.priority"></td>
+            <td x-text="i.summary"></td>
+            <td x-text="i.owner"></td>
+            <td x-text="i.team"></td>
+            <td x-text="i.platform"></td>
           </tr>
-        </thead>
-        <tbody>
-          <template x-for="i in issues" :key="i.key">
-            <tr class="border-t">
-              <td class="py-2 pr-4"><a :href="i.link" target="_blank" class="text-indigo-600 hover:underline" x-text="i.key"></a></td>
-              <td class="py-2 pr-4">
-                <span class="badge" :class="sevClass(i.priority || i.severity)" x-text="i.priority || i.severity"></span>
-              </td>
-              <td class="py-2 pr-4" x-text="i.summary"></td>
-              <td class="py-2 pr-4" x-text="i.owner || '—'"></td>
-              <td class="py-2 pr-4" x-text="i.team || '—'"></td>
-              <td class="py-2 pr-4" x-text="i.platform || i.country || '—'"></td>
-            </tr>
-          </template>
-        </tbody>
-      </table>
-    </div>
+        </template>
+      </tbody>
+    </table>
   </section>
 
-  <!-- Teams & Key Dates -->
-  <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-20">
-    <div class="card">
-      <div class="font-medium mb-2">Teams & Contacts</div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <template x-for="t in raw.teams" :key="t.name">
-          <div class="border rounded-xl p-3">
-            <div class="font-semibold" x-text="t.name"></div>
-            <div class="text-xs text-gray-500" x-text="t.platform || t.country || ''"></div>
-            <div class="mt-1 text-sm"><span class="text-gray-500">Lead: </span><span x-text="t.lead"></span></div>
-            <div class="text-sm"><span class="text-gray-500">Email: </span>
-              <a :href="`mailto:${t.email}`" class="text-indigo-600 hover:underline" x-text="t.email"></a>
+  <!-- Key Dates -->
+  <section class="card mb-20">
+    <div class="font-medium mb-2">Key Dates</div>
+
+    <template x-if="!raw.keyDates || !raw.keyDates.length">
+      <div class="text-sm text-gray-500 p-3">No key dates loaded. Check <code>uat.json</code>.</div>
+    </template>
+
+    <template x-if="raw.keyDates && raw.keyDates.length">
+      <ul class="space-y-2">
+        <template x-for="d in raw.keyDates" :key="d.label">
+          <li class="flex items-center justify-between">
+            <div>
+              <div class="font-medium" x-text="d.label"></div>
+              <div class="text-xs text-gray-500" x-text="d.notes || ''"></div>
             </div>
-          </div>
+            <div class="text-sm" x-text="d.date || d.dateRange || ''"></div>
+          </li>
         </template>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="font-medium mb-2">Key Dates</div>
-
-      <!-- Empty state -->
-      <template x-if="!raw.keyDates || !raw.keyDates.length">
-        <div class="text-sm text-gray-500 p-3">No key dates loaded. Check <code>uat.json</code>.</div>
-      </template>
-
-      <!-- List -->
-      <template x-if="raw.keyDates && raw.keyDates.length">
-        <ul class="space-y-2">
-          <template x-for="d in raw.keyDates" :key="d.label">
-            <li class="flex items-center justify-between">
-              <div>
-                <div class="font-medium" x-text="d.label"></div>
-                <div class="text-xs text-gray-500" x-text="d.notes || ''"></div>
-              </div>
-              <div class="text-sm" x-text="d.date || d.dateRange || ''"></div>
-            </li>
-          </template>
-        </ul>
-      </template>
-    </div>
+      </ul>
+    </template>
   </section>
 
   <!-- Modal: Report -->
@@ -220,461 +140,110 @@
 </div>
 
 <script>
-// Replace your entire app function with this fixed version:
 function app(){
   return {
-    raw: { overview:{}, progressDaily:[], defectsDaily:[], issues:[], teams:[], keyDates:[] },
-    filtered: { progressDaily:[], defectsDaily:[] },
-    issues: [],
-    issuesTotal: 0,
-    platforms: [],
-    teams: [],
-    filters: { platform:'', team:'' },
-    kpis: { inScope:0, executedPct:0, passPct:0, openDefects:0, critical:0 },
-    lastUpdate: '',
-    reportOpen:false,
-    reportMD:'',
-    // hybrid chart bits
-    useImageCharts:false,
-    execChart:null, 
-    defectChart:null,
-    // Enhanced guards against re-entrancy and loops
-    isUpdatingCharts:false,
-    isApplyingFilters:false,
-    chartsInitialized:false,
-    chartUpdatesPaused:false,
+    raw:{overview:{},progressDaily:[],defectsDaily:[],issues:[],keyDates:[]},
+    kpis:{inScope:0,executedPct:0,passPct:0,openDefects:0,critical:0},
+    issues:[], lastUpdate:'',
+    // platforms
+    platforms:[], filters:{ platform:'' },
 
-    // Replace your init method with this version:
     async init(){
-      // Clear any previous error flags
-      window.chartErrorOccurred = false;
-      
-      try {
-        const res = await fetch('./uat.json?v=' + Date.now(), { cache:'no-store' });
-        if (res.ok) this.raw = await res.json();
-      } catch(e){ 
-        console.error('Failed to load uat.json', e); 
-      }
+      const res=await fetch('./uat.json?v='+Date.now(), {cache:'no-store'});
+      this.raw=await res.json();
 
-      this.lastUpdate = this.raw.overview?.lastUpdate || '';
-      this.buildFilters(); 
-      this.applyFilters();
-      
-      // Only try to initialize charts if not in image mode and no errors occurred
-      if (!this.useImageCharts && !window.chartErrorOccurred) {
-        // Wait for DOM to be fully ready and Chart.js to load
-        setTimeout(() => {
-          if (!this.useImageCharts && !window.chartErrorOccurred) {
-            this.drawCharts();
-            
-            // Initial data update after another small delay
-            setTimeout(() => {
-              if (this.chartsInitialized && !this.useImageCharts) {
-                this.updateCharts();
-              }
-            }, 100);
-          }
-        }, 200);
-      }
-    }, 
-
-    buildFilters(){
-      const pset = new Set(this.raw.teams.map(t => t.platform || t.country).filter(Boolean));
-      this.raw.issues.forEach(i => { if (i.platform || i.country) pset.add(i.platform || i.country); });
-      this.platforms = [...pset].sort();
-      if (!this.platforms.length) this.platforms = ['Web','App','BOSS'];
-
-      const tset = new Set(this.raw.teams.map(t => t.name).filter(Boolean));
-      this.teams = [...tset].sort();
+      this.lastUpdate=this.raw.overview?.lastUpdate || '';
+      this.platforms = this.getPlatforms();
+      this.computeKpis();
+      this.drawCharts();
+      this.filterIssues();
     },
 
-    // Replace your applyFilters method with this safer version:
-    applyFilters(){
-      // Prevent recursive calls and early exit for error states
-      if (this.isApplyingFilters || window.chartErrorOccurred) {
-        return;
-      }
-      
-      try {
-        this.isApplyingFilters = true;
-        
-        const {platform, team} = this.filters;
-        const match = (row)=>{
-          const p = row.platform || row.country || '';
-          const t = row.team || row.name || '';
-          return (!platform || p === platform) && (!team || t === team);
-        };
-
-        // execution series with safety checks
-        if (Array.isArray(this.raw.progressDaily)) {
-          this.filtered.progressDaily = this.raw.progressDaily.filter(match);
-          if (!this.filtered.progressDaily.length) {
-            this.filtered.progressDaily = this.raw.progressDaily;
-          }
-        } else {
-          this.filtered.progressDaily = [];
-        }
-
-        // defects series with safety checks
-        if (Array.isArray(this.raw.defectsDaily)) {
-          this.filtered.defectsDaily = this.raw.defectsDaily.filter(match);
-          if (!this.filtered.defectsDaily.length) {
-            this.filtered.defectsDaily = this.raw.defectsDaily;
-          }
-        } else {
-          this.filtered.defectsDaily = [];
-        }
-
-        // Issues filtering
-        const sevKeep = new Set(['Blocker','Critical']);
-        if (Array.isArray(this.raw.issues)) {
-          const issuesFiltered = this.raw.issues.filter(i => {
-            return match(i) && sevKeep.has((i.priority || i.severity || '').trim());
-          });
-          
-          this.issuesTotal = issuesFiltered.length;
-          this.issues = issuesFiltered.sort((a,b)=>{
-            const rank = {Blocker:1, Critical:2, High:3, Medium:4, Low:5};
-            return (rank[a.priority || a.severity] || 9) - (rank[b.priority || b.severity] || 9);
-          });
-        } else {
-          this.issues = [];
-          this.issuesTotal = 0;
-        }
-
-        this.computeKpis();
-        
-        // Only update charts if safe to do so
-        if (this.chartsInitialized && 
-            !this.useImageCharts && 
-            !this.chartUpdatesPaused && 
-            !window.chartErrorOccurred &&
-            !this.isUpdatingCharts) {
-          
-          // Use setTimeout to prevent any blocking
-          setTimeout(() => {
-            if (!this.useImageCharts && !window.chartErrorOccurred) {
-              this.updateCharts();
-            }
-          }, 10);
-        }
-        
-      } catch(e) {
-        console.error('Error in applyFilters:', e);
-      } finally {
-        this.isApplyingFilters = false;
-      }
-    }, 
-
-    // Aggregation methods remain the same...
-    aggregateByDate(rows){
-      const map = new Map();
-      for (const r of rows){
-        const d = r.date;
-        const inScope = Number(r.inScope) || 0;
-        const b = map.get(d) || { inScope:0, exec:0, pass:0, open:0 };
-        b.inScope += inScope;
-        b.exec    += (Number(r.executedPct)||0)/100 * inScope;
-        b.pass    += (Number(r.passPct)||0)/100 * inScope;
-        b.open    += Number(r.openDefects)||0;
-        map.set(d,b);
-      }
-      return [...map.entries()].map(([date,b])=>({
-        date,
-        executedPct: b.inScope ? (b.exec/b.inScope)*100 : 0,
-        passPct:     b.inScope ? (b.pass/b.inScope)*100 : 0,
-        openDefects: b.open
-      })).sort((a,b)=> a.date.localeCompare(b.date));
+    getPlatforms(){
+      // Build from issues; if none, provide sensible defaults
+      const set = new Set(this.raw.issues.map(i => i.platform).filter(Boolean));
+      return set.size ? [...set].sort() : ['Web','App','BOSS'];
     },
 
-    aggregateDefectsByDate(rows){
-      if (!rows || !rows.length) return [];
-      const map = new Map();
-      for (const r of rows){
-        const d = r.date;
-        const b = map.get(d) || { open:0 };
-        b.open += Number(r.openDefects) || 0;
-        map.set(d, b);
-      }
-      return [...map.entries()]
-        .map(([date,b]) => ({ date, openDefects: b.open }))
-        .sort((a,b)=> a.date.localeCompare(b.date));
+    onFilterChange(){
+      this.computeKpis();
+      this.filterIssues();
     },
 
     computeKpis(){
-      const execAgg = this.aggregateByDate(this.filtered.progressDaily.length ? this.filtered.progressDaily : this.raw.progressDaily);
-      const latest = execAgg[execAgg.length-1] || {};
-      this.kpis.inScope     = this.raw.overview.inScope || 0;
-      this.kpis.executedPct = latest.executedPct || 0;
-      this.kpis.passPct     = latest.passPct || 0;
+      // Execution KPIs from last progressDaily point (overall)
+      const p=this.raw.progressDaily;
+      if(p.length){
+        const last=p[p.length-1];
+        this.kpis.inScope=last.inScope||0;
+        this.kpis.executedPct=last.executedPct||0;
+        this.kpis.passPct=last.passPct||0;
+      } else {
+        this.kpis.inScope=0; this.kpis.executedPct=0; this.kpis.passPct=0;
+      }
 
+      // Defect KPIs (filtered by platform selection)
+      const plat = this.filters.platform;
       const open = this.raw.issues.filter(i=>{
-        const p = i.platform || i.country || '';
-        const t = i.team || '';
-        const m = (!this.filters.platform || p===this.filters.platform) && (!this.filters.team || t===this.filters.team);
-        return m && (!i.status || i.status.toLowerCase() !== 'closed');
+        const isOpen = !i.status || i.status.toLowerCase()!=='closed';
+        const matches = !plat || i.platform===plat;
+        return isOpen && matches;
       });
       this.kpis.openDefects = open.length;
-      this.kpis.critical    = open.filter(i=>{
-        const sev = (i.priority || i.severity || '').trim();
-        return sev === 'Blocker' || sev === 'Critical';
-      }).length;
+      this.kpis.critical = open.filter(i=>['Blocker','Critical'].includes(i.priority)).length;
     },
-
-    // ---------- Charts (live) ----------
-// Replace the drawCharts and updateCharts methods with these safer versions:
 
     drawCharts(){
-      if (this.useImageCharts || this.chartUpdatesPaused) return;
-
-      // Add a global flag to prevent any chart operations during errors
-      if (window.chartErrorOccurred) {
-        this.useImageCharts = true;
-        return;
-      }
-
-      try {
-        // Clean up existing charts with more thorough cleanup
-        this.destroyCharts();
-
-        const execCtx = document.getElementById('execChart');
-        const defectCtx = document.getElementById('defectChart');
-
-        if (!execCtx || !defectCtx) {
-          console.warn('Chart canvases not found, switching to image mode');
-          this.useImageCharts = true;
-          return;
+      // Execution
+      new Chart(document.getElementById('execChart'),{
+        type:'line',
+        data:{datasets:[
+          {label:'Executed %',data:this.raw.progressDaily.map(r=>({x:r.date,y:r.executedPct})),borderColor:'#3b82f6',pointRadius:2,tension:.25},
+          {label:'Pass %',data:this.raw.progressDaily.map(r=>({x:r.date,y:r.passPct})),borderColor:'#ec4899',pointRadius:2,tension:.25}
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,animation:false,
+          scales:{x:{type:'time',time:{unit:'day'}},y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'}}},
+          plugins:{legend:{position:'bottom'}}
         }
+      });
 
-        // Test Chart.js availability
-        if (typeof Chart === 'undefined') {
-          console.warn('Chart.js not loaded, switching to image mode');
-          this.useImageCharts = true;
-          return;
+      // Defects (overall series; if you later add platform on defectsDaily, we can filter here too)
+      new Chart(document.getElementById('defectChart'),{
+        type:'line',
+        data:{datasets:[{label:'Open Defects',data:this.raw.defectsDaily.map(r=>({x:r.date,y:r.openDefects})),borderColor:'#0284c7',pointRadius:2,tension:.25}]},
+        options:{responsive:true,maintainAspectRatio:false,animation:false,
+          scales:{x:{type:'time',time:{unit:'day'}},y:{beginAtZero:true}},
+          plugins:{legend:{position:'bottom'}}
         }
-
-        // Wrap each chart creation in its own try-catch
-        try {
-          this.execChart = new Chart(execCtx, {
-            type: 'scatter',
-            data: { datasets: [
-              { label:'Executed %', data: [], showLine:true, tension:.25, borderWidth:2, fill:false,
-                borderColor:'#3b82f6', backgroundColor:'#3b82f6', pointRadius:2, spanGaps:true },
-              { label:'Pass %', data: [], showLine:true, tension:.25, borderWidth:2, fill:false,
-                borderColor:'#ec4899', backgroundColor:'#ec4899', pointRadius:2, spanGaps:true }
-            ]},
-            options:{
-              responsive:true, maintainAspectRatio:false, animation:false, parsing:false,
-              scales:{ x:{ type:'time', time:{ unit:'day' } }, y:{ beginAtZero:true, suggestedMax:100, ticks:{ callback:v=>v+'%' } } },
-              plugins:{ legend:{ position:'bottom' } }
-            }
-          });
-        } catch(e) {
-          console.error('Failed to create execution chart:', e);
-          throw e;
-        }
-
-        try {
-          this.defectChart = new Chart(defectCtx, {
-            type: 'scatter',
-            data: { datasets: [
-              { label:'Open defects', data: [], showLine:true, tension:.25, borderWidth:2, fill:false,
-                borderColor:'#0284c7', backgroundColor:'#0284c7', pointRadius:2, spanGaps:true }
-            ]},
-            options:{
-              responsive:true, maintainAspectRatio:false, animation:false, parsing:false,
-              scales:{ x:{ type:'time', time:{ unit:'day' } }, y:{ beginAtZero:true } },
-              plugins:{ legend:{ position:'bottom' } }
-            }
-          });
-        } catch(e) {
-          console.error('Failed to create defect chart:', e);
-          if (this.execChart) {
-            this.execChart.destroy();
-            this.execChart = null;
-          }
-          throw e;
-        }
-
-        this.chartsInitialized = true;
-        console.log('Charts initialized successfully');
-        
-      } catch(e){
-        console.error('drawCharts failed completely:', e);
-        window.chartErrorOccurred = true;
-        this.chartUpdatesPaused = true;
-        this.useImageCharts = true;
-        this.chartsInitialized = false;
-        this.destroyCharts();
-      }
+      });
     },
 
-    destroyCharts() {
-      if (this.execChart) {
-        try { 
-          this.execChart.destroy(); 
-        } catch(e) { 
-          console.warn('Error destroying execChart:', e); 
-        }
-        this.execChart = null;
-      }
-      if (this.defectChart) {
-        try { 
-          this.defectChart.destroy(); 
-        } catch(e) { 
-          console.warn('Error destroying defectChart:', e); 
-        }
-        this.defectChart = null;
-      }
-      this.chartsInitialized = false;
+    filterIssues(){
+      const plat = this.filters.platform;
+      this.issues = this.raw.issues
+        .filter(i => (!plat || i.platform===plat))
+        .filter(i => ['Blocker','Critical'].includes(i.priority));
     },
 
-    updateCharts(){
-      // Multiple early exits to prevent any possibility of recursion
-      if (this.useImageCharts) return;
-      if (this.chartUpdatesPaused) return;
-      if (!this.chartsInitialized) return;
-      if (this.isUpdatingCharts) return;
-      if (window.chartErrorOccurred) return;
-
-      // Check if charts still exist and are valid
-      if (!this.execChart || !this.defectChart) {
-        console.warn('Charts missing during update, switching to image mode');
-        this.useImageCharts = true;
-        return;
-      }
-
-      // Check if charts are destroyed
-      if (this.execChart.destroyed || this.defectChart.destroyed) {
-        console.warn('Charts destroyed, switching to image mode');
-        this.useImageCharts = true;
-        return;
-      }
-
-      const validPoint = (p) => {
-        return p && 
-              typeof p === 'object' && 
-              isFinite(p.y) && 
-              !isNaN(p.y) && 
-              p.x && 
-              !isNaN(new Date(p.x).getTime());
-      };
-      
-      const dedupe = (arr) => {
-        if (!Array.isArray(arr)) return [];
-        return arr.filter((p,i,a)=> i===0 || a[i-1].x !== p.x);
-      };
-
-      try {
-        this.isUpdatingCharts = true;
-
-        // Get data with more defensive checks
-        const rawProgressData = this.filtered.progressDaily.length ? 
-          this.filtered.progressDaily : 
-          (this.raw.progressDaily || []);
-        
-        if (!Array.isArray(rawProgressData)) {
-          console.warn('Invalid progress data, skipping chart update');
-          return;
-        }
-
-        const execAgg = this.aggregateByDate(rawProgressData);
-        
-        if (!Array.isArray(execAgg)) {
-          console.warn('Failed to aggregate execution data');
-          return;
-        }
-
-        // Build data points with more validation
-        let execPts = [];
-        let passPts = [];
-        
-        for (const r of execAgg) {
-          if (!r || typeof r !== 'object') continue;
-          
-          const execPt = { x: r.date, y: Number(r.executedPct || 0) };
-          const passPt = { x: r.date, y: Number(r.passPct || 0) };
-          
-          if (validPoint(execPt)) execPts.push(execPt);
-          if (validPoint(passPt)) passPts.push(passPt);
-        }
-
-        // Defects data
-        const rawDefectsData = (this.filtered.defectsDaily && this.filtered.defectsDaily.length)
-          ? this.filtered.defectsDaily
-          : (this.raw.defectsDaily || []);
-        
-        const defectsAgg = Array.isArray(rawDefectsData) && rawDefectsData.length ? 
-          this.aggregateDefectsByDate(rawDefectsData) : 
-          execAgg;
-        
-        let openPts = [];
-        for (const r of (defectsAgg || [])) {
-          if (!r || typeof r !== 'object') continue;
-          const openPt = { x: r.date, y: Number(r.openDefects || 0) };
-          if (validPoint(openPt)) openPts.push(openPt);
-        }
-
-        // Deduplicate
-        execPts = dedupe(execPts);
-        passPts = dedupe(passPts);
-        openPts = dedupe(openPts);
-
-        // Update charts with additional safety
-        if (this.execChart && !this.execChart.destroyed && this.execChart.data && this.execChart.data.datasets) {
-          try {
-            this.execChart.data.datasets[0].data = execPts;
-            this.execChart.data.datasets[1].data = passPts;
-            this.execChart.update('none');
-          } catch(e) {
-            console.error('Error updating execution chart:', e);
-            throw e;
-          }
-        }
-        
-        if (this.defectChart && !this.defectChart.destroyed && this.defectChart.data && this.defectChart.data.datasets) {
-          try {
-            this.defectChart.data.datasets[0].data = openPts;
-            this.defectChart.update('none');
-          } catch(e) {
-            console.error('Error updating defect chart:', e);
-            throw e;
-          }
-        }
-        
-      } catch(e) {
-        console.error('Critical error in updateCharts:', e);
-        
-        // Set global error flag to prevent any future chart operations
-        window.chartErrorOccurred = true;
-        this.chartUpdatesPaused = true;
-        this.useImageCharts = true;
-        
-        // Clean up everything
-        this.destroyCharts();
-        
-      } finally {
-        this.isUpdatingCharts = false;
-      }
-    }, 
-    // Rest of your methods remain the same...
+    // ---- Report ----
     generateReport(){
+      const plat = this.filters.platform || 'All platforms';
       const md = [
-        `# UAT Status — ${this.raw.overview.release || 'Release'} (${this.lastUpdate})`,
+        `# UAT Status – ${this.raw.overview.release || 'Release'} (${this.lastUpdate})`,
+        ``,
+        `**Platform:** ${plat}`,
         ``,
         `**Scope:** ${this.kpis.inScope} | **Executed:** ${this.fmtPct(this.kpis.executedPct)} | **Pass:** ${this.fmtPct(this.kpis.passPct)} | **Open defects:** ${this.kpis.openDefects} | **Blocker/Critical:** ${this.kpis.critical}`,
         ``,
         `## Top Open Issues (Blocker/Critical)`,
         `| Key | Priority | Summary | Owner | Team | Platform |`,
         `|---|---|---|---|---|---|`,
-        ...this.issues.map(i=>`| [${i.key}](${i.link||''}) | ${(i.priority||i.severity)} | ${i.summary.replace(/\|/g,'/')} | ${i.owner||''} | ${i.team||''} | ${i.platform||i.country||''} |`)
+        ...this.issues.map(i=>`| [${i.key}](${i.link||''}) | ${i.priority} | ${i.summary.replace(/\|/g,'/')} | ${i.owner||''} | ${i.team||''} | ${i.platform||''} |`)
       ].join('\n');
-      this.reportMD = md; 
+      this.reportMD = md;
       this.reportOpen = true;
     },
-    
     copyReport(){ navigator.clipboard.writeText(this.reportMD); },
-    
     downloadReport(){
       const blob = new Blob([this.reportMD], {type:'text/markdown'});
       const a = document.createElement('a');
@@ -684,27 +253,11 @@ function app(){
       URL.revokeObjectURL(a.href);
     },
 
-    fmtPct(v){ return (v??0).toFixed(0)+'%'; },
-    
-    sevClass(s){
-      const sev = (s||'').trim();
-      return sev==='Blocker' ? 'bg-red-100 text-red-700'
-           : sev==='Critical'? 'bg-red-50 text-red-700'
-           : sev==='High'     ? 'bg-orange-50 text-orange-700'
-           : sev==='Medium'   ? 'bg-amber-50 text-amber-700'
-           : 'bg-slate-100 text-slate-700';
-    }
+    reportOpen:false, reportMD:'',
+    fmtPct(v){return (v??0)+'%';}
   }
 }
-// Register SW (relative scope under /uat-app/)
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js', { scope: './' })
-      .catch(err => console.error('SW registration failed:', err));
-  });
-}
-
-document.addEventListener('alpine:init',()=>{Alpine.data('app', app)})
+document.addEventListener('alpine:init',()=>{Alpine.data('app',app)})
 </script>
 </body>
 </html>
