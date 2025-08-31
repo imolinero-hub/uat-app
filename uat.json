@@ -21,10 +21,21 @@
 
   "defectsDaily": [
     { "date": "2025-10-13", "openDefects": 300 },
-    { "date": "2025-10-17", "openDefects": 220 },
+    { "date": "2025-10-15", "openDefects": 260 },
+    { "date": "2025-10-17", "openDefects": 210 },
+    { "date": "2025-10-20", "openDefects": 180 },
+    { "date": "2025-10-22", "openDefects": 160 },
+    { "date": "2025-10-23", "openDefects": 150 },
     { "date": "2025-10-24", "openDefects": 130 },
-    { "date": "2025-10-31", "openDefects": 70 }
-  ],
+    { "date": "2025-10-27", "openDefects": 120 },
+    { "date": "2025-10-28", "openDefects": 110 },
+    { "date": "2025-10-29", "openDefects": 95  },
+    { "date": "2025-10-30", "openDefects": 85  },
+    { "date": "2025-10-31", "openDefects": 70  },
+    { "date": "2025-11-01", "openDefects": 60  },
+    { "date": "2025-11-05", "openDefects": 45  },
+    { "date": "2025-11-07", "openDefects": 30  }
+  ], 
 
   "issues": [
     { "key": "UAT-501", "priority": "Blocker", "summary": "Payment outage", "owner": "Helena", "team": "eCommerce", "platform": "Web", "status": "Open" },
