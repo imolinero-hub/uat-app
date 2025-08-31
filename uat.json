@@ -1,77 +1,27 @@
 {
-  "overview": {
-    "release": "RI-4",
-    "inScope": 3249,
-    "lastUpdate": "2025-08-27 10:00"
-  },
+  "overview": { "release": "RI-4", "inScope": 3249, "lastUpdate": "2025-08-27 10:00" },
 
   "progressDaily": [
-    { "date": "2025-10-13", "platform": "ALL", "team": "ALL", "inScope": 3249, "executedPct": 4,  "passPct": 3  },
-    { "date": "2025-10-14", "platform": "ALL", "team": "ALL", "inScope": 3230, "executedPct": 14, "passPct": 12 },
-    { "date": "2025-11-07", "platform": "ALL", "team": "ALL", "inScope": 3063, "executedPct": 100, "passPct": 97 }
+    { "date": "2025-10-13", "inScope": 3249, "executedPct": 4, "passPct": 3 },
+    { "date": "2025-10-17", "inScope": 3220, "executedPct": 39, "passPct": 33 },
+    { "date": "2025-10-24", "inScope": 3108, "executedPct": 93, "passPct": 85 },
+    { "date": "2025-10-31", "inScope": 3063, "executedPct": 99, "passPct": 93 }
   ],
 
   "defectsDaily": [
-    { "date": "2025-10-13", "platform": "ALL", "team": "ALL", "openDefects": 300 },
-    { "date": "2025-10-14", "platform": "ALL", "team": "ALL", "openDefects": 280 },
-    { "date": "2025-11-07", "platform": "ALL", "team": "ALL", "openDefects": 30  }
+    { "date": "2025-10-13", "openDefects": 300 },
+    { "date": "2025-10-17", "openDefects": 220 },
+    { "date": "2025-10-24", "openDefects": 130 },
+    { "date": "2025-10-31", "openDefects": 70 }
   ],
 
   "issues": [
-    {
-      "key": "UAT-501",
-      "priority": "Blocker",
-      "summary": "Payment service outage blocks checkout on Web",
-      "owner": "Helena",
-      "team": "eCommerce",
-      "platform": "Web",
-      "status": "Open",
-      "link": "https://jira.example.com/browse/UAT-501"
-    },
-    {
-      "key": "UAT-201",
-      "priority": "Critical",
-      "summary": "Checkout fails when applying loyalty points",
-      "owner": "Helena",
-      "team": "eCommerce",
-      "platform": "Web",
-      "status": "Open",
-      "link": "https://jira.example.com/browse/UAT-201"
-    },
-    {
-      "key": "UAT-178",
-      "priority": "High",
-      "summary": "iOS app crashes on product detail page",
-      "owner": "Jakub",
-      "team": "Mobile",
-      "platform": "App",
-      "status": "Open",
-      "link": "https://jira.example.com/browse/UAT-178"
-    },
-    {
-      "key": "UAT-162",
-      "priority": "Medium",
-      "summary": "Translation missing for 'Add to Cart' button (IT)",
-      "owner": "Juan",
-      "team": "Localization",
-      "platform": "Web",
-      "status": "Open",
-      "link": "https://jira.example.com/browse/UAT-162"
-    }
-  ],
-
-  "teams": [
-    { "name": "eCommerce",    "platform": "Web",  "lead": "Helena", "email": "helena@example.com" },
-    { "name": "Mobile",       "platform": "App",  "lead": "Jakub",  "email": "jakub@example.com" },
-    { "name": "Localization", "platform": "Web",  "lead": "Juan",   "email": "juan@example.com" },
-    { "name": "BOSS Ops",     "platform": "BOSS", "lead": "Marco",  "email": "marco@example.com" }
+    { "key": "UAT-501", "priority": "Blocker", "summary": "Payment outage", "owner": "Helena", "team": "eCommerce", "platform": "Web", "status": "Open" },
+    { "key": "UAT-201", "priority": "Critical", "summary": "Checkout fails", "owner": "Helena", "team": "eCommerce", "platform": "Web", "status": "Open" }
   ],
 
   "keyDates": [
-    { "label": "Kick-off",    "date": "2025-10-10",                       "notes": "All testers are onboarded" },
-    { "label": "UAT period",  "date": "2025-10-13 to 2025-11-06",         "notes": "Testing period for the UAT" },
-    { "label": "Alpha Demo",  "date": "2025-11-04 to 2025-11-05",         "notes": "First testing with the ABOs" },
-    { "label": "Go / No-Go",  "date": "2025-12-08",                       "notes": "Final leadership decision" },
-    { "label": "Go Live",     "date": "2025-12-10",                       "notes": "Go Live of the RI-4" }
+    { "label": "Kick-off", "date": "2025-10-10", "notes": "All testers onboarded" },
+    { "label": "Go Live", "date": "2025-12-10", "notes": "Go Live of the RI-4" }
   ]
 }
