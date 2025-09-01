@@ -502,5 +502,18 @@ function app(){
 }
 document.addEventListener('alpine:init',()=>{ Alpine.data('app', app) })
 </script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      const reg = await navigator.serviceWorker.register('./service-worker.js');
+      // Optional: check for updates every 30 min
+      setInterval(() => reg.update(), 30 * 60 * 1000);
+    } catch (e) { console.warn('SW failed', e); }
+  });
+}
+</script>
+
 </body>
 </html>

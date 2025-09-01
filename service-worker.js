@@ -1,69 +1,35 @@
-const CACHE_NAME = 'uat-shell-v3';
-const SHELL = [
-  './',
-  './index.html',
-  './manifest.webmanifest',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/icon-180.png',
-  './charts/execution.png',
-  './charts/defects.png'
-];
+// uat-app/service-worker.js
+const CACHE = 'uat-cache-v4'; // bump when you ship
 
-// Install: pre-cache same-origin shell only
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((c) => c.addAll(SHELL)).catch(() => Promise.resolve())
+self.addEventListener('install', evt => {
+  self.skipWaiting(); // take control ASAP
+  evt.waitUntil(
+    caches.open(CACHE).then(c => c.addAll([
+      './', './index.html', './uat.json',
+      './manifest.webmanifest',
+      './icons/icon-192.png', './icons/icon-512.png'
+      // add ./about-uat.md if you use it
+    ]))
   );
-  self.skipWaiting();
 });
 
-// Activate: cleanup old caches
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.map(k => (k === CACHE_NAME ? null : caches.delete(k)))))
+self.addEventListener('activate', evt => {
+  evt.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
   );
-  self.clients.claim();
+  self.clients.claim(); // update open pages
 });
 
-// Fetch:
-// - Cross-origin (CDNs) -> let browser handle (avoid CORS/opaque).
-// - uat.json -> network-first with cached fallback.
-// - same-origin shell -> cache-first.
-self.addEventListener('fetch', (event) => {
-  const req = event.request;
-  const url = new URL(req.url);
-
-  if (url.origin !== self.location.origin) {
-    return; // do not intercept cross-origin requests
-  }
-
-  const isUatJson = url.pathname.endsWith('/uat.json') || url.pathname.endsWith('uat.json');
-  if (isUatJson) {
-    event.respondWith(
-      fetch(req).then((res) => {
-        caches.open(CACHE_NAME).then(cache => cache.put(req, res.clone()));
-        return res;
-      }).catch(async () => {
-        const cached = await caches.match(req);
-        return cached || new Response(JSON.stringify({
-          overview:{release:"",inScope:0,lastUpdate:""},
-          progressDaily:[], issues:[], teams:[], keyDates:[]
-        }), { headers: { 'Content-Type': 'application/json' }});
-      })
-    );
+self.addEventListener('fetch', evt => {
+  const url = new URL(evt.request.url);
+  // Always network-first for uat.json to stay fresh
+  if (url.pathname.endsWith('/uat.json')) {
+    evt.respondWith(fetch(evt.request).catch(() => caches.match(evt.request)));
     return;
   }
-
-  event.respondWith(
-    caches.match(req).then((cached) => {
-      if (cached) return cached;
-      return fetch(req).then((res) => {
-        if (req.method === 'GET' && res.status === 200) {
-          caches.open(CACHE_NAME).then(cache => cache.put(req, res.clone()));
-        }
-        return res;
-      }).catch(() => cached);
-    })
+  // Cache-first for static
+  evt.respondWith(
+    caches.match(evt.request).then(r => r || fetch(evt.request))
   );
 });
