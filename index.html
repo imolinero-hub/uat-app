@@ -5,7 +5,7 @@
   <title>UAT Dashboard · Leadership View</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-  <!-- PWA bits (paths are relative to the current folder) -->
+  <!-- PWA bits (paths relative to /uat-app/) -->
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" sizes="192x192" href="./icons/icon-192.png">
   <link rel="icon" sizes="512x512" href="./icons/icon-512.png">
@@ -14,53 +14,58 @@
   <meta name="mobile-web-app-capable" content="yes">
 
   <!-- Tailwind (CDN) -->
-  <script src="https://cdn.tailwindcss.com" crossorigin="anonymous"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
   <!-- Alpine.js -->
-  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" crossorigin="anonymous"></script>
-  <!-- Chart.js (category scale; no date adapter needed) -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <!-- Chart.js + time adapter -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
 
   <style>
+    /* Design tokens */
     :root{
-      --bg:#0b1220; --card:#0f172a; --muted:#94a3b8; --ring:255 255 255/0.1;
-      --grad-1:linear-gradient(135deg,#0ea5e9 0%,#6366f1 50%,#22c55e 100%);
+      --bg: #0b1220;          /* page background */
+      --card: #0f172a;        /* card background */
+      --muted: #94a3b8;       /* secondary text */
+      --ring: 255 255 255/0.1;
+      --grad-1: linear-gradient(135deg,#0ea5e9 0%,#6366f1 50%,#22c55e 100%);
     }
-    body{
-      background:
-        radial-gradient(1200px 800px at 20% -10%, rgba(59,130,246,.25), transparent 40%),
-        radial-gradient(1000px 600px at 120% 0%, rgba(34,197,94,.18), transparent 35%),
-        var(--bg);
-    }
-    .glass{ background:rgba(255,255,255,.03); backdrop-filter:blur(10px); }
-    .card{ background:var(--card); border:1px solid rgba(255,255,255,.06); border-radius:1.25rem; }
-    .ring{ box-shadow:0 0 0 1px rgba(var(--ring)); }
+    body{ background: radial-gradient(1200px 800px at 20% -10%, rgba(59,130,246,.25), transparent 40%),
+                      radial-gradient(1000px 600px at 120% 0%, rgba(34,197,94,.18), transparent 35%),
+                      var(--bg); }
+    .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); }
+    .card  { background: var(--card); border: 1px solid rgba(255,255,255,.06); border-radius: 1.25rem; }
+    .ring  { box-shadow: 0 0 0 1px rgba(var(--ring)); }
     .kpi-label{ font-size:.75rem; letter-spacing:.02em; color:var(--muted); font-weight:600 }
     .kpi-value{ font-size:1.6rem; font-weight:700 }
-    .pill{ border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); border-radius:999px; padding:.2rem .6rem; font-size:.72rem }
-    .btn{ border:1px solid rgba(255,255,255,.12); border-radius:.9rem; padding:.55rem .9rem; }
-    .btn:hover{ background:rgba(255,255,255,.05) }
-    .btn-primary{ background-image:var(--grad-1); border:none; color:#fff; }
-    .btn-primary:hover{ filter:brightness(.98) }
-    .badge{ display:inline-flex; align-items:center; gap:.35rem; font-size:.72rem; padding:.2rem .55rem;
-      border-radius:999px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04) }
+    .chart-wrap{ position: relative; height: 240px; }
+    .chart-wrap > canvas{ position:absolute; inset:0; width:100% !important; height:100% !important }
+    .pill{ border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); border-radius:999px; padding:.2rem .6rem; font-size:.72rem }
+    .btn{ border:1px solid rgba(255,255,255,.12); border-radius: .9rem; padding:.55rem .9rem; }
+    .btn:hover{ background: rgba(255,255,255,.05) }
+    .btn-primary{ background-image: var(--grad-1); border: none; color: white; }
+    .btn-primary:hover{ filter: brightness(.98) }
+    .badge{
+      display:inline-flex; align-items:center; gap:.35rem; font-size:.72rem; padding:.2rem .55rem;
+      border-radius:999px; border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04);
+    }
     .badge-dot{ width:.5rem; height:.5rem; border-radius:999px }
     .timeline-dot{ width:.6rem; height:.6rem; border-radius:999px; background:#22c55e; box-shadow:0 0 0 3px rgba(34,197,94,.2) }
-    .table th, .table td{ padding:.6rem .75rem }
+    .table th, .table td{ padding:.6rem .75rem; }
     .table thead th{ font-size:.75rem; color:var(--muted); font-weight:600; border-bottom:1px solid rgba(255,255,255,.08) }
     .table tbody tr{ border-bottom:1px solid rgba(255,255,255,.06) }
     .link{ color:#60a5fa }
-    .chart-wrap{ position:relative; height:240px }
-    .chart-wrap > canvas{ position:absolute; inset:0; width:100% !important; height:100% !important }
   </style>
 </head>
 <body class="text-slate-100">
 <div class="max-w-5xl mx-auto px-4 py-5" x-data="app()">
 
-  <!-- Header -->
+  <!-- Top bar -->
   <header class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-5">
     <div class="flex items-center gap-3">
       <div class="h-9 w-9 rounded-xl ring flex items-center justify-center"
            style="background:linear-gradient(135deg,rgba(14,165,233,.25),rgba(99,102,241,.25));">
+        <!-- simple logo -->
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 12h16M12 4v16" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
       </div>
       <div>
@@ -74,24 +79,44 @@
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
+      <!-- Platform filter -->
       <select class="glass btn text-sm text-slate-200" x-model="filters.platform" @change="onFilterChange()">
         <option value="">All platforms</option>
         <template x-for="p in platforms" :key="p"><option x-text="p"></option></template>
       </select>
-      <button class="btn btn-primary" @click="generateAIStatus()">AI Daily Status</button>
+
+      <!-- AI Status -->
+      <button class="btn btn-primary" @click="generateAIStatus()">
+        <span>AI Daily Status</span>
+      </button>
     </div>
   </header>
 
-  <!-- KPIs -->
+  <!-- KPI ribbon -->
   <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
-    <div class="card p-4"><div class="kpi-label">In Scope</div><div class="kpi-value mt-1" x-text="kpis.inScope"></div></div>
-    <div class="card p-4"><div class="kpi-label">Executed %</div><div class="kpi-value mt-1" :class="kpiColor(kpis.executedPct)" x-text="fmtPct(kpis.executedPct)"></div></div>
-    <div class="card p-4"><div class="kpi-label">Pass %</div><div class="kpi-value mt-1" :class="kpiColor(kpis.passPct)" x-text="fmtPct(kpis.passPct)"></div></div>
-    <div class="card p-4"><div class="kpi-label">Open Defects</div><div class="kpi-value mt-1" x-text="kpis.openDefects"></div></div>
-    <div class="card p-4"><div class="kpi-label">Blocker / Critical</div><div class="kpi-value mt-1" :class="kpis.critical>0?'text-rose-400':'text-emerald-400'" x-text="kpis.critical"></div></div>
+    <div class="card p-4">
+      <div class="kpi-label">In Scope</div>
+      <div class="kpi-value mt-1" x-text="kpis.inScope"></div>
+    </div>
+    <div class="card p-4">
+      <div class="kpi-label">Executed %</div>
+      <div class="kpi-value mt-1" :class="kpiColor(kpis.executedPct)" x-text="fmtPct(kpis.executedPct)"></div>
+    </div>
+    <div class="card p-4">
+      <div class="kpi-label">Pass %</div>
+      <div class="kpi-value mt-1" :class="kpiColor(kpis.passPct)" x-text="fmtPct(kpis.passPct)"></div>
+    </div>
+    <div class="card p-4">
+      <div class="kpi-label">Open Defects</div>
+      <div class="kpi-value mt-1" x-text="kpis.openDefects"></div>
+    </div>
+    <div class="card p-4">
+      <div class="kpi-label">Blocker / Critical</div>
+      <div class="kpi-value mt-1" :class="kpis.critical>0?'text-rose-400':'text-emerald-400'" x-text="kpis.critical"></div>
+    </div>
   </section>
 
-  <!-- AI Status -->
+  <!-- AI Daily Status -->
   <section class="card p-0 overflow-hidden mb-6">
     <div class="px-5 py-4 border-b border-white/10 flex items-center justify-between"
          style="background: linear-gradient(180deg, rgba(99,102,241,.12), transparent);">
@@ -118,10 +143,9 @@
     <div class="card p-4">
       <div class="flex items-center justify-between mb-2">
         <div class="font-medium">Execution Over Time</div>
-        <span class="pill">Executed% · Pass%</span>
+        <span class="pill">Executed% &nbsp;·&nbsp; Pass%</span>
       </div>
       <div class="chart-wrap"><canvas id="execChart"></canvas></div>
-      <div class="text-xs text-slate-400 mt-2" x-show="!raw.progressDaily?.length">No progress data.</div>
     </div>
     <div class="card p-4">
       <div class="flex items-center justify-between mb-2">
@@ -129,7 +153,6 @@
         <span class="pill">Open defects</span>
       </div>
       <div class="chart-wrap"><canvas id="defectChart"></canvas></div>
-      <div class="text-xs text-slate-400 mt-2" x-show="!raw.defectsDaily?.length">No defect data.</div>
     </div>
   </section>
 
@@ -142,17 +165,16 @@
     <div class="overflow-x-auto">
       <table class="table w-full text-sm">
         <thead>
-          <tr><th>Key</th><th>Priority</th><th>Summary</th><th>Owner</th><th>Team</th><th>Platform</th></tr>
+          <tr>
+            <th>Key</th><th>Priority</th><th>Summary</th><th>Owner</th><th>Team</th><th>Platform</th>
+          </tr>
         </thead>
         <tbody>
           <template x-for="i in issues" :key="i.key">
             <tr>
               <td><a class="link hover:underline" :href="i.link" target="_blank" x-text="i.key"></a></td>
               <td>
-                <span class="badge">
-                  <span class="badge-dot" :style="sevDot(i.priority)"></span>
-                  <span x-text="i.priority"></span>
-                </span>
+                <span class="badge" :style="sevBadge(i.priority)"><span class="badge-dot" :style="sevDot(i.priority)"></span><span x-text="i.priority"></span></span>
               </td>
               <td x-text="i.summary"></td>
               <td x-text="i.owner || '—'"></td>
@@ -168,6 +190,9 @@
   <!-- Key Dates -->
   <section class="card p-4 mb-16">
     <div class="font-medium mb-3">Key Dates</div>
+    <template x-if="!raw.keyDates || !raw.keyDates.length">
+      <div class="text-sm text-slate-400">No key dates loaded. Check <code>uat.json</code>.</div>
+    </template>
     <template x-if="raw.keyDates && raw.keyDates.length">
       <ul class="space-y-3">
         <template x-for="d in raw.keyDates" :key="d.label">
@@ -182,36 +207,26 @@
         </template>
       </ul>
     </template>
-    <template x-if="!raw.keyDates || !raw.keyDates.length">
-      <div class="text-sm text-slate-400">No key dates loaded.</div>
-    </template>
   </section>
 </div>
 
 <script>
 function app(){
   return {
+    // --- State ---
     raw:{ overview:{}, progressDaily:[], defectsDaily:[], issues:[], keyDates:[] },
     kpis:{ inScope:0, executedPct:0, passPct:0, openDefects:0, critical:0 },
     platforms:[], filters:{ platform:'' },
     lastUpdate:'', issues:[],
     execChart:null, defectChart:null,
-    aiStatus:'',
+    aiStatus:'',  // HTML rendered from Markdown-like content
 
+    // --- Lifecycle ---
     async init(){
-      // Load uat.json (no inline fallback)
-      let loaded = false;
       try{
         const res = await fetch('./uat.json?v=' + Date.now(), { cache:'no-store' });
-        if(res.ok){ this.raw = await res.json(); loaded = true; }
-      }catch(e){
-        console.error('Failed to fetch uat.json', e);
-      }
-      if(!loaded){
-        document.body.insertAdjacentHTML('beforeend',
-          '<div class="fixed bottom-4 left-1/2 -translate-x-1/2 text-xs px-3 py-2 rounded-lg bg-rose-600/90">uat.json could not be loaded</div>');
-        return;
-      }
+        if(res.ok) this.raw = await res.json();
+      }catch(e){ console.error('Failed to load uat.json', e); }
 
       this.lastUpdate = this.raw.overview?.lastUpdate || '';
       this.platforms = this.getPlatforms();
@@ -220,17 +235,18 @@ function app(){
       this.filterIssues();
     },
 
+    // --- Helpers ---
     getPlatforms(){
-      const set = new Set((this.raw.issues||[]).map(i=>i.platform).filter(Boolean));
+      const set = new Set(this.raw.issues.map(i=>i.platform).filter(Boolean));
       return set.size ? [...set].sort() : ['Web','App','BOSS'];
     },
     onFilterChange(){ this.computeKpis(); this.filterIssues(); },
 
     computeKpis(){
-      const p = this.raw.progressDaily || [];
+      const p = this.raw.progressDaily;
       if(p.length){
         const last = p[p.length-1];
-        this.kpis.inScope = last.inScope ?? this.raw.overview?.inScope ?? 0;
+        this.kpis.inScope = last.inScope || this.raw.overview?.inScope || 0;
         this.kpis.executedPct = +last.executedPct || 0;
         this.kpis.passPct = +last.passPct || 0;
       } else {
@@ -239,7 +255,7 @@ function app(){
       }
 
       const plat = this.filters.platform;
-      const open = (this.raw.issues||[]).filter(i=>{
+      const open = this.raw.issues.filter(i=>{
         const isOpen = !i.status || i.status.toLowerCase() !== 'closed';
         const matches = !plat || i.platform === plat;
         return isOpen && matches;
@@ -249,41 +265,35 @@ function app(){
     },
 
     drawCharts(){
-      if(!window.Chart){ console.error('Chart.js not loaded'); return; }
-
-      // Execution chart (category axis)
-      const labels = (this.raw.progressDaily||[]).map(r=>r.date);
-      const exec = (this.raw.progressDaily||[]).map(r=>+r.executedPct||0);
-      const pass = (this.raw.progressDaily||[]).map(r=>+r.passPct||0);
-
+      // Execution chart
       if(this.execChart){ this.execChart.destroy(); }
       this.execChart = new Chart(document.getElementById('execChart'), {
         type:'line',
-        data:{ labels, datasets:[
-          {label:'Executed %', data:exec, borderColor:'#60a5fa', backgroundColor:'#60a5fa', pointRadius:2, tension:.25},
-          {label:'Pass %',     data:pass, borderColor:'#a78bfa', backgroundColor:'#a78bfa', pointRadius:2, tension:.25}
+        data:{ datasets:[
+          {label:'Executed %', data:this.raw.progressDaily.map(r=>({x:r.date,y:+r.executedPct})),
+           borderColor:'#60a5fa', backgroundColor:'#60a5fa', pointRadius:2, tension:.25},
+          {label:'Pass %', data:this.raw.progressDaily.map(r=>({x:r.date,y:+r.passPct})),
+           borderColor:'#a78bfa', backgroundColor:'#a78bfa', pointRadius:2, tension:.25}
         ]},
         options:{
           responsive:true, maintainAspectRatio:false, animation:false,
-          scales:{ x:{ type:'category', grid:{ color:'rgba(255,255,255,.06)'} },
+          scales:{ x:{ type:'time', time:{ unit:'day' }, grid:{ color:'rgba(255,255,255,.06)'} },
                   y:{ beginAtZero:true, max:100, ticks:{ callback:v=>v+'%' }, grid:{ color:'rgba(255,255,255,.06)'} } },
           plugins:{ legend:{ position:'bottom', labels:{ color:'#cbd5e1' } } }
         }
       });
 
-      // Defects chart (category axis)
-      const labelsD = (this.raw.defectsDaily||[]).map(r=>r.date);
-      const open = (this.raw.defectsDaily||[]).map(r=>+r.openDefects||0);
-
+      // Defects chart
       if(this.defectChart){ this.defectChart.destroy(); }
       this.defectChart = new Chart(document.getElementById('defectChart'), {
         type:'line',
-        data:{ labels: labelsD, datasets:[
-          {label:'Open defects', data:open, borderColor:'#34d399', backgroundColor:'#34d399', pointRadius:2, tension:.25}
+        data:{ datasets:[
+          {label:'Open defects', data:this.raw.defectsDaily.map(r=>({x:r.date,y:+r.openDefects})),
+           borderColor:'#34d399', backgroundColor:'#34d399', pointRadius:2, tension:.25}
         ]},
         options:{
           responsive:true, maintainAspectRatio:false, animation:false,
-          scales:{ x:{ type:'category', grid:{ color:'rgba(255,255,255,.06)'} },
+          scales:{ x:{ type:'time', time:{ unit:'day' }, grid:{ color:'rgba(255,255,255,.06)'} },
                   y:{ beginAtZero:true, grid:{ color:'rgba(255,255,255,.06)'} } },
           plugins:{ legend:{ position:'bottom', labels:{ color:'#cbd5e1' } } }
         }
@@ -298,8 +308,10 @@ function app(){
         .filter(i => !plat || i.platform === plat);
     },
 
-    // AI status (client stub)
+    // --- AI Status (client-side stub) ---
     generateAIStatus(){
+      // For now: synthesize a concise leadership note from available data.
+      // Later: replace with serverless call to your LLM.
       const plat = this.filters.platform || 'All platforms';
       const md = [
         `**Summary (${plat})**`,
@@ -317,6 +329,8 @@ function app(){
         `• Close remaining critical defects; re-test impacted flows.`,
         `• Prepare demo materials ahead of Alpha Demo.`,
       ].join('\n');
+
+      // Render very lightly to HTML (bold + bullets)
       this.aiStatus = this.mdToHtml(md);
     },
 
@@ -330,26 +344,35 @@ function app(){
       a.click(); URL.revokeObjectURL(a.href);
     },
 
+    // --- Small formatters ---
     fmtPct(v){ return (v??0).toFixed(0)+'%'; },
     kpiColor(v){ return v>=90 ? 'text-emerald-400' : (v>=70 ? 'text-amber-300' : 'text-rose-400'); },
-    sevDot(p){ const c = p==='Blocker' ? '#fb7185' : p==='Critical' ? '#fca5a5' : '#f59e0b'; return `background:${c}`; },
+    sevBadge(p){ return `border-color:rgba(255,255,255,.12);`; },
+    sevDot(p){
+      const c = p==='Blocker' ? '#fb7185' : p==='Critical' ? '#fca5a5' : '#f59e0b';
+      return `background:${c}`;
+    },
+
     trendText(kind){
+      // naive delta over last 3 points
       try{
         if(kind==='exec'){
-          const arr = (this.raw.progressDaily||[]).slice(-3).map(r=>+r.executedPct||0);
+          const arr = this.raw.progressDaily.slice(-3).map(r=>+r.executedPct);
           if(arr.length<2) return 'steady';
           const d = arr[arr.length-1] - arr[0];
           return d>0 ? 'up' : (d<0 ? 'down' : 'steady');
         }else{
-          const arr = (this.raw.defectsDaily||[]).slice(-3).map(r=>+r.openDefects||0);
+          const arr = this.raw.defectsDaily.slice(-3).map(r=>+r.openDefects);
           if(arr.length<2) return 'steady';
           const d = arr[arr.length-1] - arr[0];
           return d<0 ? 'down' : (d>0 ? 'up' : 'steady');
         }
       }catch(_){ return '—'; }
     },
+
+    // minimal MD -> HTML for our bullets/bold
     mdToHtml(md){
-      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#39;');
+      const esc = (s)=>s.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
       return esc(md)
         .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
         .replace(/^• /gm,'<li>')
