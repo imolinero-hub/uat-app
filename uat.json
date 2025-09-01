@@ -77,7 +77,7 @@
       "team": "eCommerce",
       "platform": "Web",
       "status": "Open",
-      "link": "https://jira.example.com/browse/UAT-501"
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-22058"
     },
     {
       "key": "UAT-201",
@@ -87,7 +87,7 @@
       "team": "eCommerce",
       "platform": "Web",
       "status": "Open",
-      "link": "https://jira.example.com/browse/UAT-201"
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-22058"
     },
     {
       "key": "UAT-162",
@@ -97,7 +97,7 @@
       "team": "Localization",
       "platform": "Web",
       "status": "Open",
-      "link": "https://jira.example.com/browse/UAT-162"
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-22058"
     }
   ],
 
