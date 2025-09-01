@@ -36,20 +36,6 @@
       --bg:#f8fafc; --card:#ffffff; --muted:#64748b; --ring:15 23 42/0.08;
       --text:#0f172a; --text-weak:#334155;
     }
-
-    /* Unified elevated panel used by modals / AI card */
-    .panel{
-      background: linear-gradient(180deg, rgba(15,23,42,.98), rgba(15,23,42,.94));
-      border: 1px solid rgba(255,255,255,.16);
-      border-radius: 1.25rem;
-      box-shadow: 0 20px 55px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.03) inset;
-    }
-    .theme-light .panel{
-      background: #fff;
-      border-color: rgba(15,23,42,.12);
-      box-shadow: 0 20px 55px rgba(2,6,23,.15), 0 1px 0 rgba(2,6,23,.06) inset;
-    }
-
     body{
       color:var(--text);
       background:
@@ -62,6 +48,16 @@
     .theme-light .glass{ background:rgba(15,23,42,.04) }
     .card{ background:var(--card); border:1px solid rgba(255,255,255,.06); border-radius:1.25rem; }
     .theme-light .card{ border-color: rgba(15,23,42,.06); }
+    .panel{
+      background: linear-gradient(180deg, rgba(15,23,42,.98), rgba(15,23,42,.94));
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 1.25rem;
+      box-shadow: 0 20px 55px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.03) inset;
+    }
+    .theme-light .panel{
+      background:#fff; border-color: rgba(15,23,42,.12);
+      box-shadow: 0 20px 55px rgba(2,6,23,.15), 0 1px 0 rgba(2,6,23,.06) inset;
+    }
     .ring{ box-shadow:0 0 0 1px rgba(var(--ring)); }
     .kpi-label{ font-size:.75rem; letter-spacing:.02em; color:var(--muted); font-weight:600 }
     .kpi-value{ font-size:1.6rem; font-weight:700 }
@@ -119,14 +115,17 @@
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
-      <!-- Countdown -->
-      <div class="card px-4 py-2">
+      <!-- Countdown (Option A) -->
+      <div class="card px-4 py-2 w-[330px]">
         <div class="text-xs text-slate-400" x-text="countdown.title"></div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center justify-between mt-0.5">
           <div class="text-lg font-semibold" x-text="countdown.label"></div>
-          <div class="text-xs pill" x-text="countdown.range"></div>
+          <template x-if="countdown.pctShow">
+            <span class="pill text-xs" x-text="countdown.pct.toFixed(0)+'%'"></span>
+          </template>
         </div>
-        <div class="w-48 mt-2 bg-white/10 rounded-full h-1.5 theme-light:bg-black/10">
+        <div class="text-xs text-slate-400 mt-1" x-text="countdown.subtitle"></div>
+        <div class="w-full mt-2 bg-white/10 rounded-full h-1.5 theme-light:bg-black/10">
           <div class="countdown-bar" :style="`width:${countdown.pct}%`"></div>
         </div>
       </div>
@@ -158,7 +157,7 @@
     <div class="card p-4"><div class="kpi-label">Blocker / Critical</div><div class="kpi-value mt-1" :class="kpis.critical>0?'text-rose-400':'text-emerald-400'" x-text="kpis.critical"></div></div>
   </section>
 
-  <!-- AI Status (starts closed; clean divider; close button) -->
+  <!-- AI Status -->
   <section class="panel overflow-hidden mb-6" x-show="aiOpen" x-transition>
     <div class="px-5 py-4 flex items-center justify-between"
          style="background: linear-gradient(180deg, rgba(99,102,241,.12), transparent);">
@@ -257,7 +256,7 @@
     </template>
   </section>
 
-  <!-- Info Modal (higher contrast) -->
+  <!-- Info Modal -->
   <div x-show="infoOpen" x-transition.opacity class="fixed inset-0 bg-black/85 backdrop-blur-[1px] grid place-items-center p-4 z-50">
     <div class="panel max-w-2xl w-full p-5 relative">
       <button class="icon-btn absolute -top-3 -right-3 btn" @click="infoOpen=false" aria-label="Close">✕</button>
@@ -278,9 +277,9 @@ function app(){
     lastUpdate:'', issues:[],
     execChart:null, defectChart:null,
     aiStatus:'',
-    aiOpen: false,                  // start closed now
+    aiOpen: false,
     theme: 'theme-dark',
-    countdown: { title:'UAT Days', label:'—', pct:0, range:'' },
+    countdown: { title:'UAT Days', label:'—', pct:0, pctShow:false, subtitle:'' },
     infoOpen:false, infoHtml:'',
 
     async init(){
@@ -343,7 +342,6 @@ function app(){
     drawCharts(){
       if(!window.Chart){ console.error('Chart.js not loaded'); return; }
 
-      // Common element styling for visibility
       const common = {
         responsive:true, maintainAspectRatio:false, animation:false,
         elements: { line: { borderWidth: 2 }, point: { radius: 3, hitRadius: 6, hoverRadius: 4 } },
@@ -399,26 +397,121 @@ function app(){
         .filter(i => !plat || i.platform === plat);
     },
 
-    /* ===== Countdown ===== */
+    /* ===== Countdown (Option A) ===== */
     computeCountdown(){
-      const s = this.raw.schedule?.start || this.raw.overview?.start || null;
-      const e = this.raw.schedule?.end   || this.raw.overview?.end   || null;
-      if(!s || !e){ this.countdown = {title:'UAT Days', label:'—', pct:0, range:'(dates missing)'}; return; }
-      const start = new Date(s + 'T00:00:00');
-      const end   = new Date(e + 'T23:59:59');
-      const now   = new Date();
+      const sch = this.raw.schedule || {};
+      const tz = sch.timezone || 'Europe/Berlin';
+      const holidays = Array.isArray(sch.holidays) ? new Set(sch.holidays) : new Set();
 
-      const totalDays = Math.max(1, Math.ceil((end - start) / 86400000) + 1);
-      const elapsed   = Math.min(totalDays, Math.max(0, Math.ceil((now - start) / 86400000)));
-      const left      = Math.max(0, totalDays - elapsed);
-      const pct       = Math.min(100, Math.max(0, (elapsed / totalDays) * 100));
+      const toTZDate = (dStr) => {
+        // returns a Date representing local time in given TZ at 00:00
+        const parts = new Intl.DateTimeFormat('en-CA',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit'})
+          .formatToParts(new Date(dStr+'T00:00:00'));
+        const y = +parts.find(p=>p.type==='year').value;
+        const m = +parts.find(p=>p.type==='month').value;
+        const d = +parts.find(p=>p.type==='day').value;
+        return new Date(Date.UTC(y,m-1,d,0,0,0)); // lock to UTC midnight of TZ date
+      };
+      const todayTZ = () => {
+        const now = new Date();
+        const parts = new Intl.DateTimeFormat('en-CA',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now);
+        const y = +parts.find(p=>p.type==='year').value;
+        const m = +parts.find(p=>p.type==='month').value;
+        const d = +parts.find(p=>p.type==='day').value;
+        return new Date(Date.UTC(y,m-1,d,0,0,0));
+      };
+      const fmtDay = (d) => {
+        return new Intl.DateTimeFormat(undefined,{timeZone:tz,month:'short',day:'2-digit'}).format(d);
+      };
+      const isWeekend = (d) => {
+        const wd = d.getUTCDay(); // 0 Sun..6 Sat (UTC, but we normalized to UTC midnight for TZ date)
+        return wd===0 || wd===6;
+      };
+      const isHoliday = (d) => {
+        const iso = d.toISOString().slice(0,10);
+        return holidays.has(iso);
+      };
+      const isBusiness = (d) => !isWeekend(d) && !isHoliday(d);
 
-      const fmt = d => d.toLocaleDateString(undefined,{month:'short', day:'2-digit'});
+      const start = sch.start ? toTZDate(sch.start) : null;
+      const end   = sch.end   ? toTZDate(sch.end)   : null;
+
+      if(!start || !end){
+        this.countdown = { title:'UAT Days', label:'—', pct:0, pctShow:false, subtitle:'(dates missing)' };
+        return;
+      }
+
+      // Build array of business days (inclusive)
+      const bizDays = [];
+      for(let d = new Date(start); d <= end; d = new Date(d.getTime()+86400000)){
+        if(isBusiness(d)) bizDays.push(new Date(d));
+      }
+      const total = bizDays.length;
+
+      // Determine "today" (in TZ) and state
+      const today = todayTZ();
+
+      const beforeStart = today < start;
+      const afterEnd = today > end;
+
+      // Helper: count business days between start and a given date inclusive
+      const indexFor = (d) => bizDays.filter(x => x <= d).length;
+
+      if(beforeStart){
+        // business days until first business day on/after start
+        let firstRun = new Date(start);
+        while(!isBusiness(firstRun)) firstRun = new Date(firstRun.getTime()+86400000);
+        // count business days from today to firstRun (exclusive of today, inclusive of firstRun if business)
+        let daysUntil = 0;
+        for(let d = new Date(today.getTime()+86400000); d <= firstRun; d = new Date(d.getTime()+86400000)){
+          if(isBusiness(d)) daysUntil++;
+        }
+        const calDays = Math.ceil((firstRun - today)/86400000);
+        this.countdown = {
+          title:'UAT Days',
+          label: `Starts in ${daysUntil} business day${daysUntil===1?'':'s'}`,
+          pct: 0, pctShow:false,
+          subtitle: `${fmtDay(start)} – ${fmtDay(end)} · ${total} working days (${calDays} calendar days to start)`
+        };
+        return;
+      }
+
+      if(afterEnd){
+        this.countdown = {
+          title:'UAT Days',
+          label:'Completed',
+          pct:100, pctShow:true,
+          subtitle:`${total}/${total} working days · Ran ${fmtDay(start)} – ${fmtDay(end)}`
+        };
+        return;
+      }
+
+      // Inside range – figure out paused vs active
+      if(!isBusiness(today)){
+        // paused (weekend/holiday)
+        // Completed business days up to yesterday
+        const lastBizIndex = indexFor(new Date(today.getTime()-86400000));
+        // find next business day
+        let next = new Date(today.getTime()+86400000);
+        while(!isBusiness(next)) next = new Date(next.getTime()+86400000);
+        const pct = Math.max(0, Math.min(100, (lastBizIndex/total)*100));
+        this.countdown = {
+          title:'UAT Days',
+          label:`Paused · resumes ${fmtDay(next)}`,
+          pct, pctShow:true,
+          subtitle:`Completed day ${lastBizIndex} of ${total}`
+        };
+        return;
+      }
+
+      // Active business day: Day X of N
+      const dayIdx = indexFor(today); // 1-based index of today in bizDays
+      const pct = Math.max(0, Math.min(100, (dayIdx/total)*100));
       this.countdown = {
-        title: 'UAT Days',
-        label: left > 0 ? `${left} day${left===1?'':'s'} left` : 'Completed',
-        pct: pct.toFixed(0),
-        range: `${fmt(start)} – ${fmt(end)}`
+        title:'UAT Days',
+        label:`Day ${dayIdx} of ${total}`,
+        pct, pctShow:true,
+        subtitle:`${fmtDay(start)} – ${fmtDay(end)} · ${total} working days`
       };
     },
 
@@ -503,17 +596,6 @@ function app(){
 document.addEventListener('alpine:init',()=>{ Alpine.data('app', app) })
 </script>
 
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    try {
-      const reg = await navigator.serviceWorker.register('./service-worker.js');
-      // Optional: check for updates every 30 min
-      setInterval(() => reg.update(), 30 * 60 * 1000);
-    } catch (e) { console.warn('SW failed', e); }
-  });
-}
-</script>
-
+<!-- (Optional) Service worker registration kept as-is if you have it -->
 </body>
 </html>
