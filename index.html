@@ -13,29 +13,25 @@
   <meta name="theme-color" content="#0b1220">
   <meta name="mobile-web-app-capable" content="yes">
 
-  <!-- Tailwind v2 fallback CSS (no integrity to avoid SRI blocking) -->
+  <!-- Tailwind v2 fallback (no SRI to avoid corporate SRI blocks) -->
   <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
         crossorigin="anonymous" referrerpolicy="no-referrer">
-
-  <!-- Tailwind v3 Play CDN (preferred; will override v2 if it loads) -->
+  <!-- Tailwind v3 Play CDN (preferred; overrides v2 if it loads) -->
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography" crossorigin="anonymous"></script>
+
   <!-- Alpine.js -->
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" crossorigin="anonymous"></script>
-  <!-- Chart.js -->
+  <!-- Chart.js + time adapter -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
-  <!-- time adapter -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3" crossorigin="anonymous"></script>
 
   <style>
-    /* ===== Theme tokens (dark default) ===== */
     :root{
       --bg:#0b1220; --card:#0f172a; --muted:#94a3b8; --ring:255 255 255/0.1;
       --text:#e5e7eb; --text-weak:#cbd5e1;
-      --kpi-good:#34d399; --kpi-mid:#f59e0b; --kpi-bad:#fb7185;
       --accent-1:#0ea5e9; --accent-2:#6366f1; --accent-3:#22c55e;
     }
-    /* Light theme overrides */
     .theme-light{
       --bg:#f8fafc; --card:#ffffff; --muted:#64748b; --ring:15 23 42/0.08;
       --text:#0f172a; --text-weak:#334155;
@@ -87,7 +83,7 @@
   <!-- Header -->
   <header class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-5">
     <div class="flex items-center gap-3">
-      <!-- Theme toggle (sun/moon) -->
+      <!-- Theme toggle -->
       <button class="icon-btn ring" @click="toggleTheme()" :title="theme==='theme-light' ? 'Switch to dark' : 'Switch to light'"
               :style="'background:linear-gradient(135deg,rgba(14,165,233,.25),rgba(99,102,241,.25))'">
         <template x-if="theme!=='theme-light'">
@@ -148,25 +144,21 @@
     <div class="card p-4"><div class="kpi-label">Blocker / Critical</div><div class="kpi-value mt-1" :class="kpis.critical>0?'text-rose-400':'text-emerald-400'" x-text="kpis.critical"></div></div>
   </section>
 
-  <!-- AI Status -->
-  <section class="card p-0 overflow-hidden mb-6" x-show="aiOpen" x-transition>
-    <div class="px-5 py-4 border-b border-white/10 flex items-center justify-between"
+  <!-- AI Status (now closable + internal divider; no misalignment) -->
+  <section class="card overflow-hidden mb-6" x-show="aiOpen" x-transition>
+    <div class="px-5 py-4 flex items-center justify-between"
          style="background: linear-gradient(180deg, rgba(99,102,241,.12), transparent);">
       <div class="flex items-center gap-2">
         <span class="badge"><span class="badge-dot" style="background:#22c55e"></span> Daily</span>
         <div class="font-semibold">Daily Status (AI-generated)</div>
       </div>
-
       <div class="flex items-center gap-3">
         <div class="text-xs text-slate-400">For leadership • concise & action-oriented</div>
-        <!-- new close button -->
-        <button class="btn icon-btn" aria-label="Close" @click="aiOpen=false" title="Hide">
-          ✕
-        </button>
+        <button class="btn icon-btn" aria-label="Close" @click="aiOpen=false" title="Hide">✕</button>
       </div>
     </div>
-      <div class="text-xs text-slate-400">For leadership • concise & action-oriented</div>
-    </div>
+    <div class="h-px bg-white/10 theme-light:bg-black/10"></div>
+
     <div class="p-5">
       <div class="prose prose-invert max-w-none text-[15px] leading-6 theme-light:prose">
         <div x-show="!aiStatus" class="text-slate-400">Click <strong>AI Daily Status</strong> to generate today’s summary.</div>
@@ -251,9 +243,9 @@
     </template>
   </section>
 
-  <!-- Info Modal -->
+  <!-- Info Modal (higher contrast) -->
   <div x-show="infoOpen" x-transition.opacity class="fixed inset-0 bg-black/70 grid place-items-center p-4 z-50">
-    <div class="card max-w-2xl w-full p-5 relative" bg-slate-900/95 theme-light:bg-white/95 shadow-2xl ring-1 ring-white/10">
+    <div class="card max-w-2xl w-full p-5 relative bg-slate-900/95 theme-light:bg-white/95 shadow-2xl ring-1 ring-white/10">
       <button class="icon-btn absolute -top-3 -right-3 btn" @click="infoOpen=false" aria-label="Close">✕</button>
       <div class="font-semibold mb-3">UAT Overview</div>
       <div class="prose prose-invert theme-light:prose max-w-none text-[15px]" x-html="infoHtml || '<p class=&quot;text-slate-400&quot;>No info loaded.</p>'"></div>
@@ -272,12 +264,9 @@ function app(){
     lastUpdate:'', issues:[],
     execChart:null, defectChart:null,
     aiStatus:'',
-    aiOpen: true,
-    // theme
+    aiOpen: true,                    // <-- new: AI card open/closed
     theme: 'theme-dark',
-    // countdown
-    countdown: { title:'UAT Window', label:'—', pct:0, range:'' },
-    // info modal
+    countdown: { title:'UAT Days', label:'—', pct:0, range:'' },
     infoOpen:false, infoHtml:'',
 
     async init(){
@@ -396,7 +385,7 @@ function app(){
     computeCountdown(){
       const s = this.raw.schedule?.start || this.raw.overview?.start || null;
       const e = this.raw.schedule?.end   || this.raw.overview?.end   || null;
-      if(!s || !e){ this.countdown = {title:'UAT Window', label:'—', pct:0, range:'(dates missing)'}; return; }
+      if(!s || !e){ this.countdown = {title:'UAT Days', label:'—', pct:0, range:'(dates missing)'}; return; }
       const start = new Date(s + 'T00:00:00');
       const end   = new Date(e + 'T23:59:59');
       const now   = new Date();
@@ -431,7 +420,7 @@ function app(){
 
     /* ===== Utilities ===== */
     generateAIStatus(){
-      this.aiOpen = true;
+      this.aiOpen = true; // ensure visible
       const plat = this.filters.platform || 'All platforms';
       const md = [
         `**Summary (${plat})**`,
