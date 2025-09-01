@@ -36,6 +36,20 @@
       --bg:#f8fafc; --card:#ffffff; --muted:#64748b; --ring:15 23 42/0.08;
       --text:#0f172a; --text-weak:#334155;
     }
+
+    /* Unified elevated panel used by modals / AI card */
+    .panel{
+      background: linear-gradient(180deg, rgba(15,23,42,.98), rgba(15,23,42,.94));
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 1.25rem;
+      box-shadow: 0 20px 55px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.03) inset;
+    }
+    .theme-light .panel{
+      background: #fff;
+      border-color: rgba(15,23,42,.12);
+      box-shadow: 0 20px 55px rgba(2,6,23,.15), 0 1px 0 rgba(2,6,23,.06) inset;
+    }
+
     body{
       color:var(--text);
       background:
@@ -145,7 +159,7 @@
   </section>
 
   <!-- AI Status (starts closed; clean divider; close button) -->
-  <section class="card overflow-hidden mb-6" x-show="aiOpen" x-transition>
+  <section class="panel overflow-hidden mb-6" x-show="aiOpen" x-transition>
     <div class="px-5 py-4 flex items-center justify-between"
          style="background: linear-gradient(180deg, rgba(99,102,241,.12), transparent);">
       <div class="flex items-center gap-2">
@@ -244,8 +258,8 @@
   </section>
 
   <!-- Info Modal (higher contrast) -->
-  <div x-show="infoOpen" x-transition.opacity class="fixed inset-0 bg-black/80 backdrop-blur-[1px] grid place-items-center p-4 z-50">
-    <div class="card max-w-2xl w-full p-5 relative bg-slate-800/98 theme-light:bg-white shadow-2xl ring-2 ring-white/20">
+  <div x-show="infoOpen" x-transition.opacity class="fixed inset-0 bg-black/85 backdrop-blur-[1px] grid place-items-center p-4 z-50">
+    <div class="panel max-w-2xl w-full p-5 relative">
       <button class="icon-btn absolute -top-3 -right-3 btn" @click="infoOpen=false" aria-label="Close">✕</button>
       <div class="font-semibold mb-3">UAT Overview</div>
       <div class="prose prose-invert theme-light:prose max-w-none text-[15px]" x-html="infoHtml || '<p class=&quot;text-slate-400&quot;>No info loaded.</p>'"></div>
