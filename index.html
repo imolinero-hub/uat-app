@@ -13,7 +13,7 @@
   <meta name="theme-color" content="#0b1220">
   <meta name="mobile-web-app-capable" content="yes">
 
-  <!-- Tailwind v2 fallback (no SRI to avoid corporate SRI blocks) -->
+  <!-- Tailwind v2 fallback (no SRI to avoid blocks) -->
   <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
         crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -144,7 +144,7 @@
     <div class="card p-4"><div class="kpi-label">Blocker / Critical</div><div class="kpi-value mt-1" :class="kpis.critical>0?'text-rose-400':'text-emerald-400'" x-text="kpis.critical"></div></div>
   </section>
 
-  <!-- AI Status (now closable + internal divider; no misalignment) -->
+  <!-- AI Status (starts closed; clean divider; close button) -->
   <section class="card overflow-hidden mb-6" x-show="aiOpen" x-transition>
     <div class="px-5 py-4 flex items-center justify-between"
          style="background: linear-gradient(180deg, rgba(99,102,241,.12), transparent);">
@@ -244,8 +244,8 @@
   </section>
 
   <!-- Info Modal (higher contrast) -->
-  <div x-show="infoOpen" x-transition.opacity class="fixed inset-0 bg-black/70 grid place-items-center p-4 z-50">
-    <div class="card max-w-2xl w-full p-5 relative bg-slate-900/95 theme-light:bg-white/95 shadow-2xl ring-1 ring-white/10">
+  <div x-show="infoOpen" x-transition.opacity class="fixed inset-0 bg-black/80 backdrop-blur-[1px] grid place-items-center p-4 z-50">
+    <div class="card max-w-2xl w-full p-5 relative bg-slate-800/98 theme-light:bg-white shadow-2xl ring-2 ring-white/20">
       <button class="icon-btn absolute -top-3 -right-3 btn" @click="infoOpen=false" aria-label="Close">✕</button>
       <div class="font-semibold mb-3">UAT Overview</div>
       <div class="prose prose-invert theme-light:prose max-w-none text-[15px]" x-html="infoHtml || '<p class=&quot;text-slate-400&quot;>No info loaded.</p>'"></div>
@@ -264,7 +264,7 @@ function app(){
     lastUpdate:'', issues:[],
     execChart:null, defectChart:null,
     aiStatus:'',
-    aiOpen: true,                    // <-- new: AI card open/closed
+    aiOpen: false,                  // start closed now
     theme: 'theme-dark',
     countdown: { title:'UAT Days', label:'—', pct:0, range:'' },
     infoOpen:false, infoHtml:'',
@@ -329,6 +329,13 @@ function app(){
     drawCharts(){
       if(!window.Chart){ console.error('Chart.js not loaded'); return; }
 
+      // Common element styling for visibility
+      const common = {
+        responsive:true, maintainAspectRatio:false, animation:false,
+        elements: { line: { borderWidth: 2 }, point: { radius: 3, hitRadius: 6, hoverRadius: 4 } },
+        plugins:{ legend:{ position:'bottom', labels:{ color:'#94a3b8' } } }
+      };
+
       // Execution (time scale)
       const labels = (this.raw.progressDaily||[]).map(r=>r.date);
       const exec = (this.raw.progressDaily||[]).map(r=>+r.executedPct||0);
@@ -338,17 +345,15 @@ function app(){
       this.execChart = new Chart(document.getElementById('execChart'), {
         type:'line',
         data:{ labels, datasets:[
-          {label:'Executed %', data:exec, borderColor:'#60a5fa', backgroundColor:'#60a5fa', pointRadius:2, tension:.25},
-          {label:'Pass %',     data:pass, borderColor:'#a78bfa', backgroundColor:'#a78bfa', pointRadius:2, tension:.25}
+          {label:'Executed %', data:exec, borderColor:'#60a5fa', backgroundColor:'#60a5fa', tension:.25, spanGaps:true},
+          {label:'Pass %',     data:pass, borderColor:'#a78bfa', backgroundColor:'#a78bfa', tension:.25, spanGaps:true}
         ]},
         options:{
-          responsive:true, maintainAspectRatio:false, animation:false,
-          parsing:false,
+          ...common,
           scales:{
             x:{ type:'time', time:{ unit:'day' }, grid:{ color:'rgba(148,163,184,.2)'} },
             y:{ beginAtZero:true, max:100, ticks:{ callback:v=>v+'%' }, grid:{ color:'rgba(148,163,184,.2)'} }
-          },
-          plugins:{ legend:{ position:'bottom', labels:{ color:'#94a3b8' } } }
+          }
         }
       });
 
@@ -360,15 +365,14 @@ function app(){
       this.defectChart = new Chart(document.getElementById('defectChart'), {
         type:'line',
         data:{ labels: labelsD, datasets:[
-          {label:'Open defects', data:open, borderColor:'#34d399', backgroundColor:'#34d399', pointRadius:2, tension:.25}
+          {label:'Open defects', data:open, borderColor:'#34d399', backgroundColor:'#34d399', tension:.25, spanGaps:true}
         ]},
         options:{
-          responsive:true, maintainAspectRatio:false, animation:false, parsing:false,
+          ...common,
           scales:{
             x:{ type:'time', time:{ unit:'day' }, grid:{ color:'rgba(148,163,184,.2)'} },
             y:{ beginAtZero:true, grid:{ color:'rgba(148,163,184,.2)'} }
-          },
-          plugins:{ legend:{ position:'bottom', labels:{ color:'#94a3b8' } } }
+          }
         }
       });
     },
