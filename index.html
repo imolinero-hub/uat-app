@@ -13,14 +13,12 @@
   <meta name="theme-color" content="#0b1220">
   <meta name="mobile-web-app-capable" content="yes">
 
-  <!-- Tailwind v2 fallback CSS (loads instantly). If v3 CDN below loads, it will override this. -->
+  <!-- Tailwind v2 fallback CSS (no integrity to avoid SRI blocking) -->
   <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
-        integrity="sha512-w8bZ8i8p0R6tq1oU0c8qS8Cwq7nR4EXq8m3WZb8x1S5k0gX9xw3nL2E2bqjzHjX8vQKQFQWk6j0KqpAAiZ6x5g=="
         crossorigin="anonymous" referrerpolicy="no-referrer">
 
-  <!-- Tailwind -->
-  <!-- Tailwind v3 CDN (preferred). If it fails, v2 above still styles the app well enough. -->
+  <!-- Tailwind v3 Play CDN (preferred; will override v2 if it loads) -->
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography" crossorigin="anonymous"></script>
   <!-- Alpine.js -->
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" crossorigin="anonymous"></script>
