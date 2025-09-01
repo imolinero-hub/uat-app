@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8" />
+<title>UAT PWA Icon Generator</title>
+<style>
+  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif; padding: 20px; color:#111827; background:#f8fafc; }
+  h1 { font-size: 18px; margin: 0 0 12px 0; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; }
+  .card { background:#fff; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(0,0,0,.06); }
+  canvas { width: 180px; height: 180px; image-rendering: crisp-edges; display:block; margin: 8px 0; }
+  button { padding:8px 12px; border-radius:10px; border:1px solid #e5e7eb; background:#111827; color:#fff; cursor:pointer; }
+  small { color:#6b7280; display:block; margin-top:4px; }
+</style>
+<h1>UAT PWA Icon Generator</h1>
+<p>This creates three PNGs with a slate background and “UAT” text. Click Download for each size and upload them to <code>uat-app/icons/</code>.</p>
+
+<div class="grid" id="wrap"></div>
+
+<script>
+const specs = [
+  { size:192, file:'icon-192.png', label:'Android/Web (maskable OK)' },
+  { size:512, file:'icon-512.png', label:'PWA install (high-res)' },
+  { size:180, file:'icon-180.png', label:'Apple touch icon' }
+];
+
+// Colors
+const bg = '#111827';     // slate-900
+const ring = '#4f46e5';   // indigo-600
+const fg = '#ffffff';     // white
+
+function drawIcon(n){
+  const canvas = document.createElement('canvas');
+  canvas.width = n; canvas.height = n;
+  const ctx = canvas.getContext('2d');
+
+  // Background
+  ctx.fillStyle = bg;
+  ctx.fillRect(0,0,n,n);
+
+  // Rounded border ring
+  const pad = Math.round(n * 0.06);
+  const r = n * 0.18;
+  ctx.lineWidth = Math.max(2, Math.floor(n/64));
+  ctx.strokeStyle = ring;
+  roundRect(ctx, pad, pad, n-pad*2, n-pad*2, r);
+  ctx.stroke();
+
+  // Text
+  const fontSize = Math.floor(n * 0.34);
+  ctx.fillStyle = fg;
+  ctx.font = `bold ${fontSize}px system-ui, -apple-system, Segoe UI, Roboto, Arial`;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'center';
+  ctx.fillText('UAT', n/2, n/2);
+  return canvas;
+}
+
+function roundRect(ctx, x, y, w, h, r){
+  const rr = Math.min(r, w/2, h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+rr, y);
+  ctx.arcTo(x+w, y, x+w, y+h, rr);
+  ctx.arcTo(x+w, y+h, x, y+h, rr);
+  ctx.arcTo(x, y+h, x, y, rr);
+  ctx.arcTo(x, y, x+w, y, rr);
+  ctx.closePath();
+}
+
+function makeCard(spec){
+  const card = document.createElement('div');
+  card.className = 'card';
+  const h = document.createElement('div');
+  h.textContent = `${spec.size}×${spec.size}`;
+  h.style.fontWeight = '600';
+  card.appendChild(h);
+
+  const canvas = drawIcon(spec.size);
+  canvas.style.width = '180px';
+  canvas.style.height = '180px';
+  card.appendChild(canvas);
+
+  const btn = document.createElement('button');
+  btn.textContent = `Download ${spec.file}`;
+  btn.onclick = ()=>{
+    const link = document.createElement('a');
+    link.href = canvas.toDataURL('image/png');
+    link.download = spec.file;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+  card.appendChild(btn);
+
+  const note = document.createElement('small');
+  note.textContent = spec.label;
+  card.appendChild(note);
+  return card;
+}
+
+const wrap = document.getElementById('wrap');
+specs.forEach(s => wrap.appendChild(makeCard(s)));
+</script>
