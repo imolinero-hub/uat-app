@@ -80,14 +80,14 @@
       "link": "https://jira.example.com/browse/UAT-201"
     },
     {
-      "key": "UAT-178",
+      "key": "NGEUIT-22058",
       "priority": "High",
       "summary": "iOS app crashes on product detail page",
       "owner": "Jakub",
       "team": "Mobile",
       "platform": "App",
       "status": "Open",
-      "link": "https://jira.example.com/browse/UAT-178"
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-22058"
     },
     {
       "key": "UAT-162",
