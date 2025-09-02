@@ -240,13 +240,13 @@
   <!-- ============================== ISSUES TABLE ============================== -->
   <section class="card p-4 mb-6">
     <div class="flex items-center justify-between mb-2">
-      <div class="font-medium">Top Blocker / Critical Issues</div>
+      <div class="font-medium">Blocker / Critical Defects</div>
       <div class="text-xs text-slate-400" x-text="`Showing ${issues.length}`"></div>
     </div>
     <div class="overflow-x-auto">
       <table class="table w-full text-sm">
         <thead>
-          <tr><th>Key</th><th>Priority</th><th>Summary</th><th>Owner</th><th>Team</th><th>Platform</th></tr>
+          <tr><th>Key</th><th>Priority</th><th>Summary</th><th>Reporter</th><th>Team</th><th>Platform</th></tr>
         </thead>
         <tbody>
           <template x-for="i in issues" :key="i.key">
@@ -259,7 +259,7 @@
                 </span>
               </td>
               <td x-text="i.summary"></td>
-              <td x-text="i.owner || '—'"></td>
+              <td x-text="i.reporter || i.owner || '—'"></td>
               <td x-text="i.team || '—'"></td>
               <td x-text="i.platform || '—'"></td>
             </tr>
