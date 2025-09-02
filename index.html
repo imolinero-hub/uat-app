@@ -74,6 +74,17 @@
         var(--bg);
       transition: background-color .2s ease, color .2s ease;
     }
+    .pill-lg{
+      display:inline-flex; align-items:center;
+      padding:.45rem .75rem; border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:linear-gradient(135deg, rgba(14,165,233,.14), rgba(99,102,241,.14));
+      color:var(--text); font-size:.85rem;
+    }
+    .theme-light .pill-lg{
+      border-color: rgba(15,23,42,.14);
+      background:linear-gradient(135deg, rgba(14,165,233,.12), rgba(99,102,241,.12));
+    }
     .glass{ background:rgba(255,255,255,.03); backdrop-filter:blur(10px); }
     .theme-light .glass{ background:rgba(15,23,42,.04) }
     .card{ background:var(--card); border:1px solid rgba(255,255,255,.06); border-radius:1.25rem; }
@@ -142,25 +153,19 @@
           <span x-text="raw.overview?.release || 'Release'"></span>
           <span class="opacity-40">•</span>
           Last update: <span class="text-slate-300" x-text="lastUpdate || '—'"></span>
-          <span class="opacity-40">•</span>
-          <span>Author: Ildefonso Molinero</span>
         </div>
       </div>
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
-      <!-- Countdown (Option A) -->
-      <div class="card px-4 py-2 w-[330px]">
-        <div class="text-xs text-slate-400" x-text="countdown.title"></div>
-        <div class="flex items-center justify-between mt-0.5">
-          <div class="text-lg font-semibold" x-text="countdown.label"></div>
-          <template x-if="countdown.pctShow">
-            <span class="pill text-xs" x-text="countdown.pct.toFixed(0)+'%'"></span>
-          </template>
-        </div>
-        <div class="text-xs text-slate-400 mt-1" x-text="countdown.subtitle"></div>
-        <div class="w-full mt-2 bg-white/10 rounded-full h-1.5 theme-light:bg-black/10">
-          <div class="countdown-bar" :style="`width:${countdown.pct}%`"></div>
+      <!-- Compact UAT Days badge -->
+      <div class="flex items-center">
+        <div class="pill-lg" :title="countdown.tooltip">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" class="mr-2">
+            <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+            <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="font-semibold" x-text="countdown.compact"></span>
         </div>
       </div>
 
@@ -519,15 +524,33 @@ function app(){
       });
     },
 
-    /* -------------------------- COUNTDOWN -------------------------------- */
+    /* -------------------------- COUNTDOWN (compact) -------------------------- */
+    /**
+     * Computes the UAT countdown using business days.
+     * Populates this.countdown with:
+     *  - title:   "UAT Days"
+     *  - label:   verbose label used elsewhere (kept for backward compatibility)
+     *  - compact: short badge text shown in the header (e.g., "Day 7/19")
+     *  - tooltip: full details shown on hover (dates, totals)
+     *  - pct:     % of business days completed (for optional progress bars)
+     *  - pctShow: whether pct is meaningful for current phase
+     *  - subtitle: legacy detail line (still populated)
+     */
     computeCountdown(){
-      // Converts schedule (from uat.json) into a clear leadership-friendly badge.
       const sch = this.raw.schedule || {};
-      const cal = BizCal(sch);                    // use modular helper
+      const cal = BizCal(sch);              // uses timezone/holidays if provided
       const { start, end } = cal;
 
+      // Missing or invalid schedule
       if(!start || !end){
-        this.countdown = { title:'UAT Days', label:'—', pct:0, pctShow:false, subtitle:'(dates missing)' };
+        this.countdown = {
+          title:'UAT Days',
+          label:'—',
+          compact:'—',
+          tooltip:'UAT dates not configured',
+          pct:0, pctShow:false,
+          subtitle:'(dates missing)'
+        };
         return;
       }
 
@@ -538,58 +561,75 @@ function app(){
       const beforeStart = today < start;
       const afterEnd    = today > end;
 
-      // PRE-UAT: Show business days until the first business day within window
-      if(beforeStart){
+      // 1) PRE-UAT — show business days until first run day
+      if (beforeStart){
         let firstRun = new Date(start);
-        while(!cal.isBusiness(firstRun)) firstRun = new Date(firstRun.getTime()+86400000);
+        while(!cal.isBusiness(firstRun)) firstRun = new Date(firstRun.getTime() + 86400000);
 
-        // Count business days from tomorrow until firstRun (inclusive)
+        // Business days from tomorrow until (and including) firstRun
         let daysUntil = 0;
-        for(let d = new Date(today.getTime()+86400000); d <= firstRun; d = new Date(d.getTime()+86400000)){
-          if(cal.isBusiness(d)) daysUntil++;
+        for (let d = new Date(today.getTime()+86400000); d <= firstRun; d = new Date(d.getTime()+86400000)){
+          if (cal.isBusiness(d)) daysUntil++;
         }
-        const calDays = Math.ceil((firstRun - today)/86400000);
+
+        // Calendar days to start for extra clarity in tooltip
+        const calDays = Math.ceil((firstRun - today) / 86400000);
+
         this.countdown = {
-          title:'UAT Days',
-          label: `Starts in ${daysUntil} business day${daysUntil===1?'':'s'}`,
-          pct: 0, pctShow:false,
-          subtitle: `${cal.formatDay(start)} – ${cal.formatDay(end)} · ${total} working days (${calDays} calendar days to start)`
+          title:   'UAT Days',
+          label:   `Starts in ${daysUntil} business day${daysUntil===1?'':'s'}`,
+          compact: `Starts in ${daysUntil} biz day${daysUntil===1?'':'s'}`,
+          tooltip: `${cal.formatDay(start)} – ${cal.formatDay(end)} · ${total} working days\n${calDays} calendar days to start`,
+          pct:     0,
+          pctShow: false,
+          subtitle:`${cal.formatDay(start)} – ${cal.formatDay(end)} · ${total} working days (${calDays} calendar days to start)`
         };
         return;
       }
 
-      // POST-UAT: Completed
-      if(afterEnd){
+      // 2) POST-UAT — completed
+      if (afterEnd){
         this.countdown = {
-          title:'UAT Days',
-          label:'Completed',
-          pct:100, pctShow:true,
+          title:   'UAT Days',
+          label:   'Completed',
+          compact: 'Completed',
+          tooltip: `Ran ${cal.formatDay(start)} – ${cal.formatDay(end)} · ${total} working days`,
+          pct:     100,
+          pctShow: true,
           subtitle:`${total}/${total} working days · Ran ${cal.formatDay(start)} – ${cal.formatDay(end)}`
         };
         return;
       }
 
-      // INSIDE WINDOW: paused vs active
-      if(!cal.isBusiness(today)){
-        const lastBizIndex = cal.indexFor(new Date(today.getTime()-86400000));
+      // 3) INSIDE WINDOW, but NON-BUSINESS DAY — paused
+      if (!cal.isBusiness(today)){
+        const lastBizIndex = cal.indexFor(new Date(today.getTime() - 86400000)); // how many completed
         const next = cal.nextBusinessAfter(today);
-        const pct = Math.max(0, Math.min(100, (lastBizIndex/total)*100));
+        const pct = Math.max(0, Math.min(100, (lastBizIndex / total) * 100));
+
         this.countdown = {
-          title:'UAT Days',
-          label:`Paused · resumes ${cal.formatDay(next)}`,
-          pct, pctShow:true,
+          title:   'UAT Days',
+          label:   `Paused · resumes ${cal.formatDay(next)}`,
+          compact: `Paused · resumes ${cal.formatDay(next)}`,
+          tooltip: `Completed day ${lastBizIndex} of ${total}\n${cal.formatDay(start)} – ${cal.formatDay(end)}`,
+          pct,
+          pctShow: true,
           subtitle:`Completed day ${lastBizIndex} of ${total}`
         };
         return;
       }
 
-      // ACTIVE business day
-      const dayIdx = cal.indexFor(today); // 1-based index
-      const pct = Math.max(0, Math.min(100, (dayIdx/total)*100));
+      // 4) ACTIVE BUSINESS DAY — show day counter
+      const dayIdx = cal.indexFor(today); // 1-based index of current business day
+      const pct    = Math.max(0, Math.min(100, (dayIdx / total) * 100));
+
       this.countdown = {
-        title:'UAT Days',
-        label:`Day ${dayIdx} of ${total}`,
-        pct, pctShow:true,
+        title:   'UAT Days',
+        label:   `Day ${dayIdx} of ${total}`,
+        compact: `Day ${dayIdx}/${total}`,
+        tooltip: `${cal.formatDay(start)} – ${cal.formatDay(end)} · ${total} working days`,
+        pct,
+        pctShow: true,
         subtitle:`${cal.formatDay(start)} – ${cal.formatDay(end)} · ${total} working days`
       };
     },
@@ -692,6 +732,11 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 -->
+
+<!-- ===== Footer (discreet author attribution) ===== -->
+<footer class="mt-10 pb-6 text-center text-xs text-slate-400 opacity-70 select-none">
+  <span>Author: Ildefonso Molinero</span>
+</footer>
 
 </body>
 </html>
