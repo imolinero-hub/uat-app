@@ -96,7 +96,7 @@
       "summary": "Translation missing for 'Add to Cart' button (IT)",
       "reporter": "Juan",
       "team": "Localization",
-      "platform": "Web",
+      "platform": "BOSS",
       "status": "Open",
       "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-22058"
     }
