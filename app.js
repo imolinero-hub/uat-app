@@ -1,13 +1,11 @@
-/* UAT Dashboard — app.js (CDN-friendly)
- * - No Tailwind @apply anywhere (all utilities inline in HTML)
- * - Chart.js instances reused/destroyed (no growth)
- * - Theme toggle (default light) stored in localStorage
+/* UAT Dashboard — app.js (guarded init + stable charts)
  * Author: Ildefonso Molinero
  */
 
 window.app = function () {
   return {
     // ---------- State ----------
+    _inited: false,
     raw: {},
     filtered: {},
     platforms: [],
@@ -29,6 +27,9 @@ window.app = function () {
 
     // ---------- Lifecycle ----------
     async init () {
+      // prevent double run (can happen with SW or re-hydration)
+      if (this._inited) return; this._inited = true;
+
       this.applyTheme();
       await this.loadData();
       this.buildFilters();
@@ -140,6 +141,17 @@ window.app = function () {
 
     // ---------- Charts ----------
     buildCharts () {
+      const baseOpts = {
+        parsing:false,
+        responsive:true,
+        maintainAspectRatio:false,
+        animation:false,
+        resizeDelay: 200,           // avoid RO resize loops
+        devicePixelRatio: 1,        // stable sizing on some devices
+        plugins:{ legend:{display:true} },
+        scales:{ x:{ ticks:{maxRotation:0,autoSkip:true} } }
+      };
+
       const eCtx = document.getElementById('execChart').getContext('2d');
       const dCtx = document.getElementById('defectChart').getContext('2d');
 
@@ -150,11 +162,7 @@ window.app = function () {
           { label:'Executed %', data:[], borderColor:'#3b82f6', backgroundColor:'#3b82f6', fill:false, tension:0.25, borderWidth:2, pointRadius:2 },
           { label:'Pass %',     data:[], borderColor:'#8b5cf6', backgroundColor:'#8b5cf6', fill:false, tension:0.25, borderWidth:2, pointRadius:2 }
         ]},
-        options: {
-          parsing:false, responsive:true, maintainAspectRatio:false, animation:false,
-          scales:{ y:{min:0,max:100,ticks:{callback:v=>v+'%'}}, x:{ticks:{maxRotation:0,autoSkip:true}} },
-          plugins:{ legend:{display:true} }
-        }
+        options: { ...baseOpts, scales:{ ...baseOpts.scales, y:{min:0,max:100,ticks:{callback:v=>v+'%'}} } }
       });
 
       if (this.defectChart) this.defectChart.destroy();
@@ -163,11 +171,7 @@ window.app = function () {
         data: { labels: [], datasets: [
           { label:'Open defects', data:[], borderColor:'#22c55e', backgroundColor:'#22c55e', fill:false, tension:0.25, borderWidth:2, pointRadius:2 }
         ]},
-        options: {
-          parsing:false, responsive:true, maintainAspectRatio:false, animation:false,
-          scales:{ y:{beginAtZero:true,ticks:{precision:0}}, x:{ticks:{maxRotation:0,autoSkip:true}} },
-          plugins:{ legend:{display:true} }
-        }
+        options: { ...baseOpts, scales:{ ...baseOpts.scales, y:{ beginAtZero:true, ticks:{ precision:0 } } } }
       });
     },
 

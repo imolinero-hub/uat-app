@@ -1,187 +1,224 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>UAT Dashboard</title>
+/* UAT Dashboard — app.js (guarded init + stable charts)
+ * Author: Ildefonso Molinero
+ */
 
-  <!-- Tailwind config (dark mode toggled by class) -->
-  <script> tailwind = { config: { darkMode: 'class' } };</script>
-  <script src="https://cdn.tailwindcss.com"></script>
+window.app = function () {
+  return {
+    // ---------- State ----------
+    _inited: false,
+    raw: {},
+    filtered: {},
+    platforms: [],
+    filters: { platform: 'ALL' },
 
-  <!-- Chart.js + date adapter -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
+    kpis: { inScope: 0, executedPct: 0, passPct: 0, openDefects: 0, critical: 0 },
+    countdown: { compact: '—', tooltip: 'UAT dates not configured', pctShow: false },
+    health: { label: '—', dotClass: '', tooltip: '' },
 
-  <!-- Your app FIRST -->
-  <script defer src="./app.js?v=4"></script>
-  <!-- Alpine AFTER app -->
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.1/dist/cdn.min.js"></script>
+    issues: [],
+    infoHtml: '',
+    showInfo: false,
 
-  <link rel="icon" href="favicon.ico" />
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
-</head>
+    execChart: null,
+    defectChart: null,
+    lastUpdate: '',
 
-<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100">
-  <div x-data="app()" class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    theme: { mode: localStorage.getItem('theme') || 'light' },
 
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="text-2xl">✨</div>
-        <div>
-          <h1 class="text-2xl font-semibold">UAT Dashboard</h1>
-          <div class="text-sm text-slate-500 dark:text-slate-400">
-            <span class="mr-2">RI-4</span> •
-            <span class="ml-2">Last update: <span x-text="lastUpdate || '—'"></span></span>
-          </div>
-        </div>
-      </div>
+    // ---------- Lifecycle ----------
+    async init () {
+      // prevent double run (can happen with SW or re-hydration)
+      if (this._inited) return; this._inited = true;
 
-      <div class="flex flex-wrap items-center gap-2">
-        <!-- Countdown chip -->
-        <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm border border-slate-200 bg-white shadow-sm dark:bg-slate-900 dark:border-slate-700"
-             :title="countdown.tooltip">
-          <span>🗓️</span><span x-text="countdown.compact">—</span>
-        </div>
+      this.applyTheme();
+      await this.loadData();
+      this.buildFilters();
+      this.applyFilters();
+      this.computeKPIs();
+      this.computeHealth();
+      this.computeCountdown();
+      this.buildCharts();
+      this.updateCharts();
+    },
 
-        <!-- RAG chip -->
-        <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm border border-slate-200 bg-white shadow-sm dark:bg-slate-900 dark:border-slate-700"
-             :title="health.tooltip">
-          <span class="inline-block w-2.5 h-2.5 rounded-full"
-                :class="{'bg-emerald-500': health.dotClass==='dot-G',
-                         'bg-amber-500': health.dotClass==='dot-A',
-                         'bg-rose-500':   health.dotClass==='dot-R'}"></span>
-          <span x-text="health.label">—</span>
-        </div>
+    // ---------- Data ----------
+    async loadData () {
+      try {
+        const res = await fetch('./uat.json?' + Date.now());
+        this.raw = await res.json();
+      } catch (e) {
+        console.error('Failed to load uat.json', e);
+        this.raw = {};
+      }
 
-        <!-- Platform filter -->
-        <select class="rounded-full px-4 py-2 text-sm border border-slate-200 bg-white shadow-sm dark:bg-slate-900 dark:border-slate-700"
-                x-model="filters.platform" @change="applyFilters()">
-          <template x-for="p in platforms" :key="p">
-            <option :value="p" x-text="p"></option>
-          </template>
-        </select>
+      try {
+        if (this.raw.infoUrl) {
+          const md = await fetch(this.raw.infoUrl).then(r => r.ok ? r.text() : '');
+          this.infoHtml = this.mdToHtml(md);
+        }
+      } catch { /* ignore */ }
 
-        <!-- Info -->
-        <button class="rounded-full px-4 py-2 text-sm border border-slate-200 bg-white shadow-sm hover:bg-slate-50
-                       dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800"
-                @click="showInfo=true">ℹ️ Info</button>
+      this.lastUpdate = this.raw?.overview?.lastUpdate || '';
+    },
 
-        <!-- AI Daily Status -->
-        <button class="rounded-full px-4 py-2 text-sm text-white bg-indigo-600 border border-indigo-600 shadow-sm hover:bg-indigo-500">
-          AI Daily Status
-        </button>
+    // ---------- Filters ----------
+    buildFilters () {
+      const set = new Set();
+      (this.raw.progressDaily || []).forEach(r => set.add(r.platform || 'ALL'));
+      (this.raw.defectsDaily  || []).forEach(r => set.add(r.platform || 'ALL'));
+      (this.raw.issues        || []).forEach(r => set.add(r.platform || 'ALL'));
+      const arr = [...set].filter(Boolean).sort();
+      if (!arr.includes('ALL')) arr.unshift('ALL');
+      this.platforms = arr;
+      if (!this.platforms.includes(this.filters.platform)) this.filters.platform = 'ALL';
+    },
 
-        <!-- Theme toggle (default light) -->
-        <button class="rounded-full px-4 py-2 text-sm border border-slate-200 bg-white shadow-sm hover:bg-slate-50
-                       dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800"
-                @click="toggleTheme()" :title="theme.mode==='dark'?'Light mode':'Dark mode'">
-          <span x-show="theme.mode!=='dark'">🌙</span>
-          <span x-show="theme.mode==='dark'">☀️</span>
-        </button>
-      </div>
-    </div>
+    applyFilters () {
+      const p = this.filters.platform;
+      const same = r => p === 'ALL' || (r.platform || 'ALL') === p;
+      this.filtered.progressDaily = (this.raw.progressDaily || []).filter(same);
+      this.filtered.defectsDaily  = (this.raw.defectsDaily  || []).filter(same);
+      this.issues = (this.raw.issues || [])
+        .filter(i => ['Blocker','Critical'].includes(i.priority))
+        .filter(same);
+      this.computeKPIs();
+      this.computeHealth();
+      this.updateCharts();
+    },
 
-    <!-- KPIs -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-      <div class="rounded-2xl bg-white shadow-sm border border-slate-200 p-6 dark:bg-slate-900 dark:border-slate-700">
-        <div class="text-sm text-slate-500">In Scope</div>
-        <div class="text-3xl font-semibold" x-text="kpis.inScope?.toLocaleString() || '—'"></div>
-      </div>
-      <div class="rounded-2xl bg-white shadow-sm border border-slate-200 p-6 dark:bg-slate-900 dark:border-slate-700">
-        <div class="text-sm text-slate-500">Executed %</div>
-        <div class="text-3xl font-semibold" x-text="fmtPct(kpis.executedPct)"></div>
-      </div>
-      <div class="rounded-2xl bg-white shadow-sm border border-slate-200 p-6 dark:bg-slate-900 dark:border-slate-700">
-        <div class="text-sm text-slate-500">Pass %</div>
-        <div class="text-3xl font-semibold" x-text="fmtPct(kpis.passPct)"></div>
-      </div>
-      <div class="rounded-2xl bg-white shadow-sm border border-slate-200 p-6 dark:bg-slate-900 dark:border-slate-700">
-        <div class="text-sm text-slate-500">Open Defects</div>
-        <div class="text-3xl font-semibold" x-text="kpis.openDefects ?? '—'"></div>
-      </div>
-      <div class="rounded-2xl bg-white shadow-sm border border-slate-200 p-6 dark:bg-slate-900 dark:border-slate-700">
-        <div class="text-sm text-slate-500">Blocker / Critical</div>
-        <div class="text-3xl font-semibold" x-text="kpis.critical ?? '—'"></div>
-      </div>
-    </div>
+    // ---------- KPIs / Health / Countdown ----------
+    computeKPIs () {
+      this.kpis.inScope = Number(this.raw?.overview?.inScope || 0);
 
-    <!-- Charts -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <div class="rounded-2xl bg-white shadow-sm border border-slate-200 p-4 dark:bg-slate-900 dark:border-slate-700">
-        <div class="flex items-center justify-between">
-          <h3 class="font-semibold">Execution Over Time</h3>
-          <div class="text-sm text-slate-500">Executed% · Pass%</div>
-        </div>
-        <div class="relative h-72 mt-2"><canvas id="execChart"></canvas></div>
-      </div>
+      const pList = this.filtered.progressDaily?.length ? this.filtered.progressDaily : (this.raw.progressDaily || []);
+      if (pList.length) {
+        const last = pList[pList.length - 1];
+        this.kpis.executedPct = Number(last.executedPct || 0);
+        this.kpis.passPct     = Number(last.passPct || 0);
+      } else {
+        this.kpis.executedPct = 0; this.kpis.passPct = 0;
+      }
 
-      <div class="rounded-2xl bg-white shadow-sm border border-slate-200 p-4 dark:bg-slate-900 dark:border-slate-700">
-        <div class="flex items-center justify-between">
-          <h3 class="font-semibold">Defect Burndown</h3>
-          <div class="text-sm text-slate-500">Open defects</div>
-        </div>
-        <div class="relative h-72 mt-2"><canvas id="defectChart"></canvas></div>
-      </div>
-    </div>
+      const dList = this.filtered.defectsDaily?.length ? this.filtered.defectsDaily : (this.raw.defectsDaily || []);
+      this.kpis.openDefects = dList.length ? Number(dList[dList.length - 1].openDefects || 0) : 0;
 
-    <!-- Issues table -->
-    <div class="rounded-2xl bg-white shadow-sm border border-slate-200 dark:bg-slate-900 dark:border-slate-700">
-      <div class="p-4 border-b border-slate-200 dark:border-slate-700">
-        <h3 class="font-semibold">Blocker / Critical Defects</h3>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead>
-            <tr class="text-left text-slate-500">
-              <th class="px-4 py-2">Key</th>
-              <th class="px-4 py-2">Priority</th>
-              <th class="px-4 py-2">Summary</th>
-              <th class="px-4 py-2">Reporter</th>
-              <th class="px-4 py-2">Team</th>
-              <th class="px-4 py-2">Platform</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template x-for="iss in issues" :key="iss.key">
-              <tr class="border-t border-slate-100 dark:border-slate-800">
-                <td class="px-4 py-2">
-                  <a class="text-indigo-600 hover:underline" :href="iss.link" target="_blank" rel="noopener" x-text="iss.key"></a>
-                </td>
-                <td class="px-4 py-2" x-text="iss.priority"></td>
-                <td class="px-4 py-2" x-text="iss.summary"></td>
-                <td class="px-4 py-2" x-text="iss.reporter"></td>
-                <td class="px-4 py-2" x-text="iss.team"></td>
-                <td class="px-4 py-2" x-text="iss.platform"></td>
-              </tr>
-            </template>
-          </tbody>
-        </table>
-      </div>
-    </div>
+      this.kpis.critical = this.issues.length;
+    },
 
-    <!-- Author -->
-    <footer class="text-center text-xs text-slate-500 dark:text-slate-400 opacity-80 pt-4 pb-8">
-      Author: Ildefonso Molinero
-    </footer>
+    computeHealth () {
+      const p = this.filters.platform;
+      const list = (this.raw.dailyStatus || [])
+        .filter(r => p === 'ALL' || r.platform === p)
+        .sort((a,b)=>a.date.localeCompare(b.date));
 
-    <!-- Info modal -->
-    <div x-show="showInfo" x-transition.opacity
-         class="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4"
-         @click.self="showInfo=false" style="display:none">
-      <div class="rounded-2xl bg-white shadow-sm border border-slate-200 p-6 max-w-2xl w-full dark:bg-slate-900 dark:border-slate-700">
-        <div class="flex justify-between items-center mb-3">
-          <h3 class="font-semibold">UAT Overview</h3>
-          <button class="rounded-full px-3 py-1 text-sm border border-slate-200 bg-white shadow-sm hover:bg-slate-50
-                         dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800"
-                  @click="showInfo=false">Close</button>
-        </div>
-        <div class="prose prose-slate max-w-none text-sm dark:prose-invert" x-html="infoHtml || '<p>No info available.</p>'"></div>
-      </div>
-    </div>
+      let rag='G', reason='On track';
+      if (list.length) { rag=(list[list.length-1].rag||'G').toUpperCase(); reason=list[list.length-1].reason||reason; }
+      this.health.dotClass = (rag==='G')?'dot-G':(rag==='A')?'dot-A':'dot-R';
+      this.health.label    = (rag==='G')?'On track':(rag==='A')?'At risk':'Critical';
+      this.health.tooltip  = reason;
+    },
 
-  </div>
-</body>
-</html>
+    computeCountdown () {
+      const s = this.raw?.schedule?.start;
+      const e = this.raw?.schedule?.end;
+      if (!s || !e) { this.countdown = { compact:'—', tooltip:'UAT dates not configured', pctShow:false }; return; }
+      const start = new Date(s), end = new Date(e), today = new Date(); today.setHours(0,0,0,0);
+      const isBiz = d => d.getDay()!==0 && d.getDay()!==6;
+      const bizBetween = (a,b)=>{const step=a<b?1:-1;let n=0,d=new Date(a);while((step>0&&d<b)||(step<0&&d>b)){if(isBiz(d))n++;d.setDate(d.getDate()+step);}return n;};
+
+      if (today < start) {
+        const biz = bizBetween(today,start), cal = Math.ceil((start-today)/86400000);
+        this.countdown = { compact:`Starts in ${biz} biz days`, tooltip:`${s} → ${e} · ${biz} working days (${cal} calendar days to start)`, pctShow:false };
+      } else if (today > end) {
+        this.countdown = { compact:'Finished', tooltip:`${s} → ${e} · done`, pctShow:false };
+      } else {
+        const total = bizBetween(start,end) + (isBiz(end)?1:0);
+        let day=0,d=new Date(start); while(d<=today){ if(isBiz(d)) day++; d.setDate(d.getDate()+1); }
+        const pct = Math.round((day/total)*100);
+        this.countdown = { compact:`Day ${day} of ${total}`, tooltip:`${s} → ${e} · ${pct}% elapsed`, pctShow:true };
+      }
+    },
+
+    // ---------- Charts ----------
+    buildCharts () {
+      const baseOpts = {
+        parsing:false,
+        responsive:true,
+        maintainAspectRatio:false,
+        animation:false,
+        resizeDelay: 200,           // avoid RO resize loops
+        devicePixelRatio: 1,        // stable sizing on some devices
+        plugins:{ legend:{display:true} },
+        scales:{ x:{ ticks:{maxRotation:0,autoSkip:true} } }
+      };
+
+      const eCtx = document.getElementById('execChart').getContext('2d');
+      const dCtx = document.getElementById('defectChart').getContext('2d');
+
+      if (this.execChart) this.execChart.destroy();
+      this.execChart = new Chart(eCtx, {
+        type: 'line',
+        data: { labels: [], datasets: [
+          { label:'Executed %', data:[], borderColor:'#3b82f6', backgroundColor:'#3b82f6', fill:false, tension:0.25, borderWidth:2, pointRadius:2 },
+          { label:'Pass %',     data:[], borderColor:'#8b5cf6', backgroundColor:'#8b5cf6', fill:false, tension:0.25, borderWidth:2, pointRadius:2 }
+        ]},
+        options: { ...baseOpts, scales:{ ...baseOpts.scales, y:{min:0,max:100,ticks:{callback:v=>v+'%'}} } }
+      });
+
+      if (this.defectChart) this.defectChart.destroy();
+      this.defectChart = new Chart(dCtx, {
+        type: 'line',
+        data: { labels: [], datasets: [
+          { label:'Open defects', data:[], borderColor:'#22c55e', backgroundColor:'#22c55e', fill:false, tension:0.25, borderWidth:2, pointRadius:2 }
+        ]},
+        options: { ...baseOpts, scales:{ ...baseOpts.scales, y:{ beginAtZero:true, ticks:{ precision:0 } } } }
+      });
+    },
+
+    computeSeries () {
+      const p = this.filtered.progressDaily?.length ? this.filtered.progressDaily : (this.raw.progressDaily || []);
+      const d = this.filtered.defectsDaily?.length  ? this.filtered.defectsDaily  : (this.raw.defectsDaily  || []);
+      return {
+        labels:  p.map(r => r.date),
+        exec:    p.map(r => Number(r.executedPct || 0)),
+        pass:    p.map(r => Number(r.passPct || 0)),
+        dLabels: d.map(r => r.date),
+        open:    d.map(r => Number(r.openDefects || 0))
+      };
+    },
+
+    updateCharts () {
+      if (!this.execChart || !this.defectChart) return;
+      const { labels, exec, pass, dLabels, open } = this.computeSeries();
+      this.execChart.data.labels = labels;
+      this.execChart.data.datasets[0].data = exec;
+      this.execChart.data.datasets[1].data = pass;
+      this.execChart.update('none');
+
+      this.defectChart.data.labels = dLabels;
+      this.defectChart.data.datasets[0].data = open;
+      this.defectChart.update('none');
+    },
+
+    // ---------- Theme ----------
+    applyTheme(){ document.documentElement.classList.toggle('dark', this.theme.mode==='dark'); },
+    toggleTheme(){ this.theme.mode = (this.theme.mode==='dark') ? 'light':'dark'; localStorage.setItem('theme', this.theme.mode); this.applyTheme(); },
+
+    // ---------- Utils ----------
+    fmtPct (n) { const v=Number(n??0); return isFinite(v)?`${v}%`:'—'; },
+    mdToHtml (md='') {
+      if (!md) return '';
+      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+      const html = esc(md)
+        .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+        .split('\n\n').map(b=>{
+          if (b.startsWith('- ')) {
+            const items=b.split('\n').map(l=>`<li>${l.replace(/^- /,'')}</li>`).join('');
+            return `<ul class="list-disc pl-5 space-y-1">${items}</ul>`;
+          }
+          return `<p>${b.replace(/\n/g,'<br>')}</p>`;
+        }).join('');
+      return html;
+    }
+  };
+};
