@@ -5,129 +5,130 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>UAT Dashboard</title>
 
-  <!-- Tailwind config: dark mode via "dark" class (default = light) -->
-  <script>
-    tailwind = { config: { darkMode: 'class' } };
-  </script>
-  <!-- Tailwind (CDN) -->
+  <!-- Tailwind config (dark mode toggled by class) -->
+  <script> tailwind = { config: { darkMode: 'class' } };</script>
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- Chart.js + date adapter -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
 
-  <!-- Your app code FIRST (so x-data='app()' can call it) -->
-  <script defer src="./app.js?v=3"></script>
-
-  <!-- Alpine AFTER your app -->
+  <!-- Your app FIRST -->
+  <script defer src="./app.js?v=4"></script>
+  <!-- Alpine AFTER app -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.1/dist/cdn.min.js"></script>
 
   <link rel="icon" href="favicon.ico" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="./icons/icon-192.png" />
-  <style>
-    /* small helpers used by the chips/buttons */
-    .pill     { @apply rounded-full px-3 py-1 text-sm border border-slate-200 bg-white shadow-sm; }
-    .pill-lg  { @apply rounded-full px-4 py-2 text-sm border border-slate-200 bg-white shadow-sm; }
-    .card     { @apply rounded-2xl bg-white shadow-sm border border-slate-200; }
-    .card-d   { @apply rounded-2xl bg-slate-900 text-slate-100 shadow-sm border border-slate-700; }
-    html.dark .card { @apply bg-slate-900 text-slate-100 border-slate-700; }
-    .kpi      { @apply card p-6; }
-    .chip     { @apply pill inline-flex items-center gap-2; }
-    .dot      { @apply inline-block w-2.5 h-2.5 rounded-full; }
-    .dot-G    { background:#22c55e; }
-    .dot-A    { background:#f59e0b; }
-    .dot-R    { background:#ef4444; }
-  </style>
 </head>
 
 <body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100">
   <div x-data="app()" x-init="init()" class="max-w-7xl mx-auto px-4 py-6 space-y-6">
 
-    <!-- Header row -->
+    <!-- Header -->
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
         <div class="text-2xl">✨</div>
         <div>
           <h1 class="text-2xl font-semibold">UAT Dashboard</h1>
           <div class="text-sm text-slate-500 dark:text-slate-400">
-            <span class="mr-2">RI-4</span>
-            •
+            <span class="mr-2">RI-4</span> •
             <span class="ml-2">Last update: <span x-text="lastUpdate || '—'"></span></span>
           </div>
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
-        <!-- Countdown -->
-        <div class="chip" :title="countdown.tooltip">
-          <span>🗓️</span>
-          <span x-text="countdown.compact">–</span>
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- Countdown chip -->
+        <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm border border-slate-200 bg-white shadow-sm dark:bg-slate-900 dark:border-slate-700"
+             :title="countdown.tooltip">
+          <span>🗓️</span><span x-text="countdown.compact">—</span>
         </div>
 
-        <!-- RAG health -->
-        <div class="chip" :title="health.tooltip">
-          <span :class="['dot', health.dotClass]"></span>
-          <span x-text="health.label">–</span>
+        <!-- RAG chip -->
+        <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm border border-slate-200 bg-white shadow-sm dark:bg-slate-900 dark:border-slate-700"
+             :title="health.tooltip">
+          <span class="inline-block w-2.5 h-2.5 rounded-full"
+                :class="{'bg-emerald-500': health.dotClass==='dot-G',
+                         'bg-amber-500': health.dotClass==='dot-A',
+                         'bg-rose-500':   health.dotClass==='dot-R'}"></span>
+          <span x-text="health.label">—</span>
         </div>
 
         <!-- Platform filter -->
-        <select class="pill-lg" x-model="filters.platform" @change="applyFilters()">
+        <select class="rounded-full px-4 py-2 text-sm border border-slate-200 bg-white shadow-sm dark:bg-slate-900 dark:border-slate-700"
+                x-model="filters.platform" @change="applyFilters()">
           <template x-for="p in platforms" :key="p">
             <option :value="p" x-text="p"></option>
           </template>
         </select>
 
         <!-- Info -->
-        <button class="pill-lg" @click="showInfo=true">ℹ️ Info</button>
+        <button class="rounded-full px-4 py-2 text-sm border border-slate-200 bg-white shadow-sm hover:bg-slate-50
+                       dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800"
+                @click="showInfo=true">ℹ️ Info</button>
 
-        <!-- AI Daily Status (placeholder) -->
-        <button class="pill-lg bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-500">
+        <!-- AI Daily Status -->
+        <button class="rounded-full px-4 py-2 text-sm text-white bg-indigo-600 border border-indigo-600 shadow-sm hover:bg-indigo-500">
           AI Daily Status
         </button>
 
         <!-- Theme toggle (default light) -->
-        <button class="pill-lg" @click="toggleTheme()" :title="theme.mode==='dark'?'Light mode':'Dark mode'">
+        <button class="rounded-full px-4 py-2 text-sm border border-slate-200 bg-white shadow-sm hover:bg-slate-50
+                       dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800"
+                @click="toggleTheme()" :title="theme.mode==='dark'?'Light mode':'Dark mode'">
           <span x-show="theme.mode!=='dark'">🌙</span>
           <span x-show="theme.mode==='dark'">☀️</span>
         </button>
       </div>
     </div>
 
-    <!-- KPI row -->
+    <!-- KPIs -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-      <div class="kpi"><div class="text-sm text-slate-500">In Scope</div><div class="text-3xl font-semibold" x-text="kpis.inScope?.toLocaleString() || '—'"></div></div>
-      <div class="kpi"><div class="text-sm text-slate-500">Executed %</div><div class="text-3xl font-semibold" x-text="fmtPct(kpis.executedPct)"></div></div>
-      <div class="kpi"><div class="text-sm text-slate-500">Pass %</div><div class="text-3xl font-semibold" x-text="fmtPct(kpis.passPct)"></div></div>
-      <div class="kpi"><div class="text-sm text-slate-500">Open Defects</div><div class="text-3xl font-semibold" x-text="kpis.openDefects ?? '—'"></div></div>
-      <div class="kpi"><div class="text-sm text-slate-500">Blocker / Critical</div><div class="text-3xl font-semibold" x-text="kpis.critical ?? '—'"></div></div>
+      <div class="rounded-2xl bg-white shadow-sm border border-slate-200 p-6 dark:bg-slate-900 dark:border-slate-700">
+        <div class="text-sm text-slate-500">In Scope</div>
+        <div class="text-3xl font-semibold" x-text="kpis.inScope?.toLocaleString() || '—'"></div>
+      </div>
+      <div class="rounded-2xl bg-white shadow-sm border border-slate-200 p-6 dark:bg-slate-900 dark:border-slate-700">
+        <div class="text-sm text-slate-500">Executed %</div>
+        <div class="text-3xl font-semibold" x-text="fmtPct(kpis.executedPct)"></div>
+      </div>
+      <div class="rounded-2xl bg-white shadow-sm border border-slate-200 p-6 dark:bg-slate-900 dark:border-slate-700">
+        <div class="text-sm text-slate-500">Pass %</div>
+        <div class="text-3xl font-semibold" x-text="fmtPct(kpis.passPct)"></div>
+      </div>
+      <div class="rounded-2xl bg-white shadow-sm border border-slate-200 p-6 dark:bg-slate-900 dark:border-slate-700">
+        <div class="text-sm text-slate-500">Open Defects</div>
+        <div class="text-3xl font-semibold" x-text="kpis.openDefects ?? '—'"></div>
+      </div>
+      <div class="rounded-2xl bg-white shadow-sm border border-slate-200 p-6 dark:bg-slate-900 dark:border-slate-700">
+        <div class="text-sm text-slate-500">Blocker / Critical</div>
+        <div class="text-3xl font-semibold" x-text="kpis.critical ?? '—'"></div>
+      </div>
     </div>
 
     <!-- Charts -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <div class="card p-4">
+      <div class="rounded-2xl bg-white shadow-sm border border-slate-200 p-4 dark:bg-slate-900 dark:border-slate-700">
         <div class="flex items-center justify-between">
           <h3 class="font-semibold">Execution Over Time</h3>
           <div class="text-sm text-slate-500">Executed% · Pass%</div>
         </div>
-        <div class="relative h-72 mt-2">
-          <canvas id="execChart"></canvas>
-        </div>
+        <div class="relative h-72 mt-2"><canvas id="execChart"></canvas></div>
       </div>
 
-      <div class="card p-4">
+      <div class="rounded-2xl bg-white shadow-sm border border-slate-200 p-4 dark:bg-slate-900 dark:border-slate-700">
         <div class="flex items-center justify-between">
           <h3 class="font-semibold">Defect Burndown</h3>
           <div class="text-sm text-slate-500">Open defects</div>
         </div>
-        <div class="relative h-72 mt-2">
-          <canvas id="defectChart"></canvas>
-        </div>
+        <div class="relative h-72 mt-2"><canvas id="defectChart"></canvas></div>
       </div>
     </div>
 
     <!-- Issues table -->
-    <div class="card">
+    <div class="rounded-2xl bg-white shadow-sm border border-slate-200 dark:bg-slate-900 dark:border-slate-700">
       <div class="p-4 border-b border-slate-200 dark:border-slate-700">
         <h3 class="font-semibold">Blocker / Critical Defects</h3>
       </div>
@@ -161,7 +162,7 @@
       </div>
     </div>
 
-    <!-- Footer -->
+    <!-- Author -->
     <footer class="text-center text-xs text-slate-500 dark:text-slate-400 opacity-80 pt-4 pb-8">
       Author: Ildefonso Molinero
     </footer>
@@ -170,12 +171,14 @@
     <div x-show="showInfo" x-transition.opacity
          class="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4"
          @click.self="showInfo=false" style="display:none">
-      <div class="card max-w-2xl w-full p-6">
+      <div class="rounded-2xl bg-white shadow-sm border border-slate-200 p-6 max-w-2xl w-full dark:bg-slate-900 dark:border-slate-700">
         <div class="flex justify-between items-center mb-3">
           <h3 class="font-semibold">UAT Overview</h3>
-          <button class="pill" @click="showInfo=false">Close</button>
+          <button class="rounded-full px-3 py-1 text-sm border border-slate-200 bg-white shadow-sm hover:bg-slate-50
+                         dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800"
+                  @click="showInfo=false">Close</button>
         </div>
-        <div class="prose prose-slate max-w-none text-sm" x-html="infoHtml || '<p>No info available.</p>'"></div>
+        <div class="prose prose-slate max-w-none text-sm dark:prose-invert" x-html="infoHtml || '<p>No info available.</p>'"></div>
       </div>
     </div>
 
