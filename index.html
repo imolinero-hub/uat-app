@@ -37,18 +37,19 @@ Deployment:
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>UAT Dashboard</title>
 
-  <!-- Tailwind (CDN). If your company blocks cdn.tailwindcss.com, you can compile styles locally later. -->
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Chart.js + date adapter (for charts) -->
+  <!-- Chart.js + adapter -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
 
-  <!-- Alpine.js (lightweight state & templating) -->
+  <!-- Your app code FIRST -->
+  <script defer src="./app.js?v=2"></script>
+
+  <!-- Alpine AFTER your app, so x-data="app()" can call it -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.1/dist/cdn.min.js"></script>
 
-  <!-- App logic -->
-  <script defer src="./app.js"></script>
 
   <!-- Your custom styles -->
   <link rel="stylesheet" href="./styles.css" />
