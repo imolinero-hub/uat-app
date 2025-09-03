@@ -6,7 +6,8 @@
  * Author: Ildefonso Molinero
  */
 
-function app(){
+// Expose globally so Alpine can call x-data="app()"
+window.app = function (){
   return {
     // ---------- State ----------
     raw: {},                    // full JSON
@@ -337,9 +338,4 @@ function BizCal({ start, end, timezone='Europe/Berlin', holidays=[] }){
 
   return { start:S, end:E, timezone:tz, isBusiness, businessDays, nextBusinessAfter, indexFor, todayTZ, formatDay };
 }
-
-// Expose Alpine component named "app"
-document.addEventListener('alpine:init', () => {
-  Alpine.data('app', app);   // now you should use x-data="app" (no parentheses)
-});
 
