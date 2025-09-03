@@ -1,223 +1,308 @@
 <!doctype html>
-<!--
-UAT Dashboard – Single-page app for leadership status (mobile-friendly)
-
-Author: Ildefonso Molinero
-Tech: Tailwind (CDN), Alpine.js, Chart.js, static JSON (uat.json)
-Files:
-  • index.html  – markup + lightweight Alpine bindings
-  • styles.css  – custom styles (cards, pills, modals, health colors)
-  • app.js      – data load, filters, KPIs, charts, countdown, health logic
-  • uat.json    – data source (see schema below)
-
-Data contract (uat.json):
-{
-  "overview": { "release": "RI-4", "lastUpdate": "YYYY-MM-DD HH:mm", "inScope": <number> },
-  "schedule": { "start": "YYYY-MM-DD", "end": "YYYY-MM-DD", "timezone": "Europe/Berlin", "holidays": [] },
-  "progressDaily": [{ "date":"YYYY-MM-DD", "platform":"ALL|Web|App|BOSS", "inScope":<num?>, "executedPct":<num>, "passPct":<num> }],
-  "defectsDaily":  [{ "date":"YYYY-MM-DD", "platform":"ALL|Web|App|BOSS", "openDefects":<num> }],
-  "issues":        [{ "key":"UAT-201", "priority":"Blocker|Critical|…", "summary":"...", "reporter":"...", "team":"...", "platform":"...", "status":"Open", "link":"https://..." }],
-  "dailyStatus":   [{ "date":"YYYY-MM-DD", "platform":"ALL|Web|App|BOSS", "rag":"G|A|R", "reason":"...", "by":"..." }],
-  "keyDates":      [{ "label":"Go Live", "date":"YYYY-MM-DD", "notes":"..." }]
-}
-
-UX principles:
-  • Clear KPIs, compact UAT-day pill, R/A/G health pill with tooltip (manual override or auto fallback)
-  • Color + text labels (accessible), responsive layout, small footprint
-Customization:
-  • Colors & components → styles.css
-  • Health rules / thresholds → app.js (_healthMap, computeHealth)
-  • Countdown logic (business days) → app.js (BizCal + computeCountdown)
-Deployment:
-  • Static site friendly (GitHub Pages). Optional PWA (service-worker.js).
--->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>UAT Dashboard</title>
 
-  <!-- Tailwind (CDN). If your company blocks cdn.tailwindcss.com, you can compile styles locally later. -->
+  <!-- Tailwind CDN (OK for internal prototype) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Chart.js + date adapter (for charts) -->
+  <!-- Chart.js + date adapter -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
 
-  <!-- Alpine.js (lightweight state & templating) -->
+  <!-- Alpine -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.1/dist/cdn.min.js"></script>
 
-  <!-- Your custom styles -->
-  <link rel="stylesheet" href="./styles.css" />
+  <style>
+    /* tiny custom styles */
+    .kpi-card { @apply bg-white shadow rounded-xl p-5 dark:bg-slate-800; }
+    .panel    { @apply bg-white shadow rounded-xl p-5 dark:bg-slate-800; }
+    .pill     { @apply text-xs font-medium px-2.5 py-1 rounded-full; }
+    .dot      { @apply inline-block w-2 h-2 rounded-full align-middle mr-2; }
+    .dot-G { background: #22c55e; } .dot-A { background: #f59e0b; } .dot-R { background: #ef4444; }
+  </style>
 </head>
-<body class="bg-slate-50 text-slate-800">
-  <div x-data="app()" x-init="init()" class="mx-auto max-w-7xl px-4 py-6">
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+  <div x-data="app()" class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
     <!-- Header -->
-    <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-      <div class="flex items-start gap-3">
-        <div class="h-9 w-9 flex items-center justify-center rounded-xl bg-blue-100 text-blue-700">✨</div>
+    <header class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-xl">✨</span>
         <div>
           <h1 class="text-2xl font-semibold">UAT Dashboard</h1>
-          <div class="mt-1 text-[12px] text-slate-500 flex items-center gap-2">
-            <span x-text="raw.overview?.release || '—'"></span>
-            <span class="opacity-40">•</span>
-            <span>Last update:</span>
-            <span class="text-slate-700" x-text="lastUpdate || '—'"></span>
+          <div class="text-sm text-slate-500">
+            RI-4 • Last update: <span x-text="lastUpdate || '—'"></span>
           </div>
         </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-3">
-        <!-- Compact countdown pill -->
-        <div class="pill-lg" :title="countdown.tooltip">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" class="mr-2">
-            <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
-            <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          <span class="font-semibold" x-text="countdown.compact"></span>
-        </div>
-
-        <!-- Health pill (R/A/G with tooltip) -->
-        <div class="pill-lg"
-             :class="health.className"
-             :title="health.tooltip">
-          <span class="dot mr-2" :class="health.dotClass"></span>
-          <span class="font-semibold" x-text="health.label"></span>
+      <div class="flex items-center gap-2">
+        <!-- Countdown -->
+        <div class="panel flex items-center gap-2 py-2 px-3">
+          <span>📅</span>
+          <span class="font-medium" x-text="countdown.compact"></span>
+          <span class="pill" :class="health.dotClass"><span class="dot" :class="health.dotClass"></span><span x-text="health.label"></span></span>
         </div>
 
         <!-- Platform filter -->
-        <select class="pill-select" x-model="filters.platform" @change="applyFilters()">
-          <option value="ALL">All platforms</option>
+        <select class="panel py-2 px-3" x-model="filters.platform" @change="applyFilters()">
           <template x-for="p in platforms" :key="p">
             <option :value="p" x-text="p"></option>
           </template>
         </select>
 
         <!-- Info -->
-        <button class="pill-lg" @click="openInfo()">ℹ️ Info</button>
+        <button class="panel py-2 px-3" @click="showInfo = true">ℹ️ Info</button>
 
-        <!-- AI Status -->
-        <button class="btn-primary" @click="openReport()">AI Daily Status</button>
+        <!-- AI daily status (placeholder) -->
+        <button class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl py-2.5 px-4 shadow">
+          AI Daily Status
+        </button>
       </div>
-    </div>
+    </header>
 
     <!-- KPIs -->
-    <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-      <div class="card">
-        <div class="text-sm text-slate-500">In Scope</div>
-        <div class="kpi-value" x-text="kpis.inScope?.toLocaleString() || '—'"></div>
+    <section class="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div class="kpi-card">
+        <div class="text-slate-500 text-sm">In Scope</div>
+        <div class="text-3xl font-semibold" x-text="kpis.inScope?.toLocaleString() || '0'"></div>
       </div>
-      <div class="card">
-        <div class="text-sm text-slate-500">Executed %</div>
-        <div class="kpi-value" x-text="fmtPct(kpis.executedPct)"></div>
+      <div class="kpi-card">
+        <div class="text-slate-500 text-sm">Executed %</div>
+        <div class="text-3xl font-semibold" x-text="fmtPct(kpis.executedPct)"></div>
       </div>
-      <div class="card">
-        <div class="text-sm text-slate-500">Pass %</div>
-        <div class="kpi-value" x-text="fmtPct(kpis.passPct)"></div>
+      <div class="kpi-card">
+        <div class="text-slate-500 text-sm">Pass %</div>
+        <div class="text-3xl font-semibold" x-text="fmtPct(kpis.passPct)"></div>
       </div>
-      <div class="card">
-        <div class="text-sm text-slate-500">Open Defects</div>
-        <div class="kpi-value" x-text="kpis.openDefects ?? '—'"></div>
+      <div class="kpi-card">
+        <div class="text-slate-500 text-sm">Open Defects</div>
+        <div class="text-3xl font-semibold" x-text="kpis.openDefects"></div>
       </div>
-      <div class="card">
-        <div class="text-sm text-slate-500">Blocker / Critical</div>
-        <div class="kpi-value" x-text="kpis.critical ?? '—'"></div>
+      <div class="kpi-card">
+        <div class="text-slate-500 text-sm">Blocker / Critical</div>
+        <div class="text-3xl font-semibold" x-text="kpis.critical"></div>
       </div>
-    </div>
+    </section>
 
     <!-- Charts -->
-    <div class="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <div class="card">
-        <div class="mb-3 text-sm font-medium">Execution Over Time
-          <span class="text-xs text-slate-400 ml-2">Executed% · Pass%</span>
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="panel">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="font-semibold">Execution Over Time</h3>
+          <span class="text-xs text-slate-500">Executed% · Pass%</span>
         </div>
-        <canvas id="execChart" height="140"></canvas>
+        <div class="h-[340px]"><canvas id="execChart"></canvas></div>
       </div>
 
-      <div class="card">
-        <div class="mb-3 text-sm font-medium">Defect Burndown
-          <span class="text-xs text-slate-400 ml-2">Open defects</span>
+      <div class="panel">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="font-semibold">Defect Burndown</h3>
+          <span class="text-xs text-slate-500">Open defects</span>
         </div>
-        <canvas id="defectChart" height="140"></canvas>
+        <div class="h-[340px]"><canvas id="defectChart"></canvas></div>
       </div>
-    </div>
+    </section>
 
-    <!-- Blocker/Critical table -->
-    <div class="card mt-6">
-      <div class="flex items-center justify-between">
-        <div class="font-medium">Blocker / Critical Defects</div>
-        <div class="text-xs text-slate-500"
-             x-text="`Showing ${issues.length} of ${(raw.issues||[]).length} (Blocker/Critical)`"></div>
+    <!-- Issues table -->
+    <section class="panel">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold">Blocker / Critical Defects</h3>
+        <div class="text-xs text-slate-500">Showing <span x-text="issues.length"></span></div>
       </div>
-      <div class="overflow-x-auto mt-3">
-        <table class="w-full text-sm">
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
           <thead class="text-left text-slate-500">
             <tr>
-              <th class="py-2 pr-3">Key</th>
-              <th class="py-2 pr-3">Priority</th>
-              <th class="py-2 pr-3">Summary</th>
-              <th class="py-2 pr-3">Reporter</th>
-              <th class="py-2 pr-3">Team</th>
-              <th class="py-2 pr-3">Platform</th>
+              <th class="py-2 pr-6">Key</th>
+              <th class="py-2 pr-6">Priority</th>
+              <th class="py-2 pr-6">Summary</th>
+              <th class="py-2 pr-6">Reporter</th>
+              <th class="py-2 pr-6">Team</th>
+              <th class="py-2 pr-6">Platform</th>
             </tr>
           </thead>
           <tbody>
             <template x-for="i in issues" :key="i.key">
-              <tr class="border-t border-slate-200">
-                <td class="py-2 pr-3">
-                  <a :href="i.link" target="_blank" class="link" x-text="i.key"></a>
+              <tr class="border-t border-slate-200/60 dark:border-slate-700/50">
+                <td class="py-2 pr-6">
+                  <a :href="i.link" target="_blank" class="text-indigo-600 hover:underline" x-text="i.key"></a>
                 </td>
-                <td class="py-2 pr-3">
-                  <span class="tag"
-                        :class="i.priority==='Blocker' ? 'tag-red' : (i.priority==='Critical' ? 'tag-amber' : 'tag-slate')"
-                        x-text="i.priority"></span>
-                </td>
-                <td class="py-2 pr-3" x-text="i.summary"></td>
-                <td class="py-2 pr-3" x-text="i.reporter || i.owner || '—'"></td>
-                <td class="py-2 pr-3" x-text="i.team || '—'"></td>
-                <td class="py-2 pr-3" x-text="i.platform || '—'"></td>
+                <td class="py-2 pr-6" x-text="i.priority"></td>
+                <td class="py-2 pr-6" x-text="i.summary"></td>
+                <td class="py-2 pr-6" x-text="i.owner"></td>
+                <td class="py-2 pr-6" x-text="i.team"></td>
+                <td class="py-2 pr-6" x-text="i.platform"></td>
               </tr>
             </template>
           </tbody>
         </table>
       </div>
-    </div>
+    </section>
+
+    <footer class="text-center text-xs text-slate-400 pt-6 select-none">
+      Author: Ildefonso Molinero
+    </footer>
 
     <!-- Info modal -->
-    <div x-show="showInfo" @click.self="showInfo=false" class="modal">
-      <div class="modal-panel">
-        <div class="modal-title">UAT Overview</div>
-        <div class="modal-body">
-          <div x-html="infoHtml"></div>
-        </div>
-        <div class="modal-actions">
-          <button class="btn" @click="showInfo=false">Close</button>
-        </div>
+    <div x-show="showInfo" @click.self="showInfo=false"
+         class="fixed inset-0 bg-black/40 grid place-items-center p-4 z-50">
+      <div class="max-w-3xl w-full bg-white dark:bg-slate-800 rounded-xl shadow p-6 relative">
+        <button class="absolute right-3 top-3 text-slate-400 hover:text-slate-600" @click="showInfo=false">✕</button>
+        <div class="prose prose-slate dark:prose-invert max-w-none text-sm" x-html="infoHtml || '<p>No info.</p>'"></div>
       </div>
     </div>
 
-    <!-- AI Daily Status panel -->
-    <div x-show="showReport" @click.self="showReport=false" class="modal">
-      <div class="modal-panel">
-        <div class="modal-title flex items-center justify-between">
-          <span>Daily Status (AI-generated)</span>
-          <button class="btn" @click="showReport=false">✕</button>
-        </div>
-        <div class="modal-body">
-          <div class="prose prose-slate max-w-none text-sm" x-html="reportHtml"></div>
-        </div>
-        <div class="modal-actions">
-          <button class="btn" @click="copyReport()">Copy</button>
-          <button class="btn-primary" @click="downloadReport()">Download .md</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Footer (author) -->
-    <footer class="footer-author">Author: Ildefonso Molinero</footer>
   </div>
 
-  <!-- App logic -->
-  <script defer src="./app.js"></script>
+<script>
+window.app = function () {
+  return {
+    _inited:false,
+    raw:{}, filtered:{}, platforms:[], filters:{ platform:'ALL' },
+    kpis:{ inScope:0, executedPct:0, passPct:0, openDefects:0, critical:0 },
+    countdown:{ compact:'—', tooltip:'UAT dates not configured', pctShow:false },
+    health:{ label:'—', dotClass:'', tooltip:'' },
+    issues:[], infoHtml:'', showInfo:false,
+    execChart:null, defectChart:null, lastUpdate:'',
+
+    async init(){
+      if(this._inited) return; this._inited = true;
+      await this.loadData();
+      this.buildFilters(); this.applyFilters();
+      this.computeKPIs(); this.computeHealth(); this.computeCountdown();
+      this.buildCharts(); this.updateCharts();
+    },
+
+    async loadData(){
+      try {
+        const res = await fetch('./uat.json?'+Date.now());
+        this.raw = await res.json();
+      } catch(e){ console.error('Failed to load uat.json', e); this.raw = {}; }
+
+      try {
+        if (this.raw.infoUrl) {
+          const md = await fetch(this.raw.infoUrl).then(r=>r.ok?r.text():'');
+          this.infoHtml = this.mdToHtml(md);
+        }
+      } catch {}
+      this.lastUpdate = this.raw?.overview?.lastUpdate || '';
+    },
+
+    buildFilters(){
+      const s = new Set();
+      (this.raw.progressDaily||[]).forEach(r=>s.add(r.platform||'ALL'));
+      (this.raw.defectsDaily ||[]).forEach(r=>s.add(r.platform||'ALL'));
+      (this.raw.issues       ||[]).forEach(r=>s.add(r.platform||'ALL'));
+      const arr = [...s].filter(Boolean).sort();
+      if(!arr.includes('ALL')) arr.unshift('ALL');
+      this.platforms = arr;
+      if(!this.platforms.includes(this.filters.platform)) this.filters.platform = 'ALL';
+    },
+
+    applyFilters(){
+      const p = this.filters.platform;
+      const same = r => p==='ALL' || (r.platform||'ALL')===p;
+      this.filtered.progressDaily = (this.raw.progressDaily||[]).filter(same);
+      this.filtered.defectsDaily  = (this.raw.defectsDaily ||[]).filter(same);
+      this.issues = (this.raw.issues||[])
+        .filter(i=>['Blocker','Critical'].includes(i.priority))
+        .filter(same);
+      this.computeKPIs(); this.computeHealth(); this.updateCharts();
+    },
+
+    computeKPIs(){
+      this.kpis.inScope = Number(this.raw?.overview?.inScope || 0);
+      const pList = this.filtered.progressDaily?.length ? this.filtered.progressDaily : (this.raw.progressDaily||[]);
+      if(pList.length){
+        const last = pList[pList.length-1];
+        this.kpis.executedPct = Number(last.executedPct||0);
+        this.kpis.passPct     = Number(last.passPct||0);
+      } else { this.kpis.executedPct=0; this.kpis.passPct=0; }
+      const dList = this.filtered.defectsDaily?.length ? this.filtered.defectsDaily : (this.raw.defectsDaily||[]);
+      this.kpis.openDefects = dList.length ? Number(dList[dList.length-1].openDefects||0) : 0;
+      this.kpis.critical    = this.issues.length;
+    },
+
+    computeHealth(){
+      const p = this.filters.platform;
+      const list = (this.raw.dailyStatus||[])
+        .filter(r=>p==='ALL'||r.platform===p)
+        .sort((a,b)=>a.date.localeCompare(b.date));
+      let rag='G', reason='On track';
+      if(list.length){ rag=(list[list.length-1].rag||'G').toUpperCase(); reason=list[list.length-1].reason||reason; }
+      this.health.dotClass = (rag==='G')?'dot-G':(rag==='A')?'dot-A':'dot-R';
+      this.health.label    = (rag==='G')?'On track':(rag==='A')?'At risk':'Critical';
+      this.health.tooltip  = reason;
+    },
+
+    computeCountdown(){
+      const s=this.raw?.schedule?.start, e=this.raw?.schedule?.end;
+      if(!s||!e){ this.countdown={compact:'—',tooltip:'UAT dates not configured',pctShow:false}; return; }
+      const start=new Date(s), end=new Date(e), today=new Date(); today.setHours(0,0,0,0);
+      const isBiz = d => d.getDay()!==0 && d.getDay()!==6;
+      const bizBetween=(a,b)=>{const step=a<b?1:-1;let n=0,d=new Date(a);while((step>0&&d<b)||(step<0&&d>b)){if(isBiz(d))n++;d.setDate(d.getDate()+step);}return n;};
+
+      if(today<start){
+        const biz=bizBetween(today,start), cal=Math.ceil((start-today)/86400000);
+        this.countdown={compact:`Starts in ${biz} biz days`, tooltip:`${s} → ${e} · ${biz} working days (${cal} calendar days to start)`, pctShow:false};
+      } else if(today>end){
+        this.countdown={compact:'Finished', tooltip:`${s} → ${e}`, pctShow:false};
+      } else {
+        const total = bizBetween(start,end) + (isBiz(end)?1:0);
+        let day=0,d=new Date(start); while(d<=today){ if(isBiz(d)) day++; d.setDate(d.getDate()+1); }
+        const pct=Math.round(day/total*100);
+        this.countdown={compact:`Day ${day} of ${total}`, tooltip:`${s} → ${e} · ${pct}% elapsed`, pctShow:true};
+      }
+    },
+
+    buildCharts(){
+      const base={parsing:false,responsive:true,maintainAspectRatio:false,animation:false,resizeDelay:200,devicePixelRatio:1,plugins:{legend:{display:true}},scales:{x:{ticks:{maxRotation:0,autoSkip:true}}}};
+      const ectx=document.getElementById('execChart').getContext('2d');
+      const dctx=document.getElementById('defectChart').getContext('2d');
+
+      if(this.execChart) this.execChart.destroy();
+      this.execChart=new Chart(ectx,{type:'line',data:{labels:[],datasets:[
+        {label:'Executed %',data:[],borderColor:'#3b82f6',backgroundColor:'#3b82f6',tension:.25,borderWidth:2,pointRadius:2},
+        {label:'Pass %',    data:[],borderColor:'#8b5cf6',backgroundColor:'#8b5cf6',tension:.25,borderWidth:2,pointRadius:2}
+      ]},options:{...base,scales:{...base.scales,y:{min:0,max:100,ticks:{callback:v=>v+'%'}}}}});
+
+      if(this.defectChart) this.defectChart.destroy();
+      this.defectChart=new Chart(dctx,{type:'line',data:{labels:[],datasets:[
+        {label:'Open defects',data:[],borderColor:'#22c55e',backgroundColor:'#22c55e',tension:.25,borderWidth:2,pointRadius:2}
+      ]},options:{...base,scales:{...base.scales,y:{beginAtZero:true,ticks:{precision:0}}}}});
+    },
+
+    computeSeries(){
+      const p = this.filtered.progressDaily?.length ? this.filtered.progressDaily : (this.raw.progressDaily||[]);
+      const d = this.filtered.defectsDaily ?.length ? this.filtered.defectsDaily  : (this.raw.defectsDaily ||[]);
+      return { labels:p.map(r=>r.date), exec:p.map(r=>+r.executedPct||0), pass:p.map(r=>+r.passPct||0),
+               dLabels:d.map(r=>r.date), open:d.map(r=>+r.openDefects||0) };
+    },
+
+    updateCharts(){
+      if(!this.execChart||!this.defectChart) return;
+      const {labels,exec,pass,dLabels,open}=this.computeSeries();
+      this.execChart.data.labels=labels;
+      this.execChart.data.datasets[0].data=exec;
+      this.execChart.data.datasets[1].data=pass;
+      this.execChart.update('none');
+
+      this.defectChart.data.labels=dLabels;
+      this.defectChart.data.datasets[0].data=open;
+      this.defectChart.update('none');
+    },
+
+    fmtPct(n){const v=Number(n??0);return isFinite(v)?`${v}%`:'—';},
+    mdToHtml(md=''){ if(!md) return ''; const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+      const html=esc(md).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').split('\n\n').map(b=>{
+        if(b.startsWith('- ')){const items=b.split('\n').map(l=>`<li>${l.replace(/^- /,'')}</li>`).join('');return `<ul class="list-disc pl-5 space-y-1">${items}</ul>`;}
+        return `<p>${b.replace(/\n/g,'<br>')}</p>`;}).join(''); return html;}
+  };
+};
+</script>
 </body>
 </html>
