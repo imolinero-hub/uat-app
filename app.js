@@ -338,4 +338,8 @@ function BizCal({ start, end, timezone='Europe/Berlin', holidays=[] }){
   return { start:S, end:E, timezone:tz, isBusiness, businessDays, nextBusinessAfter, indexFor, todayTZ, formatDay };
 }
 
-document.addEventListener('alpine:init', ()=> Alpine.data('app', app) );
+// Expose Alpine component named "app"
+document.addEventListener('alpine:init', () => {
+  Alpine.data('app', app);   // now you should use x-data="app" (no parentheses)
+});
+
