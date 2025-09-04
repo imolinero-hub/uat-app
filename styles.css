@@ -1,0 +1,7 @@
+/* Custom extras over Tailwind */
+.card { @apply rounded-xl border border-slate-200 bg-white shadow-sm; }
+.card-dark { @apply rounded-xl border border-slate-700 bg-slate-800 shadow-sm; }
+.kpi { @apply flex items-end gap-3 p-5; }
+.kpi-label { @apply text-slate-500; }
+.kpi-value { @apply text-3xl font-semibold tracking-tight; }
+.legend-dot { @apply inline-block h-2 w-4 rounded-sm align-middle; }
