@@ -8,16 +8,10 @@
   "schedule": {
     "start": "2025-10-13",
     "end":   "2025-11-06", 
-    "timezone": "Europe/Berlin", 
-    "holidays": []
+    "timezone": "Europe/Berlin"
   },
 
   "infoUrl": "./about-uat.md",
-
-  "dailyStatus": [
-    { "date": "2025-10-21", "platform": "ALL", "rag": "A", "reason": "Spike of new defects vs plan", "by": "Ildefonso" },
-    { "date": "2025-10-22", "platform": "Web", "rag": "R", "reason": "Two blockers still open", "by": "Helena" }
-  ],
 
   "progressDaily": [
     { "date": "2025-10-13", "platform": "ALL", "team": "ALL", "inScope": 3249, "executedPct": 4,  "passPct": 3  },
