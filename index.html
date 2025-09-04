@@ -2,31 +2,34 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>UAT Dashboard</title>
-  <meta name="description" content="UAT Dashboard — concise status for leadership" />
+  <meta name="description" content="UAT Dashboard — concise UAT status for leadership" />
 
-  <!-- App icons / PWA (optional, keep if you already have these files) -->
+  <!-- 🔖 Build tag: update this when you change HTML/JS/CSS -->
+  <meta name="build" content="2025-09-04-01">
+
+  <!-- Optional icons / manifest (keep or remove if not used) -->
   <link rel="icon" href="./icons/favicon.ico">
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
   <link rel="manifest" href="./manifest.webmanifest">
 
-  <!-- Tailwind via CDN (simple, no plugins to avoid CORS issues) -->
+  <!-- Tailwind CSS (CDN) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- Chart.js + date adapter -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
 
-  <!-- Alpine.js (lightweight UI state) -->
+  <!-- Alpine.js -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.1/dist/cdn.min.js"></script>
 
-  <!-- Local styles (cache-busted) -->
-  <link rel="stylesheet" href="./styles.css?v=2025-09-02a" />
+  <!-- Local CSS -->
+  <link rel="stylesheet" href="./styles.css" />
 </head>
 
 <body class="bg-slate-50 text-slate-900 selection:bg-indigo-200/60">
-  <!-- Alpine app root -->
+  <!-- Alpine root -->
   <div x-data="app" x-init="init()" class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
 
     <!-- Header -->
@@ -44,8 +47,9 @@
           </div>
         </div>
 
-        <!-- Countdown pill (always visible) -->
+        <!-- Right side controls -->
         <div class="ml-auto flex items-center gap-2">
+          <!-- Countdown -->
           <div class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700">
             <span class="text-slate-500">📅</span>
             <span x-text="countdown.compact"></span>
@@ -219,31 +223,38 @@
       </div>
     </div>
 
-    <!-- Footer (author) -->
+    <!-- Footer with build -->
     <footer class="mt-10 pb-6 text-center text-xs text-slate-400 select-none">
-      Author: Ildefonso Molinero
+      <span>Author: Ildefonso Molinero</span>
+      <span class="mx-2">•</span>
+      <span>Build: <span id="build-version">—</span></span>
     </footer>
   </div>
 
-  <!-- Local app logic (cache-busted) -->
-  <script defer src="./app.js?v=2025-09-02a"></script>
+  <!-- Local JS -->
+  <script defer src="./app.js"></script>
 
-  <!-- Service Worker: safe, escape with ?nosw -->
+  <!-- Tiny script: read <meta name="build"> and show it in footer -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const meta = document.querySelector('meta[name="build"]');
+      const el = document.getElementById('build-version');
+      if (meta && el) el.textContent = meta.content;
+    });
+  </script>
+
+  <!-- Optional: Service Worker helper (kept simple) -->
   <script>
     (function registerSW(){
-      const isProdHost = location.hostname === 'imolinero-hub.github.io';
-      const swDisabled = new URLSearchParams(location.search).has('nosw');
-
-      if ('serviceWorker' in navigator && isProdHost && !swDisabled) {
+      const isProd = location.hostname === 'imolinero-hub.github.io';
+      const swOff  = new URLSearchParams(location.search).has('nosw');
+      if ('serviceWorker' in navigator && isProd && !swOff) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./service-worker.js')
-            .catch(err => console.warn('SW register failed:', err));
+          navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
         });
-      } else {
-        // Ensure an old SW doesn't keep serving cached pages while you iterate
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
-        }
+      } else if ('serviceWorker' in navigator) {
+        // ensure old SW is not holding stale assets while you iterate
+        navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
       }
     })();
   </script>
