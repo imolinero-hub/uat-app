@@ -41,7 +41,7 @@
   <header class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-5">
     <div class="flex items-center gap-3">
       <!-- Theme toggle -->
-      <button class="icon-btn ring" @click="toggleTheme()" :title="theme==='theme-light' ? 'Switch to dark' : 'Switch to light'"
+      < class="icon-btn ring" @click="toggleTheme()" :title="theme==='theme-light' ? 'Switch to dark' : 'Switch to light'"
               :style="'background:linear-gradient(135deg,rgba(14,165,233,.25),rgba(99,102,241,.25))'">
         <template x-if="theme!=='theme-light'">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -49,7 +49,7 @@
         <template x-if="theme==='theme-light'">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="5" stroke="#111" stroke-width="2"/><path d="M12 1v3m0 16v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M1 12h3m16 0h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12" stroke="#111" stroke-width="2" stroke-linecap="round"/></svg>
         </template>
-      </button>
+      </>
 
       <div>
         <div class="text-xl font-semibold tracking-tight">UAT Dashboard</div>
@@ -80,15 +80,15 @@
       </select>
 
       <!-- Info modal trigger -->
-      <button class="btn" @click="openInfo()">
+      < class="btn" @click="openInfo()">
         <span class="inline-flex items-center gap-2">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 8h.01M11 11h2v5h-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           Info
         </span>
-      </button>
+      </>
 
       <!-- AI Daily Status -->
-      <button class="btn btn-primary no-disappear" @click="generateAIStatus()">AI Daily Status</button>
+      <button class="btn btn-primary" @click="generateAIStatus()">AI Daily Status</button>
     </div>
   </header>
 
@@ -234,4 +234,5 @@ if ('serviceWorker' in navigator) {
 
 </body>
 </html>
+
 
