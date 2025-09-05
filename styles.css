@@ -68,19 +68,3 @@ body{
 .toast{ position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:#ef4444; color:white; font-size:12px; padding:8px 10px; border-radius:8px }
 .theme-light .toast{ background:#b91c1c }
 .icon-btn{ width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center; border-radius:10px; }
-
-.theme-light .btn-primary {
-  background: linear-gradient(135deg, #6d5efc, #3b82f6) !important;
-  color: #fff !important;
-  border-color: transparent !important;
-}
-.theme-light .btn-primary:hover,
-.theme-light .btn-primary:focus {
-  background: linear-gradient(135deg, #5b4ef5, #2563eb) !important;
-  color: #fff !important;
-  opacity: 1 !important;
-}
-.theme-dark .btn-primary:hover,
-.theme-dark .btn-primary:focus {
-  filter: brightness(1.05);
-}
