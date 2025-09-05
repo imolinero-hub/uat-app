@@ -1,205 +1,311 @@
-/* UAT Dashboard — app.js (modular) */
-/* Author: Ildefonso Molinero */
+/* ---------- BizCal (unchanged) ---------- */
+function BizCal(schedule){
+  const tz = schedule.timezone || 'Europe/Berlin';
+  const holidays = new Set(Array.isArray(schedule.holidays) ? schedule.holidays : []);
 
-window.app = function () {
-  return {
-    // ---------- State ----------
-    _inited: false,          // protect from double init
-    raw: {},
-    filtered: {},
-    platforms: [],
-    filters: { platform: 'ALL' },
-
-    kpis: { inScope: 0, executedPct: 0, passPct: 0, openDefects: 0, critical: 0 },
-    countdown: { compact: '—', tooltip: 'UAT dates not configured', pct: 0, pctShow: false },
-    health: { label: '—', dotClass: '', tooltip: '' },
-
-    issues: [],
-    infoHtml: '',
-    reportHtml: '',
-    showInfo: false,
-    showReport: false,
-
-    execChart: null,
-    defectChart: null,
-    lastUpdate: '',
-
-    // ---------- Lifecycle ----------
-    async init () {
-      if (this._inited) return;          // guard
-      this._inited = true;
-
-      await this.loadData();
-      this.applyTheme();                 // if you support theme in localStorage
-      this.buildFilters();
-      this.computeKPIs();
-      this.computeHealth();
-      this.computeCountdown();
-      this.buildCharts();
-      this.updateCharts();
-    },
-
-    // ---------- Data ----------
-    async loadData () {
-      try {
-        const res = await fetch('./uat.json?' + Date.now());
-        this.raw = await res.json();
-      } catch (e) {
-        console.error('Failed to load uat.json', e);
-        this.raw = {};
-      }
-      this.lastUpdate = this.raw?.overview?.lastUpdate || '';
-      // Pre-compute info/report text if you use them
-      this.infoHtml = this.raw?.aboutHtml || '';
-      this.reportHtml = '';
-    },
-
-    // ---------- Filters / KPIs / Health / Countdown ----------
-    buildFilters () {
-      const set = new Set();
-      (this.raw.progressDaily || []).forEach(r => set.add(r.platform || 'ALL'));
-      (this.raw.defectsDaily || []).forEach(r => set.add(r.platform || 'ALL'));
-      (this.raw.issues || []).forEach(i => set.add(i.platform || 'ALL'));
-      const arr = [...set].filter(Boolean).sort();
-      if (!arr.includes('ALL')) arr.unshift('ALL');
-      this.platforms = arr;
-
-      // Apply initial filter
-      this.applyFilters();
-    },
-
-    applyFilters () {
-      const p = this.filters.platform;
-      const same = r => p === 'ALL' || (r.platform || 'ALL') === p;
-
-      this.filtered.progressDaily = (this.raw.progressDaily || []).filter(same);
-      this.filtered.defectsDaily = (this.raw.defectsDaily || []).filter(same);
-      this.issues = (this.raw.issues || []).filter(i => same(i) && ['Blocker', 'Critical'].includes(i.priority))
-                                            .sort((a,b)=>a.date?.localeCompare(b.date)||0);
-    },
-
-    computeKPIs () {
-      const s = this.filtered.progressDaily;
-      const last = s?.length ? s[s.length - 1] : {};
-      this.kpis.inScope     = Number(this.raw?.overview?.inScope || 0);
-      this.kpis.executedPct = Number(last.executedPct || 0);
-      this.kpis.passPct     = Number(last.passPct || 0);
-
-      const d = this.filtered.defectsDaily;
-      const lastD = d?.length ? d[d.length - 1] : {};
-      this.kpis.openDefects = Number(lastD.openDefects || 0);
-
-      // issues already filtered to blocker/critical
-      this.kpis.critical = this.issues.length;
-    },
-
-    computeHealth () {
-      // Simple RAG based on your rules; keep your previous logic here
-      const rag = (this.raw?.dailyStatus || []).slice().reverse().find(x => x.reason);
-      if (!rag) { this.health = { label: 'On track', dotClass: 'bg-emerald-500', tooltip: 'On track' }; return; }
-      const map = {
-        'G': ['On track', 'bg-emerald-500'],
-        'A': ['At risk',  'bg-amber-500'],
-        'R': ['Critical', 'bg-rose-500']
-      };
-      const [label, dot] = map[rag.rag] || ['On track', 'bg-emerald-500'];
-      this.health = { label, dotClass: dot, tooltip: rag.reason };
-    },
-
-    computeCountdown () {
-      const r = this.raw?.uatDates || {};
-      if (!r.start || !r.end) { this.countdown = { compact: '—', tooltip: 'UAT dates not configured', pct: 0, pctShow: false }; return; }
-      const [y1, m1, d1] = r.start.split('-').map(Number);
-      const [y2, m2, d2] = r.end.split('-').map(Number);
-      const start = new Date(y1, m1 - 1, d1);
-      const end   = new Date(y2, m2 - 1, d2);
-
-      // business-days diff (very simple; replace with your previous function if you had one)
-      const bizBetween = (a,b) => {
-        let cnt = 0, d = new Date(a);
-        while (d <= b) { const wd = d.getDay(); if (wd !== 0 && wd !== 6) cnt++; d.setDate(d.getDate()+1); }
-        return cnt;
-      };
-      const today = new Date();
-      const total = bizBetween(start, end);
-      const done  = bizBetween(start, today < start ? start : today);
-      let compact, tooltip;
-      if (today < start)       { compact = `Starts in ${bizBetween(today, start)} biz days`; tooltip = `${start.toDateString()} → ${end.toDateString()}`; }
-      else if (today > end)    { compact = `Finished`; tooltip = `${start.toDateString()} → ${end.toDateString()}`; }
-      else                     { compact = `Day ${done} of ${total}`; tooltip = `${start.toDateString()} → ${end.toDateString()}`; }
-
-      this.countdown = { compact, tooltip, pct: Math.round(done * 100 / Math.max(total,1)), pctShow: true };
-    },
-
-    // ---------- Charts ----------
-    buildCharts () {
-      const ctxExec   = document.getElementById('execChart');
-      const ctxDefect = document.getElementById('defectChart');
-
-      if (this.execChart?.destroy)   this.execChart.destroy();
-      if (this.defectChart?.destroy) this.defectChart.destroy();
-
-      // Execution chart
-      this.execChart = new Chart(ctxExec, {
-        type: 'line',
-        data: { datasets: [
-          { label: 'Executed %', data: [], tension: .25, pointRadius: 2, borderWidth: 2 },
-          { label: 'Pass %',     data: [], tension: .25, pointRadius: 2, borderWidth: 2 }
-        ]},
-        options: { responsive: true, animation: false, maintainAspectRatio: false,
-          scales: {
-            x: { type: 'time', time: { unit: 'day' } },
-            y: { min: 0, max: 100, ticks: { callback: v => v + '%' } }
-          },
-          plugins: { legend: { display: false } }
-        }
-      });
-
-      // Defects chart
-      this.defectChart = new Chart(ctxDefect, {
-        type: 'line',
-        data: { datasets: [
-          { label: 'Open defects', data: [], tension: .25, pointRadius: 2, borderWidth: 2 }
-        ]},
-        options: { responsive: true, animation: false, maintainAspectRatio: false,
-          scales: {
-            x: { type: 'time', time: { unit: 'day' } },
-            y: { beginAtZero: true }
-          },
-          plugins: { legend: { display: false } }
-        }
-      });
-    },
-
-    updateCharts () {
-      // Exec
-      const ex = this.filtered.progressDaily || [];
-      const execPts = ex.map(r => ({ x: r.date, y: Number(r.executedPct || 0) }));
-      const passPts = ex.map(r => ({ x: r.date, y: Number(r.passPct || 0) }));
-      this.execChart.data.datasets[0].data = execPts;
-      this.execChart.data.datasets[1].data = passPts;
-      this.execChart.update();
-
-      // Defects
-      const dd = this.filtered.defectsDaily || [];
-      const openPts = dd.map(r => ({ x: r.date, y: Number(r.openDefects || 0) }));
-      this.defectChart.data.datasets[0].data = openPts;
-      this.defectChart.update();
-    },
-
-    // ---------- UI helpers ----------
-    onPlatformChange () {
-      this.applyFilters();
-      this.computeKPIs();
-      this.updateCharts();
-    },
-
-    applyTheme () {
-      // if you use theme flag in localStorage, apply here; default is light mode
-      document.documentElement.classList.remove('dark');
-    }
+  const toTZDate = (dStr) => {
+    const parts = new Intl.DateTimeFormat('en-CA',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit'})
+      .formatToParts(new Date(dStr+'T00:00:00'));
+    const y = +parts.find(p=>p.type==='year').value;
+    const m = +parts.find(p=>p.type==='month').value;
+    const d = +parts.find(p=>p.type==='day').value;
+    return new Date(Date.UTC(y,m-1,d,0,0,0));
   };
-};
+  const todayTZ = () => {
+    const now = new Date();
+    const parts = new Intl.DateTimeFormat('en-CA',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now);
+    const y = +parts.find(p=>p.type==='year').value;
+    const m = +parts.find(p=>p.type==='month').value;
+    const d = +parts.find(p=>p.type==='day').value;
+    return new Date(Date.UTC(y,m-1,d,0,0,0));
+  };
+  const fmtDay = (d) => new Intl.DateTimeFormat(undefined,{timeZone:tz,month:'short',day:'2-digit'}).format(d);
+  const isWeekend = (d) => { const wd = d.getUTCDay(); return wd===0 || wd===6; };
+  const isHoliday = (d) => holidays.has(d.toISOString().slice(0,10));
+  const isBusiness = (d) => !isWeekend(d) && !isHoliday(d);
 
-// Hook for Alpine
-document.addEventListener('alpine:init', () => Alpine.data('app', window.app));
+  const start = schedule.start ? toTZDate(schedule.start) : null;
+  const end   = schedule.end   ? toTZDate(schedule.end)   : null;
+
+  const businessDays = () => {
+    const out = [];
+    if(!start || !end) return out;
+    for(let d = new Date(start); d <= end; d = new Date(d.getTime()+86400000)){
+      if(isBusiness(d)) out.push(new Date(d));
+    }
+    return out;
+  };
+
+  const indexFor = (d) => businessDays().filter(x => x <= d).length;
+
+  const nextBusinessAfter = (d) => {
+    let n = new Date(d.getTime()+86400000);
+    while(!isBusiness(n)) n = new Date(n.getTime()+86400000);
+    return n;
+  };
+
+  return { businessDays, isBusiness, indexFor, nextBusinessAfter, formatDay:fmtDay, todayTZ, start, end, tz };
+}
+
+/* ---------- Alpine app() (unchanged logic) ---------- */
+function app(){
+  return {
+    raw:{ overview:{}, progressDaily:[], defectsDaily:[], issues:[], keyDates:[], schedule:{} },
+    kpis:{ inScope:0, executedPct:0, passPct:0, openDefects:0, critical:0 },
+    platforms:[], filters:{ platform:'' },
+    lastUpdate:'', issues:[],
+    execChart:null, defectChart:null,
+    aiStatus:'', aiOpen:false,
+    theme:'theme-dark',
+    countdown:{ title:'UAT Days', label:'—', pct:0, pctShow:false, subtitle:'' },
+    infoOpen:false, infoHtml:'',
+
+    async init(){
+      try{
+        const res = await fetch('./uat.json?v=' + Date.now(), { cache:'no-store' });
+        if(res.ok){ this.raw = await res.json(); }
+        else throw new Error('Failed to fetch uat.json');
+      }catch(e){
+        console.error('Failed to fetch uat.json', e);
+        document.body.insertAdjacentHTML('beforeend','<div class="toast">uat.json could not be loaded</div>');
+        return;
+      }
+
+      this.lastUpdate = this.raw.overview?.lastUpdate || '';
+      this.platforms  = this.getPlatforms();
+      this.computeKpis();
+      this.drawCharts();
+      this.filterIssues();
+      this.computeCountdown();
+    },
+
+    initTheme(){
+      const saved = localStorage.getItem('uat-theme');
+      this.theme = saved || 'theme-dark';
+      document.documentElement.classList.toggle('theme-light', this.theme==='theme-light');
+    },
+    toggleTheme(){
+      this.theme = (this.theme==='theme-light') ? 'theme-dark' : 'theme-light';
+      document.documentElement.classList.toggle('theme-light', this.theme==='theme-light');
+      localStorage.setItem('uat-theme', this.theme);
+    },
+
+    getPlatforms(){
+      const set = new Set((this.raw.issues||[]).map(i=>i.platform).filter(Boolean));
+      return set.size ? [...set].sort() : ['Web','App','BOSS'];
+    },
+    onFilterChange(){ this.computeKpis(); this.filterIssues(); },
+    computeKpis(){
+      const p = this.raw.progressDaily || [];
+      if(p.length){
+        const last = p[p.length-1];
+        this.kpis.inScope     = last.inScope ?? this.raw.overview?.inScope ?? 0;
+        this.kpis.executedPct = +last.executedPct || 0;
+        this.kpis.passPct     = +last.passPct || 0;
+      } else {
+        this.kpis.inScope = this.raw.overview?.inScope || 0;
+        this.kpis.executedPct = 0; this.kpis.passPct = 0;
+      }
+      const plat = this.filters.platform;
+      const open = (this.raw.issues||[]).filter(i=>{
+        const isOpen = !i.status || i.status.toLowerCase() !== 'closed';
+        const matches = !plat || i.platform === plat;
+        return isOpen && matches;
+      });
+      this.kpis.openDefects = open.length;
+      this.kpis.critical    = open.filter(i=>['Blocker','Critical'].includes(i.priority)).length;
+    },
+    filterIssues(){
+      const plat = this.filters.platform;
+      const keep = new Set(['Blocker','Critical']);
+      this.issues = (this.raw.issues || [])
+        .filter(i => keep.has((i.priority||'').trim()))
+        .filter(i => !plat || i.platform === plat);
+    },
+
+    drawCharts(){
+      if(!window.Chart){ console.error('Chart.js not loaded'); return; }
+      const common = {
+        responsive:true, maintainAspectRatio:false, animation:false,
+        elements: { line: { borderWidth: 2 }, point: { radius: 3, hitRadius: 6, hoverRadius: 4 } },
+        plugins:{ legend:{ position:'bottom', labels:{ color:'#94a3b8' } } }
+      };
+      const labels = (this.raw.progressDaily||[]).map(r=>r.date);
+      const exec   = (this.raw.progressDaily||[]).map(r=>+r.executedPct||0);
+      const pass   = (this.raw.progressDaily||[]).map(r=>+r.passPct||0);
+      if(this.execChart){ this.execChart.destroy(); }
+      this.execChart = new Chart(document.getElementById('execChart'), {
+        type:'line',
+        data:{ labels, datasets:[
+          {label:'Executed %', data:exec, borderColor:'#60a5fa', backgroundColor:'#60a5fa', tension:.25, spanGaps:true},
+          {label:'Pass %',     data:pass, borderColor:'#a78bfa', backgroundColor:'#a78bfa', tension:.25, spanGaps:true}
+        ]},
+        options:{
+          ...common,
+          scales:{
+            x:{ type:'time', time:{ unit:'day' }, grid:{ color:'rgba(148,163,184,.2)'} },
+            y:{ beginAtZero:true, max:100, ticks:{ callback:v=>v+'%' }, grid:{ color:'rgba(148,163,184,.2)'} }
+          }
+        }
+      });
+      const labelsD = (this.raw.defectsDaily||[]).map(r=>r.date);
+      const open    = (this.raw.defectsDaily||[]).map(r=>+r.openDefects||0);
+      if(this.defectChart){ this.defectChart.destroy(); }
+      this.defectChart = new Chart(document.getElementById('defectChart'), {
+        type:'line',
+        data:{ labels: labelsD, datasets:[
+          {label:'Open defects', data:open, borderColor:'#34d399', backgroundColor:'#34d399', tension:.25, spanGaps:true}
+        ]},
+        options:{
+          ...common,
+          scales:{
+            x:{ type:'time', time:{ unit:'day' }, grid:{ color:'rgba(148,163,184,.2)'} },
+            y:{ beginAtZero:true, grid:{ color:'rgba(148,163,184,.2)'} }
+          }
+        }
+      });
+    },
+
+    computeCountdown(){
+      const sch = this.raw.schedule || {};
+      const cal = BizCal(sch);
+      const { start, end } = cal;
+
+      if(!start || !end){
+        this.countdown = { title:'UAT Days', label:'—', compact:'—', tooltip:'UAT dates not configured', pct:0, pctShow:false, subtitle:'(dates missing)' };
+        return;
+      }
+      const bizDays = cal.businessDays();
+      const total   = bizDays.length;
+      const today   = cal.todayTZ();
+
+      if (today < start){
+        let firstRun = new Date(start);
+        while(!cal.isBusiness(firstRun)) firstRun = new Date(firstRun.getTime() + 86400000);
+        let daysUntil = 0;
+        for (let d = new Date(today.getTime()+86400000); d <= firstRun; d = new Date(d.getTime()+86400000)){
+          if (cal.isBusiness(d)) daysUntil++;
+        }
+        const calDays = Math.ceil((firstRun - today) / 86400000);
+        this.countdown = {
+          title: 'UAT Days',
+          label: `Starts in ${daysUntil} business day${daysUntil===1?'':'s'}`,
+          compact: `Starts in ${daysUntil} biz day${daysUntil===1?'':'s'}`,
+          tooltip: `${cal.formatDay(start)} – ${cal.formatDay(end)} · ${total} working days\n${calDays} calendar days to start`,
+          pct: 0, pctShow:false,
+          subtitle: `${cal.formatDay(start)} – ${cal.formatDay(end)} · ${total} working days (${calDays} calendar days to start)`
+        };
+        return;
+      }
+      if (today > end){
+        this.countdown = {
+          title:'UAT Days', label:'Completed', compact:'Completed',
+          tooltip:`Ran ${cal.formatDay(start)} – ${cal.formatDay(end)} · ${total} working days`,
+          pct:100, pctShow:true, subtitle:`${total}/${total} working days · Ran ${cal.formatDay(start)} – ${cal.formatDay(end)}`
+        };
+        return;
+      }
+      if (!cal.isBusiness(today)){
+        const lastBizIndex = cal.indexFor(new Date(today.getTime() - 86400000));
+        const next = cal.nextBusinessAfter(today);
+        const pct = Math.max(0, Math.min(100, (lastBizIndex / total) * 100));
+        this.countdown = {
+          title:'UAT Days',
+          label:`Paused · resumes ${cal.formatDay(next)}`,
+          compact:`Paused · resumes ${cal.formatDay(next)}`,
+          tooltip:`Completed day ${lastBizIndex} of ${total}\n${cal.formatDay(start)} – ${cal.formatDay(end)}`,
+          pct, pctShow:true, subtitle:`Completed day ${lastBizIndex} of ${total}`
+        };
+        return;
+      }
+      const dayIdx = cal.indexFor(today);
+      const pct    = Math.max(0, Math.min(100, (dayIdx / total) * 100));
+      this.countdown = {
+        title:'UAT Days',
+        label:`Day ${dayIdx} of ${total}`,
+        compact:`Day ${dayIdx}/${total}`,
+        tooltip:`${cal.formatDay(start)} – ${cal.formatDay(end)} · ${total} working days`,
+        pct, pctShow:true,
+        subtitle:`${cal.formatDay(start)} – ${cal.formatDay(end)} · ${total} working days`
+      };
+    },
+
+    async openInfo(){
+      this.infoOpen = true;
+      this.infoHtml = '<p class="text-slate-400">Loading…</p>';
+      const url = this.raw.infoUrl || './about-uat.md';
+      try{
+        const res = await fetch(url, { cache:'no-store' });
+        const md = res.ok ? await res.text() : 'No info available.';
+        this.infoHtml = this.mdToHtml(md);
+      }catch{
+        this.infoHtml = '<p class="text-rose-400">Failed to load info.</p>';
+      }
+    },
+
+    generateAIStatus(){
+      this.aiOpen = true;
+      const plat = this.filters.platform || 'All platforms';
+      const md = [
+        `**Summary (${plat})**`,
+        `• Executed ${this.fmtPct(this.kpis.executedPct)}, Pass ${this.fmtPct(this.kpis.passPct)}. Open defects ${this.kpis.openDefects} (${this.kpis.critical} blocker/critical).`,
+        `• Execution trending ${this.trendText('exec')} and defects ${this.trendText('def')}.`,
+        ``,
+        `**Highlights**`,
+        `• Most planned scenarios executed; quality trending positively.`,
+        `• Key dates on track; no change to Go/No-Go.`,
+        ``,
+        `**Risks & Blockers**`,
+        `${this.issues.length ? '• Active blockers/criticals require attention (see table below).' : '• No Blocker/Critical reported currently.'}`,
+        ``,
+        `**Next Steps**`,
+        `• Close remaining critical defects; re-test impacted flows.`,
+        `• Prepare demo materials ahead of Alpha Demo.`,
+      ].join('\n');
+      this.aiStatus = this.mdToHtml(md);
+    },
+    copyAI(){ if(this.aiStatus){ navigator.clipboard.writeText(this.htmlToText(this.aiStatus)); } },
+    downloadAI(){
+      const text = this.aiStatus ? this.htmlToText(this.aiStatus) : '';
+      const blob = new Blob([text], {type:'text/markdown'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `UAT_Daily_Status_${(this.lastUpdate||'').replace(/[: ]/g,'_')}.md`;
+      a.click(); URL.revokeObjectURL(a.href);
+    },
+
+    fmtPct(v){ return (v??0).toFixed(0)+'%'; },
+    kpiColor(v){ return v>=90 ? 'text-emerald-400' : (v>=70 ? 'text-amber-300' : 'text-rose-400'); },
+    sevDot(p){ const c = p==='Blocker' ? '#fb7185' : p==='Critical' ? '#fca5a5' : '#f59e0b'; return `background:${c}`; },
+    trendText(kind){
+      try{
+        if(kind==='exec'){
+          const arr = (this.raw.progressDaily||[]).slice(-3).map(r=>+r.executedPct||0);
+          if(arr.length<2) return 'steady';
+          const d = arr[arr.length-1] - arr[0];
+          return d>0 ? 'up' : (d<0 ? 'down' : 'steady');
+        }else{
+          const arr = (this.raw.defectsDaily||[]).slice(-3).map(r=>+r.openDefects||0);
+          if(arr.length<2) return 'steady';
+          const d = arr[arr.length-1] - arr[0];
+          return d<0 ? 'down' : (d>0 ? 'up' : 'steady');
+        }
+      }catch{ return '—'; }
+    },
+    mdToHtml(md){
+      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#39;');
+      return esc(md)
+        .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+        .replace(/^• /gm,'<li>')
+        .replace(/\n{2,}/g,'\n\n')
+        .split('\n\n').map(block=>{
+          if(block.startsWith('<li>')) return `<ul class="list-disc pl-5 space-y-1">${block.replace(/<li>/g,'<li class="marker:text-slate-400">')}</ul>`;
+          return `<p>${block.replace(/\n/g,'<br>')}</p>`;
+        }).join('');
+    },
+    htmlToText(html){ const tmp=document.createElement('div'); tmp.innerHTML=html; return tmp.innerText; }
+  }
+}
+
+/* Alpine registration */
+document.addEventListener('alpine:init',()=>{ Alpine.data('app', app) });
