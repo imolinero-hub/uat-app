@@ -294,34 +294,16 @@ function app(){
     },
 
     // Minimal markdown → HTML (safe-ish; now supports headings + bullets + paragraphs)
-    function mdToHtml(md) {
-      // escape HTML
-      const esc = s => s
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    
-      let s = esc(md);
-    
-      // headings (h2, h3, h4 for #, ##, ###)
-      s = s
-        .replace(/^\s*###\s+(.+)\s*$/gm, '<h4 class="text-base font-semibold mt-4">$1</h4>')
-        .replace(/^\s*##\s+(.+)\s*$/gm,  '<h3 class="text-lg  font-semibold mt-4">$1</h3>')
-        .replace(/^\s*#\s+(.+)\s*$/gm,   '<h2 class="text-xl font-semibold mt-6">$1</h2>');
-    
-      // bold **text**
-      s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    
-      // convert "- item" lines to <li> and wrap contiguous groups in <ul>
-      s = s.replace(/^\s*-\s+(.+)$/gm, '<li>$1</li>');
-      s = s.replace(/(?:<li>.*<\/li>\s*)+/g, m => `<ul class="list-disc pl-6 space-y-1">${m}</ul>`);
-    
-      // paragraphs: split by blank lines; keep existing block tags intact
-      s = s.split(/\n{2,}/).map(block => {
-        if (/^\s*<(h2|h3|h4|ul|li)/.test(block)) return block;
-        return `<p class="mb-3">${block.replace(/\n/g, '<br>')}</p>`;
-      }).join('\n');
-    
-      return s;
+    mdToHtml(md){
+      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#39;');
+      return esc(md)
+        .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+        .replace(/^• /gm,'<li>')
+        .replace(/\n{2,}/g,'\n\n')
+        .split('\n\n').map(block=>{
+          if(block.startsWith('<li>')) return `<ul class="list-disc pl-5 space-y-1">${block.replace(/<li>/g,'<li class="marker:text-slate-400">')}</ul>`;
+          return `<p>${block.replace(/\n/g,'<br>')}</p>`;
+        }).join('');
     },
     htmlToText(html){ const tmp=document.createElement('div'); tmp.innerHTML=html; return tmp.innerText; }
   }
