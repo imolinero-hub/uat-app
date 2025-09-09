@@ -1,299 +1,219 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>UAT: Excel → JSON Exporter</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.20.2/dist/xlsx.full.min.js"></script>
+  <meta charset="UTF-8" />
+  <title>UAT JSON Export</title>
+  <!-- SheetJS (xlsx) -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <style>
-    :root { --bg:#0b1220; --card:#111a2b; --fg:#e8f0ff; --muted:#a9b6d3; --accent:#3b82f6; }
-    body { background:linear-gradient(180deg,#0d1224,#0a0f1d); color:var(--fg); font:14px/1.45 system-ui,Segoe UI,Roboto,Arial; margin:0; padding:32px; }
-    h1 { margin:0 0 16px; font-size:20px; }
-    .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); }
-    .card { background:var(--card); border:1px solid #1c2640; border-radius:12px; padding:16px; }
-    .drop { border:2px dashed #2a3760; border-radius:12px; padding:24px; text-align:center; color:var(--muted); cursor:pointer; }
-    .drop.drag { border-color:var(--accent); color:#cfe1ff; }
-    .btn { background:linear-gradient(135deg,#4ea3ff,#3b82f6); border:0; color:white; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:600; }
-    .btn:disabled { opacity:.5; cursor:not-allowed; }
-    .ok { color:#89ffa3; }
-    .warn { color:#ffd28a; }
-    .err { color:#ff9a9a; }
-    small { color:var(--muted); }
-    table { width:100%; border-collapse:collapse; font-size:13px; }
-    th,td { border-bottom:1px solid #1e2946; padding:8px; text-align:left; vertical-align:top; }
-    th { color:#cfe1ff; width:220px; }
-    code { background:#0d1730; padding:2px 6px; border-radius:6px; color:#cfe1ff; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, sans-serif; background:#0f172a; color:#e2e8f0; padding:20px }
+    h1 { font-size:20px; margin-bottom:10px }
+    .section { margin-bottom:20px }
+    input[type=file] { margin:10px 0 }
+    textarea { width:100%; height:320px; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space:pre; background:#1e293b; color:#f1f5f9; padding:10px; border-radius:8px; border:1px solid #334155 }
+    button { margin:5px; padding:8px 14px; border:none; border-radius:8px; cursor:pointer }
+    button:disabled { opacity:.5; cursor:not-allowed }
+    .btn-primary { background:#3b82f6; color:#fff }
+    .btn-secondary { background:#64748b; color:#fff }
+    small { color:#94a3b8 }
   </style>
 </head>
 <body>
-  <h1>UAT Dashboard – Excel → JSON Exporter</h1>
+  <h1>UAT JSON Export</h1>
 
-  <div class="grid">
-    <div class="card">
-      <h3 style="margin-top:0">1) Drop your Excel file</h3>
-      <div id="drop-xlsx" class="drop">Drop <b>your Excel export</b> here or click to choose</div>
-      <input id="file-xlsx" type="file" accept=".xlsx,.xls" style="display:none">
-      <small>Sheets required: <code>Overview</code>, <code>TestsDaily</code>, <code>DefectsDaily</code>, <code>Issues</code></small><br>
-      <small>Overview accepted as headers <em>or</em> key/value rows.</small>
-    </div>
-
-    <div class="card">
-      <h3 style="margin-top:0">2) (Optional) Drop current uat.json for backup</h3>
-      <div id="drop-json" class="drop">Drop current <b>uat.json</b> here or click to choose</div>
-      <input id="file-json" type="file" accept=".json" style="display:none">
-      <small>We’ll offer a backup named <code>uat_YYYY-MM-DD.json</code>.</small>
-    </div>
-
-    <div class="card">
-      <h3 style="margin-top:0">3) Preview & Export</h3>
-      <div id="status" class="warn" style="margin-bottom:12px;">No file loaded.</div>
-      <button id="btn-backup" class="btn" disabled>Download backup</button>
-      <button id="btn-export" class="btn" disabled>Download uat.json</button><br />
-      <small>Upload the generated <code>uat.json</code> to your repo root. Save backups under <code>/backups</code>.</small>
-    </div>
-
-    <div class="card" id="details" style="grid-column:1/-1; display:none;">
-      <h3 style="margin-top:0">Quick details</h3>
-      <div id="detail-body"></div>
-    </div>
+  <div class="section">
+    <h3>1) Upload workbook (.xlsx)</h3>
+    <input type="file" id="fileInput" accept=".xlsx" />
   </div>
 
-<script>
-(function(){
-  const $ = sel => document.querySelector(sel);
-  const dropX = $('#drop-xlsx'), inpX = $('#file-xlsx');
-  const dropJ = $('#drop-json'), inpJ = $('#file-json');
-  const btnExport = $('#btn-export'), btnBackup = $('#btn-backup');
-  const status = $('#status'), details = $('#details'), detailBody = $('#detail-body');
+  <div class="section">
+    <h3>2) Preview</h3>
+    <textarea id="preview" readonly>// (no preview)</textarea>
+  </div>
 
-  let excelData = null;   // parsed app object
-  let currentJSON = null; // current uat.json (for backup)
+  <div class="section">
+    <h3>3) Export</h3>
+    <button id="backupBtn" class="btn-secondary" disabled>Download backup</button>
+    <button id="jsonBtn" class="btn-primary" disabled>Download uat.json</button>
+    <p><small>Upload the generated <code>uat.json</code> to your repo root. Save copies under <code>/backups/</code>.</small></p>
+  </div>
 
-  // ---------- helpers ----------
-  function dragStyling(el, on) { el.classList.toggle('drag', on); }
-  function dateStr(d=new Date()) { return d.toISOString().slice(0,10); }
-  function isExcelDate(v){ return typeof v === 'number'; }
-  function toISODate(v){
-    if (v == null) return '';
-    if (isExcelDate(v)) return XLSX.SSF.format('yyyy-mm-dd', v);
-    // strings like '2025-10-13 18:00' -> keep date only for daily rows
-    return String(v).slice(0,10);
-  }
-  function download(filename, text) {
-    const blob = new Blob([text], {type:'application/json;charset=utf-8'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  }
-  function showError(msg){
-    status.className = 'err';
-    status.textContent = msg;
-    btnExport.disabled = true;
-  }
-  function showOk(msg){
-    status.className = 'ok';
-    status.textContent = msg;
-  }
+  <script>
+    let currentJson = null;
 
-  function wireDrop(area, input, cb) {
-    area.addEventListener('click', () => input.click());
-    ['dragenter','dragover'].forEach(evt => area.addEventListener(evt, e => { e.preventDefault(); dragStyling(area,true); }));
-    ;['dragleave','drop'].forEach(evt => area.addEventListener(evt, e => { e.preventDefault(); dragStyling(area,false); }));
-    area.addEventListener('drop', e => { const f=e.dataTransfer.files?.[0]; if(f) cb(f); });
-    input.addEventListener('change', () => { const f=input.files?.[0]; if(f) cb(f); });
-  }
+    // ---- Helpers -----------------------------------------------------------
 
-  wireDrop(dropX, inpX, handleExcel);
-  wireDrop(dropJ, inpJ, handleJson);
-
-  function handleJson(file){
-    const r = new FileReader();
-    r.onload = () => {
-      try { currentJSON = JSON.parse(r.result); btnBackup.disabled=false; showOk(`Loaded current uat.json (${file.name})`); }
-      catch(e){ showError('Invalid JSON in backup file.'); }
-    };
-    r.readAsText(file);
-  }
-
-  function handleExcel(file){
-    const r = new FileReader();
-    r.onload = () => {
-      try {
-        const wb = XLSX.read(new Uint8Array(r.result), {type:'array'});
-        excelData = parseWorkbook(wb);
-        showOk(`Loaded Excel: ${file.name}`);
-        btnExport.disabled = false;
-        renderDetails(excelData);
-      } catch(e) {
-        console.error(e);
-        showError(`Could not parse workbook: ${e.message}`);
+    // Find a sheet by one of several candidate names (case-insensitive)
+    function pickSheet(wb, candidates) {
+      const keys = Object.keys(wb.Sheets);
+      for (const cand of candidates) {
+        const found = keys.find(k => k.toLowerCase() === cand.toLowerCase());
+        if (found) return wb.Sheets[found];
       }
-    };
-    r.readAsArrayBuffer(file);
-  }
-
-  function sheet(wb, name){
-    const ws = wb.Sheets[name];
-    if (!ws) throw new Error(`Missing sheet: ${name}`);
-    return ws;
-  }
-  function toObjects(ws){
-    return XLSX.utils.sheet_to_json(ws, {defval:null});
-  }
-
-  // Try Overview as headers first; if not, fall back to key/value rows
-  function parseOverview(wb){
-    const ws = sheet(wb, 'Overview');
-    const rows = toObjects(ws);
-    if (!rows.length) throw new Error('Overview sheet has no rows');
-    const headers = Object.keys(rows[0] || {});
-    const isKeyValue = headers.includes('key') && headers.includes('value');
-
-    if (!isKeyValue) {
-      const o = rows[0];
-      return {
-        release: String(o.release || 'RI-4'),
-        lastUpdate: o.lastUpdate ? String(o.lastUpdate) : `${dateStr()} 00:00`,
-        schedule: {
-          start: String(o.schedule_start || ''),
-          end: String(o.schedule_end || ''),
-          businessDays: Number(o.business_days || 0)
-        }
-      };
-    } else {
-      // key/value fallback
-      const map = {};
-      rows.forEach(r => { if (r.key != null) map[String(r.key)] = r.value; });
-      return {
-        release: String(map.release || 'RI-4'),
-        lastUpdate: map.lastUpdate ? String(map.lastUpdate) : `${dateStr()} 00:00`,
-        schedule: {
-          start: String(map.schedule_start || ''),
-          end: String(map.schedule_end || ''),
-          businessDays: Number(map.business_days || 0)
-        }
-      };
-    }
-  }
-
-  function parseWorkbook(wb){
-    const overview = parseOverview(wb);
-
-    const testsDaily = toObjects(sheet(wb,'TestsDaily'))
-      .filter(r => r.date != null)
-      .map(r => ({
-        date: toISODate(r.date),
-        inScope: Number(r.inScope || 0),
-        executedPct: Number(r.executedPct || 0),
-        passPct: Number(r.passPct || 0),
-        platform: 'ALL',
-        team: 'ALL'
-      }))
-      .sort((a,b) => a.date.localeCompare(b.date));
-
-    const lastT = testsDaily[testsDaily.length-1] || {inScope:0, executedPct:0, passPct:0};
-
-    const defectsDaily = toObjects(sheet(wb,'DefectsDaily'))
-      .filter(r => r.date != null)
-      .map(r => ({
-        date: toISODate(r.date),
-        openDefects: Number(r.openDefects || 0),
-        platform: 'ALL',
-        team: 'ALL'
-      }))
-      .sort((a,b) => a.date.localeCompare(b.date));
-
-    const lastD = defectsDaily[defectsDaily.length-1] || {openDefects:0};
-
-    const issues = toObjects(sheet(wb,'Issues'))
-      .filter(r => r.key)
-      .map(r => ({
-        key: String(r.key),
-        priority: r.priority || '',
-        summary: r.summary || '',
-        reporter: r.reporter || '',
-        team: r.team || '',
-        platform: r.platform || '',
-        status: r.status || '',
-        link: r.link || ''
-      }));
-
-    return {
-      overview,
-      kpis: {
-        inScope: lastT.inScope,
-        executedPct: lastT.executedPct,
-        passPct: lastT.passPct,
-        openDefects: lastD.openDefects,
-        critical: issues.filter(i => i.priority === 'Blocker' || i.priority === 'Critical').length
-      },
-      progressDaily: testsDaily.map(({date,platform,team,inScope,executedPct,passPct}) => ({date,platform,team,inScope,executedPct,passPct})),
-      defectsDaily: defectsDaily.map(({date,platform,team,openDefects}) => ({date,platform,team,openDefects})),
-      issues
-    };
-  }
-
-  function renderDetails(data){
-    details.style.display = 'block';
-    const rows = [
-      ['Release', data.overview.release],
-      ['Last update', data.overview.lastUpdate],
-      ['Schedule', `${data.overview.schedule.start} → ${data.overview.schedule.end} (${data.overview.schedule.businessDays} biz days)`],
-      ['In scope (latest)', data.kpis.inScope],
-      ['Executed % (latest)', data.kpis.executedPct],
-      ['Pass % (latest)', data.kpis.passPct],
-      ['Open defects (latest)', data.kpis.openDefects],
-      ['Blocker/Critical', data.kpis.critical],
-      ['Progress points', data.progressDaily.length],
-      ['Defect points', data.defectsDaily.length],
-      ['Issues', data.issues.length],
-    ];
-    let html = '<table><tbody>';
-    for (const [k,v] of rows) html += `<tr><th>${k}</th><td>${v}</td></tr>`;
-    html += '</tbody></table>';
-    detailBody.innerHTML = html;
-  }
-
-  // ----- Custom JSON formatter: daily arrays = one element per line -----
-  function stringifyUAT(data){
-    const head = {
-      overview: data.overview,
-      kpis: data.kpis,
-      issues: data.issues
-    };
-    const headText = JSON.stringify(head, null, 2).replace(/\n}$/,''); // trim closing brace
-
-    function oneLineArray(arr){
-      // stringify each object compactly, then join with newlines + two spaces
-      const lines = arr.map(obj => '  ' + JSON.stringify(obj));
-      return `[\n${lines.join(',\n')}\n]`;
+      return null;
     }
 
-    const pdText = oneLineArray(data.progressDaily);
-    const ddText = oneLineArray(data.defectsDaily);
+    // Read sheet to objects (keep raw so we can detect date serials)
+    function sheetToObject(sheet) {
+      if (!sheet) return [];
+      return XLSX.utils.sheet_to_json(sheet, { defval: "", raw: true });
+    }
 
-    // stitch together a valid JSON string
-    return `${headText},
-  "progressDaily": ${pdText},
-  "defectsDaily": ${ddText}
-}`;
-  }
+    // Convert Excel serials or strings to ISO date (YYYY-MM-DD)
+    function toISODate(v) {
+      if (typeof v === "number") {
+        const d = XLSX.SSF.parse_date_code(v);
+        if (!d) return String(v);
+        const pad = n => String(n).padStart(2,"0");
+        return `${d.y}-${pad(d.m)}-${pad(d.d)}`;
+      }
+      // try to normalize strings that Excel might output (or user typed)
+      const s = String(v).trim();
+      const dt = new Date(s);
+      if (!isNaN(dt.valueOf())) {
+        const yyyy = dt.getFullYear();
+        const mm = String(dt.getMonth()+1).padStart(2,"0");
+        const dd = String(dt.getDate()).padStart(2,"0");
+        return `${yyyy}-${mm}-${dd}`;
+      }
+      return s;
+    }
 
-  // Export + Backup buttons
-  document.getElementById('btn-export').addEventListener('click', () => {
-    if (!excelData) return showError('Load an Excel file first.');
-    const text = stringifyUAT(excelData);
-    download('uat.json', text);
-  });
+    // Convert Excel serials to ISO datetime (YYYY-MM-DD HH:MM)
+    function toISODateTime(v) {
+      if (typeof v === "number") {
+        const d = XLSX.SSF.parse_date_code(v);
+        if (!d) return String(v);
+        const pad = n => String(n).padStart(2,"0");
+        const date = `${d.y}-${pad(d.m)}-${pad(d.d)}`;
+        const time = `${pad(d.H)}:${pad(d.M)}`;
+        return `${date} ${time}`;
+      }
+      const s = String(v).trim();
+      const dt = new Date(s);
+      if (!isNaN(dt.valueOf())) {
+        const yyyy = dt.getFullYear();
+        const mm = String(dt.getMonth()+1).padStart(2,"0");
+        const dd = String(dt.getDate()).padStart(2,"0");
+        const HH = String(dt.getHours()).padStart(2,"0");
+        const MM = String(dt.getMinutes()).padStart(2,"0");
+        return `${yyyy}-${mm}-${dd} ${HH}:${MM}`;
+      }
+      return s;
+      }
 
-  document.getElementById('btn-backup').addEventListener('click', () => {
-    if (!currentJSON) return showError('Drop your current uat.json first.');
-    download(`uat_${dateStr()}.json`, JSON.stringify(currentJSON, null, 2));
-  });
+    function downloadFile(content, filename) {
+      const blob = new Blob([content], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
 
-})();
-</script>
+    // Keep issues pretty; force compact rows for daily arrays
+    function toJsonText(model) {
+      const root = {
+        overview: model.overview,
+        progressDaily: model.progressDaily,
+        defectsDaily: model.defectsDaily,
+        issues: model.issues
+      };
+
+      let pretty = JSON.stringify(root, null, 2);
+
+      const oneLine = (obj, indent = '    ') => {
+        const parts = Object.entries(obj).map(([k, v]) => `"${k}": ${JSON.stringify(v)}`);
+        return `${indent}{ ${parts.join(', ')} }`;
+      };
+
+      const forceOneLineArray = (arrName) => {
+        const arr = root[arrName] || [];
+        const lines = arr.map(o => oneLine(o)).join(',\n');
+        const re = new RegExp(`"${arrName}": \\[([\\s\\S]*?)\\]`);
+        pretty = pretty.replace(re, `"${arrName}": [\n${lines}\n  ]`);
+      };
+
+      forceOneLineArray('progressDaily');
+      forceOneLineArray('defectsDaily');
+
+      return pretty;
+    }
+
+    // ---- UI wiring ---------------------------------------------------------
+
+    document.getElementById('fileInput').addEventListener('change', handleFile, false);
+    document.getElementById('jsonBtn').addEventListener('click', () => downloadFile(currentJson, 'uat.json'));
+    document.getElementById('backupBtn').addEventListener('click', () => {
+      const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+      downloadFile(currentJson, `uat-backup-${ts}.json`);
+    });
+
+    function handleFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        const data = new Uint8Array(evt.target.result);
+        const wb = XLSX.read(data, { type: 'array' });
+
+        // Sheets (accept variants; case-insensitive)
+        const shOverview     = pickSheet(wb, ['Overview']);
+        const shTestsDaily   = pickSheet(wb, ['testsDaily', 'testDaily']);
+        const shDefectsDaily = pickSheet(wb, ['DefectsDaily', 'defectsDaily']);
+        const shIssues       = pickSheet(wb, ['Issues']);
+
+        // Overview
+        const rawOverview = sheetToObject(shOverview)[0] || {};
+        const overview = {
+          release: rawOverview.release || '',
+          lastUpdate: toISODateTime(rawOverview.lastUpdate || ''),
+          schedule_start: toISODate(rawOverview.schedule_start || ''),
+          schedule_end: toISODate(rawOverview.schedule_end || ''),
+          business_days: Number(rawOverview.business_days || 0)
+        };
+
+        // testsDaily
+        const progressDaily = sheetToObject(shTestsDaily).map(r => ({
+          date: toISODate(r.date),
+          platform: "ALL",
+          team: "ALL",
+          inScope: Number(r.inScope || 0),
+          executedPct: Number(r.executedPct || 0),
+          passPct: Number(r.passPct || 0)
+        }));
+
+        // DefectsDaily
+        const defectsDaily = sheetToObject(shDefectsDaily).map(r => ({
+          date: toISODate(r.date),
+          platform: "ALL",
+          team: "ALL",
+          openDefects: Number(r.openDefects || 0)
+        }));
+
+        // Issues
+        const issues = sheetToObject(shIssues).map(r => ({
+          key: r.key,
+          priority: r.priority,
+          summary: r.summary,
+          reporter: r.reporter,
+          team: r.team,
+          platform: r.platform,
+          status: r.status,
+          link: r.link
+        }));
+
+        const model = { overview, progressDaily, defectsDaily, issues };
+        currentJson = toJsonText(model);
+
+        document.getElementById('preview').value = currentJson;
+        document.getElementById('jsonBtn').disabled = false;
+        document.getElementById('backupBtn').disabled = false;
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  </script>
 </body>
 </html>
