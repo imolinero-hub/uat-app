@@ -12,7 +12,7 @@
     h1 { margin:0 0 16px; font-size:20px; }
     .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); }
     .card { background:var(--card); border:1px solid #1c2640; border-radius:12px; padding:16px; }
-    .drop { border:2px dashed #2a3760; border-radius:12px; padding:24px; text-align:center; color:var(--muted); }
+    .drop { border:2px dashed #2a3760; border-radius:12px; padding:24px; text-align:center; color:var(--muted); cursor:pointer; }
     .drop.drag { border-color:var(--accent); color:#cfe1ff; }
     .btn { background:linear-gradient(135deg,#4ea3ff,#3b82f6); border:0; color:white; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:600; }
     .btn:disabled { opacity:.5; cursor:not-allowed; }
@@ -29,7 +29,7 @@
   <div class="grid">
     <div class="card">
       <h3 style="margin-top:0">1) Drop your Excel file</h3>
-      <div id="drop-xlsx" class="drop">Drop <b>uat_export_template.xlsx</b> here or click to choose</div>
+      <div id="drop-xlsx" class="drop">Drop <b>your Excel export</b> here or click to choose</div>
       <input id="file-xlsx" type="file" accept=".xlsx,.xls" style="display:none">
       <small>Expected sheets: <code>Overview</code>, <code>TestsDaily</code>, <code>DefectsDaily</code>, <code>Issues</code></small>
     </div>
@@ -57,15 +57,14 @@
 
 <script>
 (function(){
-  /** ---------------- UI helpers ---------------- */
   const $ = sel => document.querySelector(sel);
   const dropX = $('#drop-xlsx'), inpX = $('#file-xlsx');
   const dropJ = $('#drop-json'), inpJ = $('#file-json');
   const btnExport = $('#btn-export'), btnBackup = $('#btn-backup');
   const preview = $('#preview'), details = $('#details'), detailBody = $('#detail-body');
 
-  let excelData = null;      // Parsed workbook
-  let currentJSON = null;    // Existing uat.json to back up
+  let excelData = null;      // Parsed workbook → JSON object for the app
+  let currentJSON = null;    // Existing uat.json (to back up)
 
   function dragStyling(el, on) { el.classList.toggle('drag', on); }
   function dateStr(d=new Date()) { return d.toISOString().slice(0,10); }
@@ -79,7 +78,6 @@
     URL.revokeObjectURL(a.href);
   }
 
-  /** --------------- Drag & drop wiring --------------- */
   function wireDrop(area, input, cb) {
     area.addEventListener('click', () => input.click());
     ['dragenter','dragover'].forEach(evt => area.addEventListener(evt, e => { e.preventDefault(); dragStyling(area,true); }));
@@ -91,7 +89,6 @@
   wireDrop(dropX, inpX, handleExcel);
   wireDrop(dropJ, inpJ, handleJson);
 
-  /** --------------- Readers --------------- */
   function handleJson(file){
     const r = new FileReader();
     r.onload = () => {
@@ -112,13 +109,12 @@
         renderDetails(excelData);
       } catch(e) {
         console.error(e);
-        alert('Could not parse workbook. Check sheet names and headers.');
+        alert('Could not parse workbook. Check sheet names and headers exactly match the spec.');
       }
     };
     r.readAsArrayBuffer(file);
   }
 
-  /** --------------- Parsing logic --------------- */
   function sheetToObjects(wb, name) {
     const ws = wb.Sheets[name];
     if (!ws) throw new Error(`Missing sheet: ${name}`);
@@ -126,55 +122,74 @@
   }
 
   function parseWorkbook(wb){
-    // Sheets → arrays of rows
-    const overviewRows   = sheetToObjects(wb,'Overview');
-    const testsDaily     = sheetToObjects(wb,'TestsDaily');
-    const defectsDaily   = sheetToObjects(wb,'DefectsDaily');
-    const issuesRows     = sheetToObjects(wb,'Issues');
+    // 1) Overview (single row)
+    const overviewRows = sheetToObjects(wb,'Overview');
+    if (!overviewRows.length) throw new Error('Overview sheet has no rows');
+    const o = overviewRows[0];
 
-    const first = overviewRows[0] || {};
     const overview = {
-      release    : first.release || 'RI-4',
-      lastUpdate : first.lastUpdate || dateStr()
+      release: String(o.release || 'RI-4'),
+      lastUpdate: o.lastUpdate ? String(o.lastUpdate) : `${dateStr()} 00:00`,
+      schedule: {
+        start: String(o.schedule_start || ''),
+        end: String(o.schedule_end || ''),
+        businessDays: Number(o.business_days || 0)
+      }
     };
 
-    const kpis = {
-      inScope     : Number(first.inScope || 0),
-      executedPct : Number(first.executedPct || 0),
-      passPct     : Number(first.passPct || 0),
-      openDefects : Number(first.openDefects || 0),
-      critical    : Number(first.critical || 0),
-    };
-
-    // Normalize daily arrays (ignore empty rows)
-    const progressDaily = (testsDaily||[])
+    // 2) TestsDaily → progressDaily + derive KPI snapshots from last row
+    const testsDaily = sheetToObjects(wb,'TestsDaily')
       .filter(r => r.date != null)
-      .map(r => ({ date:String(r.date).slice(0,10), executedPct:Number(r.executedPct||0), passPct:Number(r.passPct||0) }));
+      .map(r => ({
+        date: String(r.date).slice(0,10),
+        inScope: Number(r.inScope || 0),
+        executedPct: Number(r.executedPct || 0),
+        passPct: Number(r.passPct || 0)
+      }))
+      .sort((a,b) => a.date.localeCompare(b.date));
 
-    const defectsHist = (defectsDaily||[])
+    const lastT = testsDaily[testsDaily.length - 1] || {inScope:0, executedPct:0, passPct:0};
+
+    // 3) DefectsDaily → defectsDaily + KPI openDefects from last row
+    const defectsDaily = sheetToObjects(wb,'DefectsDaily')
       .filter(r => r.date != null)
-      .map(r => ({ date:String(r.date).slice(0,10), openDefects:Number(r.openDefects||0) }));
+      .map(r => ({
+        date: String(r.date).slice(0,10),
+        openDefects: Number(r.openDefects || 0)
+      }))
+      .sort((a,b) => a.date.localeCompare(b.date));
 
-    // Issues
-    const issues = (issuesRows||[])
+    const lastD = defectsDaily[defectsDaily.length - 1] || {openDefects:0};
+
+    // 4) Issues list
+    const issues = sheetToObjects(wb,'Issues')
       .filter(r => r.key)
       .map(r => ({
-        key:String(r.key),
-        priority:r.priority || '',
-        summary:r.summary || '',
-        reporter:r.reporter || '',
-        team:r.team || '',
-        platform:r.platform || '',
-        status:r.status || '',
-        link:r.link || ''
+        key: String(r.key),
+        priority: r.priority || '',
+        summary: r.summary || '',
+        reporter: r.reporter || '',
+        team: r.team || '',
+        platform: r.platform || '',
+        status: r.status || '',
+        link: r.link || ''
       }));
 
-    // Final JSON for app
+    // KPIs: from last rows
+    const kpis = {
+      inScope: lastT.inScope,
+      executedPct: lastT.executedPct,
+      passPct: lastT.passPct,
+      openDefects: lastD.openDefects,
+      critical: issues.filter(i => i.priority === 'Blocker' || i.priority === 'Critical').length
+    };
+
+    // Final JSON
     return {
       overview,
       kpis,
-      progressDaily,
-      defectsDaily: defectsHist,
+      progressDaily: testsDaily.map(({date, executedPct, passPct}) => ({date, executedPct, passPct})),
+      defectsDaily,
       issues
     };
   }
@@ -184,10 +199,11 @@
     const rows = [
       ['Release', data.overview.release],
       ['Last update', data.overview.lastUpdate],
-      ['In scope', data.kpis.inScope],
-      ['Executed %', data.kpis.executedPct],
-      ['Pass %', data.kpis.passPct],
-      ['Open defects', data.kpis.openDefects],
+      ['Schedule', `${data.overview.schedule.start} → ${data.overview.schedule.end} (${data.overview.schedule.businessDays} biz days)`],
+      ['In scope (latest)', data.kpis.inScope],
+      ['Executed % (latest)', data.kpis.executedPct],
+      ['Pass % (latest)', data.kpis.passPct],
+      ['Open defects (latest)', data.kpis.openDefects],
       ['Blocker/Critical', data.kpis.critical],
       ['Progress points', data.progressDaily.length],
       ['Defect points', data.defectsDaily.length],
@@ -199,13 +215,13 @@
     detailBody.innerHTML = html;
   }
 
-  /** --------------- Export actions --------------- */
-  btnExport.addEventListener('click', () => {
+  // Export + Backup buttons
+  document.getElementById('btn-export').addEventListener('click', () => {
     if (!excelData) return alert('Load an Excel file first.');
     download('uat.json', JSON.stringify(excelData, null, 2));
   });
 
-  btnBackup.addEventListener('click', () => {
+  document.getElementById('btn-backup').addEventListener('click', () => {
     if (!currentJSON) return alert('Drop your current uat.json first.');
     download(`uat_${dateStr()}.json`, JSON.stringify(currentJSON, null, 2));
   });
@@ -214,3 +230,4 @@
 </script>
 </body>
 </html>
+
