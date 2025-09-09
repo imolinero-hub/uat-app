@@ -82,7 +82,7 @@
     },
     {
       "key": "UAT-201",
-      "priority": "Blocker",
+      "priority": "High",
       "summary": "Checkout fails when applying loyalty points",
       "reporter": "Helena",
       "team": "eCommerce",
@@ -92,7 +92,7 @@
     },
     {
       "key": "UAT-162",
-      "priority": "Critical",
+      "priority": "Medium",
       "summary": "Translation missing for 'Add to Cart' button (IT)",
       "reporter": "Juan",
       "team": "Localization",
@@ -117,3 +117,4 @@
     { "label": "Go Live",     "date": "2025-12-10",                       "notes": "Go Live of the RI-4" }
   ]
 }
+
