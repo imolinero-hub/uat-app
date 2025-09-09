@@ -1,219 +1,248 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <title>UAT JSON Export</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root { --bg:#0b1620; --panel:#0f2233; --text:#d9e7ff; --muted:#8fb3d9; --accent:#61dafb; }
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial}
+    h1{font-size:24px;margin:24px 0 12px}
+    .wrap{max-width:1200px;margin:0 auto;padding:20px}
+    .card{background:var(--panel);border-radius:10px;padding:16px;margin:12px 0}
+    .row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+    input[type=file]{color:var(--text)}
+    pre{white-space:pre-wrap;background:#07121a;border-radius:10px;padding:16px;overflow:auto}
+    button{border:0;border-radius:8px;padding:10px 14px;color:#001a2c;background:linear-gradient(135deg,#6dd5fa,#2980b9);cursor:pointer}
+    button[disabled]{opacity:.5;cursor:not-allowed}
+    .muted{color:var(--muted)}
+    .small{font-size:12px}
+  </style>
   <!-- SheetJS (xlsx) -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, sans-serif; background:#0f172a; color:#e2e8f0; padding:20px }
-    h1 { font-size:20px; margin-bottom:10px }
-    .section { margin-bottom:20px }
-    input[type=file] { margin:10px 0 }
-    textarea { width:100%; height:320px; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space:pre; background:#1e293b; color:#f1f5f9; padding:10px; border-radius:8px; border:1px solid #334155 }
-    button { margin:5px; padding:8px 14px; border:none; border-radius:8px; cursor:pointer }
-    button:disabled { opacity:.5; cursor:not-allowed }
-    .btn-primary { background:#3b82f6; color:#fff }
-    .btn-secondary { background:#64748b; color:#fff }
-    small { color:#94a3b8 }
-  </style>
 </head>
 <body>
-  <h1>UAT JSON Export</h1>
+  <div class="wrap">
+    <h1>UAT JSON Export</h1>
 
-  <div class="section">
-    <h3>1) Upload workbook (.xlsx)</h3>
-    <input type="file" id="fileInput" accept=".xlsx" />
+    <div class="card">
+      <h3>1) Upload workbook (.xlsx)</h3>
+      <div class="row">
+        <input id="file" type="file" accept=".xlsx" />
+        <span id="status" class="muted"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>2) Preview</h3>
+      <pre id="preview">// (no preview)</pre>
+    </div>
+
+    <div class="card">
+      <h3>3) Export</h3>
+      <div class="row">
+        <button id="dlJson" disabled>Download uat.json</button>
+        <button id="dlBackup" disabled>Download backup</button>
+      </div>
+      <div class="small muted" style="margin-top:8px">
+        The preview above is exactly the content that will be downloaded.
+      </div>
+    </div>
   </div>
 
-  <div class="section">
-    <h3>2) Preview</h3>
-    <textarea id="preview" readonly>// (no preview)</textarea>
-  </div>
+<script>
+(function(){
+  const $ = sel => document.querySelector(sel);
+  const status = $('#status');
+  const preview = $('#preview');
+  const btnJson = $('#dlJson');
+  const btnBak  = $('#dlBackup');
 
-  <div class="section">
-    <h3>3) Export</h3>
-    <button id="backupBtn" class="btn-secondary" disabled>Download backup</button>
-    <button id="jsonBtn" class="btn-primary" disabled>Download uat.json</button>
-    <p><small>Upload the generated <code>uat.json</code> to your repo root. Save copies under <code>/backups/</code>.</small></p>
-  </div>
+  let lastRendered = '';  // what you see is what you download
 
-  <script>
-    let currentJson = null;
-
-    // ---- Helpers -----------------------------------------------------------
-
-    // Find a sheet by one of several candidate names (case-insensitive)
-    function pickSheet(wb, candidates) {
-      const keys = Object.keys(wb.Sheets);
-      for (const cand of candidates) {
-        const found = keys.find(k => k.toLowerCase() === cand.toLowerCase());
-        if (found) return wb.Sheets[found];
-      }
-      return null;
+  // ---- helpers -------------------------------------------------------------
+  const EPOCH = Date.UTC(1899, 11, 30); // Excel epoch (with 1900 leap bug)
+  function xlToISO(v){
+    if (v == null || v === '') return '';
+    if (v instanceof Date) return v.toISOString().slice(0,10);
+    if (typeof v === 'number') {
+      const t = EPOCH + Math.round(v * 86400000);
+      return new Date(t).toISOString().slice(0,10);
     }
+    // strings like '2025-08-27 10:00' -> keep date part if looks like date
+    const s = String(v);
+    const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+    return m ? m[1] : s;
+  }
 
-    // Read sheet to objects (keep raw so we can detect date serials)
-    function sheetToObject(sheet) {
-      if (!sheet) return [];
-      return XLSX.utils.sheet_to_json(sheet, { defval: "", raw: true });
+  function getSheetCase(wb, wanted){
+    // exact
+    if (wb.Sheets[wanted]) return wb.Sheets[wanted];
+    // case-insensitive
+    const lower = wanted.toLowerCase();
+    for (const name of wb.SheetNames){
+      if (name.toLowerCase() === lower) return wb.Sheets[name];
     }
+    return null;
+  }
 
-    // Convert Excel serials or strings to ISO date (YYYY-MM-DD)
-    function toISODate(v) {
-      if (typeof v === "number") {
-        const d = XLSX.SSF.parse_date_code(v);
-        if (!d) return String(v);
-        const pad = n => String(n).padStart(2,"0");
-        return `${d.y}-${pad(d.m)}-${pad(d.d)}`;
-      }
-      // try to normalize strings that Excel might output (or user typed)
-      const s = String(v).trim();
-      const dt = new Date(s);
-      if (!isNaN(dt.valueOf())) {
-        const yyyy = dt.getFullYear();
-        const mm = String(dt.getMonth()+1).padStart(2,"0");
-        const dd = String(dt.getDate()).padStart(2,"0");
-        return `${yyyy}-${mm}-${dd}`;
-      }
-      return s;
+  function sheetToObjects(ws){
+    if (!ws) return [];
+    return XLSX.utils.sheet_to_json(ws, {defval:'', raw:true});
+  }
+
+  function toInt(v){
+    const n = parseInt(v, 10);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  // make JSON with one-line arrays for some keys
+  function renderWithOneLineArrays(obj, keysOneLine){
+    // pretty first
+    let out = JSON.stringify(obj, null, 2);
+
+    // then surgically replace those arrays
+    for (const key of keysOneLine){
+      const arr = Array.isArray(obj[key]) ? obj[key] : [];
+      const one = arr.map(e => JSON.stringify(e)).join(', ');
+      const pattern = new RegExp(
+        `"${key}"\\s*:\\s*\\[([\\s\\S]*?)\\]`  // non-greedy
+      );
+      out = out.replace(pattern, `"${key}": [ ${one} ]`);
     }
+    return out;
+  }
 
-    // Convert Excel serials to ISO datetime (YYYY-MM-DD HH:MM)
-    function toISODateTime(v) {
-      if (typeof v === "number") {
-        const d = XLSX.SSF.parse_date_code(v);
-        if (!d) return String(v);
-        const pad = n => String(n).padStart(2,"0");
-        const date = `${d.y}-${pad(d.m)}-${pad(d.d)}`;
-        const time = `${pad(d.H)}:${pad(d.M)}`;
-        return `${date} ${time}`;
-      }
-      const s = String(v).trim();
-      const dt = new Date(s);
-      if (!isNaN(dt.valueOf())) {
-        const yyyy = dt.getFullYear();
-        const mm = String(dt.getMonth()+1).padStart(2,"0");
-        const dd = String(dt.getDate()).padStart(2,"0");
-        const HH = String(dt.getHours()).padStart(2,"0");
-        const MM = String(dt.getMinutes()).padStart(2,"0");
-        return `${yyyy}-${mm}-${dd} ${HH}:${MM}`;
-      }
-      return s;
-      }
+  function nowStamp(){
+    const d = new Date();
+    const pad = n => (n<10?'0':'')+n;
+    return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'_'+
+           pad(d.getHours())+pad(d.getMinutes());
+  }
 
-    function downloadFile(content, filename) {
-      const blob = new Blob([content], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
+  // ---- main ---------------------------------------------------------------
+  $('#file').addEventListener('change', async (ev)=>{
+    btnJson.disabled = btnBak.disabled = true;
+    preview.textContent = '// (no preview)';
+    status.textContent = '';
 
-    // Keep issues pretty; force compact rows for daily arrays
-    function toJsonText(model) {
-      const root = {
-        overview: model.overview,
-        progressDaily: model.progressDaily,
-        defectsDaily: model.defectsDaily,
-        issues: model.issues
+    const file = ev.target.files && ev.target.files[0];
+    if (!file) return;
+
+    try{
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, {type:'array', cellDates:false});
+
+      // Sheets (case-insensitive)
+      const wsOverview    = getSheetCase(wb, 'overview');
+      const wsTestsDaily  = getSheetCase(wb, 'testsDaily');
+      const wsDefDaily    = getSheetCase(wb, 'defectsDaily') || getSheetCase(wb, 'DefectsDaily');
+      const wsIssues      = getSheetCase(wb, 'issues');
+      const wsTeams       = getSheetCase(wb, 'teams');
+      const wsKeyDates    = getSheetCase(wb, 'keyDates');
+
+      // Parse rows
+      const rowsOverview  = sheetToObjects(wsOverview);
+      const rowsTests     = sheetToObjects(wsTestsDaily);
+      const rowsDef       = sheetToObjects(wsDefDaily);
+      const rowsIssues    = sheetToObjects(wsIssues);
+      const rowsTeams     = sheetToObjects(wsTeams);
+      const rowsKeyDates  = sheetToObjects(wsKeyDates);
+
+      // overview (first row)
+      const o = rowsOverview[0] || {};
+      const overview = {
+        release:       o.release ?? '',
+        lastUpdate:    (o.lastUpdate ?? '').toString(),
+        schedule_start: xlToISO(o.schedule_start),
+        schedule_end:   xlToISO(o.schedule_end),
+        business_days:  toInt(o.business_days)
       };
 
-      let pretty = JSON.stringify(root, null, 2);
+      // progressDaily
+      const progressDaily = rowsTests.map(r => ({
+        date: xlToISO(r.date),
+        platform: 'ALL',
+        team: 'ALL',
+        inScope: toInt(r.inScope),
+        executedPct: toInt(r.executedPct),
+        passPct: toInt(r.passPct)
+      }));
 
-      const oneLine = (obj, indent = '    ') => {
-        const parts = Object.entries(obj).map(([k, v]) => `"${k}": ${JSON.stringify(v)}`);
-        return `${indent}{ ${parts.join(', ')} }`;
-      };
+      // defectsDaily
+      const defectsDaily = rowsDef.map(r => ({
+        date: xlToISO(r.date),
+        platform: 'ALL',
+        team: 'ALL',
+        openDefects: toInt(r.openDefects)
+      }));
 
-      const forceOneLineArray = (arrName) => {
-        const arr = root[arrName] || [];
-        const lines = arr.map(o => oneLine(o)).join(',\n');
-        const re = new RegExp(`"${arrName}": \\[([\\s\\S]*?)\\]`);
-        pretty = pretty.replace(re, `"${arrName}": [\n${lines}\n  ]`);
-      };
+      // issues (keep multiline pretty)
+      const issues = rowsIssues.map(r => ({
+        key:       r.key       ?? '',
+        priority:  r.priority  ?? '',
+        summary:   r.summary   ?? '',
+        reporter:  r.reporter  ?? '',
+        team:      r.team      ?? '',
+        platform:  r.platform  ?? '',
+        status:    r.status    ?? '',
+        link:      r.link      ?? ''
+      }));
 
-      forceOneLineArray('progressDaily');
-      forceOneLineArray('defectsDaily');
+      // teams and keyDates (one-line arrays)
+      const teams = rowsTeams.map(r => ({
+        name:     r.name ?? '',
+        platform: r.platform ?? '',
+        lead:     r.lead ?? '',
+        email:    r.email ?? ''
+      }));
 
-      return pretty;
+      const keyDates = rowsKeyDates.map(r => ({
+        label:     r.label ?? '',
+        date:      xlToISO(r.date),
+        dateRange: r.dateRange ?? '',
+        notes:     r.notes ?? ''
+      }));
+
+      const data = { overview, progressDaily, defectsDaily, issues, teams, keyDates };
+
+      // Render with one-line arrays for these keys:
+      lastRendered = renderWithOneLineArrays(
+        data,
+        ['progressDaily','defectsDaily','teams','keyDates']
+      );
+      preview.textContent = lastRendered;
+
+      btnJson.disabled = btnBak.disabled = false;
+      status.textContent = 'Parsed ✓';
+    }catch(err){
+      console.error(err);
+      status.textContent = 'Error: ' + (err?.message || err);
+      preview.textContent = '// (no preview)';
     }
+  });
 
-    // ---- UI wiring ---------------------------------------------------------
+  btnJson.addEventListener('click', ()=>{
+    if (!lastRendered) return;
+    const blob = new Blob([lastRendered], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'uat.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
 
-    document.getElementById('fileInput').addEventListener('change', handleFile, false);
-    document.getElementById('jsonBtn').addEventListener('click', () => downloadFile(currentJson, 'uat.json'));
-    document.getElementById('backupBtn').addEventListener('click', () => {
-      const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-      downloadFile(currentJson, `uat-backup-${ts}.json`);
-    });
-
-    function handleFile(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        const data = new Uint8Array(evt.target.result);
-        const wb = XLSX.read(data, { type: 'array' });
-
-        // Sheets (accept variants; case-insensitive)
-        const shOverview     = pickSheet(wb, ['Overview']);
-        const shTestsDaily   = pickSheet(wb, ['testsDaily', 'testDaily']);
-        const shDefectsDaily = pickSheet(wb, ['DefectsDaily', 'defectsDaily']);
-        const shIssues       = pickSheet(wb, ['Issues']);
-
-        // Overview
-        const rawOverview = sheetToObject(shOverview)[0] || {};
-        const overview = {
-          release: rawOverview.release || '',
-          lastUpdate: toISODateTime(rawOverview.lastUpdate || ''),
-          schedule_start: toISODate(rawOverview.schedule_start || ''),
-          schedule_end: toISODate(rawOverview.schedule_end || ''),
-          business_days: Number(rawOverview.business_days || 0)
-        };
-
-        // testsDaily
-        const progressDaily = sheetToObject(shTestsDaily).map(r => ({
-          date: toISODate(r.date),
-          platform: "ALL",
-          team: "ALL",
-          inScope: Number(r.inScope || 0),
-          executedPct: Number(r.executedPct || 0),
-          passPct: Number(r.passPct || 0)
-        }));
-
-        // DefectsDaily
-        const defectsDaily = sheetToObject(shDefectsDaily).map(r => ({
-          date: toISODate(r.date),
-          platform: "ALL",
-          team: "ALL",
-          openDefects: Number(r.openDefects || 0)
-        }));
-
-        // Issues
-        const issues = sheetToObject(shIssues).map(r => ({
-          key: r.key,
-          priority: r.priority,
-          summary: r.summary,
-          reporter: r.reporter,
-          team: r.team,
-          platform: r.platform,
-          status: r.status,
-          link: r.link
-        }));
-
-        const model = { overview, progressDaily, defectsDaily, issues };
-        currentJson = toJsonText(model);
-
-        document.getElementById('preview').value = currentJson;
-        document.getElementById('jsonBtn').disabled = false;
-        document.getElementById('backupBtn').disabled = false;
-      };
-      reader.readAsArrayBuffer(file);
-    }
-  </script>
+  btnBak.addEventListener('click', ()=>{
+    if (!lastRendered) return;
+    const blob = new Blob([lastRendered], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `uat-backup_${nowStamp()}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+})();
+</script>
 </body>
 </html>
