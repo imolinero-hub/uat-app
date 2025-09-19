@@ -31,7 +31,7 @@
        6, 13, 19, 25, 32, 38, 44, 51, 57,
       63, 70, 76, 82, 89, 95, 95, 95, 95, 95
     ]
-  }
+  },
 
   "progressDaily": [
     { "date": "2025-10-13", "platform": "ALL", "team": "ALL", "inScope": 3249, "executedPct": 4,  "passPct": 3  },
@@ -137,5 +137,6 @@
     { "label": "Go Live",     "date": "2025-12-10",                       "notes": "Go Live of the RI-4" }
   ]
 }
+
 
 
