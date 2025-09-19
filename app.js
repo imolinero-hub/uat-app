@@ -385,34 +385,63 @@ function app(){
       window.scrollTo(0, y);
     },
 
-    generateAIStatus(){
-      this.aiOpen = true;
-      const plat = this.filters.platform || 'All platforms';
-      const md = [
-        `**Summary (${plat})**`,
-        `• Executed ${this.fmtPct(this.kpis.executedPct)}, Pass ${this.fmtPct(this.kpis.passPct)}. Open defects ${this.kpis.openDefects} (${this.kpis.critical} blocker/critical).`,
-        `• Execution trending ${this.trendText('exec')} and defects ${this.trendText('def')}.`,
-        ``,
-        `**Highlights**`,
-        `• Most planned scenarios executed; quality trending positively.`,
-        `• Key dates on track; no change to Go/No-Go.`,
-        ``,
-        `**Risks & Blockers**`,
-        `${this.issues.length ? '• Active blockers/criticals require attention (see table below).' : '• No Blocker/Critical reported currently.'}`,
-        ``,
-        `**Next Steps**`,
-        `• Close remaining critical defects; re-test impacted flows.`,
-        `• Prepare demo materials ahead of Alpha Demo.`,
-      ].join('\n');
-      this.aiStatus = this.mdToHtml(md);
+    // ---- Daily Status modal state ----
+    dailyOpen: false,
+    dailyHtml: '',
+    
+    // Open Daily Status: fetch external MD (fallback to generated text)
+    async openDaily(){
+      this.dailyOpen = true;
+      this.dailyHtml = '<p class="text-slate-400">Loading…</p>';
+      this.lockScroll();    // reuse the helpers you added for Info
+    
+      const url = this.raw.statusUrl || './daily-status.md';
+      try{
+        const res = await fetch(url, { cache: 'no-store' });
+        if (res.ok) {
+          const md = await res.text();
+          this.dailyHtml = this.mdToHtml(md);
+        } else {
+          this.dailyHtml = this.mdToHtml(this.buildDailyFallback());
+        }
+      }catch{
+        this.dailyHtml = this.mdToHtml(this.buildDailyFallback());
+      }
+      requestAnimationFrame(()=> this.$refs?.dailyDialog?.focus());
     },
-    copyAI(){ if(this.aiStatus){ navigator.clipboard.writeText(this.htmlToText(this.aiStatus)); } },
-    downloadAI(){
-      const text = this.aiStatus ? this.htmlToText(this.aiStatus) : '';
+    closeDaily(){
+      this.dailyOpen = false;
+      this.unlockScroll();
+    },
+    
+    // Optional: fallback generator if the MD is missing
+    buildDailyFallback(){
+      const k = this.kpis;
+      const plat = this.filters.platform || 'All platforms';
+      const lines = [
+        `# Daily Status – ${plat}`,
+        ``,
+        `**Execution**`,
+        `- Executed: ${this.fmtPct(k.executedPct)} (plan ${this.fmtPct(this.kpis.plannedExecutedPct||0)}; Δ ${k.execDelta>0?'+':''}${k.execDelta}pp)`,
+        `- Pass rate: ${this.fmtPct(k.passPct)} (plan ${this.fmtPct(this.kpis.plannedPassPct||0)}; Δ ${k.passDelta>0?'+':''}${k.passDelta}pp)`,
+        ``,
+        `**Defects**`,
+        `- Open: ${k.openDefects} · Blocker/Critical: ${k.critical}`,
+        ``,
+        `**Notes**`,
+        `- Key dates on track.`,
+      ];
+      return lines.join('\n');
+    },
+    
+    // Utilities to copy/download the rendered status
+    copyDaily(){ if(this.dailyHtml){ navigator.clipboard.writeText(this.htmlToText(this.dailyHtml)); } },
+    downloadDaily(){
+      const text = this.dailyHtml ? this.htmlToText(this.dailyHtml) : '';
       const blob = new Blob([text], {type:'text/markdown'});
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `UAT_Daily_Status_${(this.lastUpdate||'').replace(/[: ]/g,'_')}.md`;
+      a.download = `Daily_Status_${(this.lastUpdate||'').replace(/[: ]/g,'_')}.md`;
       a.click(); URL.revokeObjectURL(a.href);
     },
 
