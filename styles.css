@@ -68,6 +68,9 @@ body{
 .toast{ position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:#ef4444; color:white; font-size:12px; padding:8px 10px; border-radius:8px }
 .theme-light .toast{ background:#b91c1c }
 .icon-btn{ width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center; border-radius:10px; }
+.prose h1, .prose h2, .prose h3 { margin: .75rem 0 .5rem; }
+.prose hr { border: 0; border-top: 1px solid rgba(148,163,184,.25); margin: .75rem 0; }
+.prose p { margin: .35rem 0; }
 
 /* --- KPI color helpers for R/A/G vs plan --- */
 .text-emerald-400 { color: #10b981; } /* green */
