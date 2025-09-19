@@ -47,7 +47,7 @@ function BizCal(schedule){
   return { businessDays, isBusiness, indexFor, nextBusinessAfter, formatDay:fmtDay, todayTZ, start, end, tz };
 }
 
-/* ---------- Alpine app() (enhanced with planned vs actual) ---------- */
+/* ---------- Alpine app() (unchanged logic) ---------- */
 function app(){
   return {
     raw:{ overview:{}, progressDaily:[], defectsDaily:[], issues:[], keyDates:[], schedule:{}, plannedSeries:{}, plan:{} },
@@ -76,7 +76,7 @@ function app(){
       this.lastUpdate = this.raw.overview?.lastUpdate || '';
       this.platforms  = this.getPlatforms();
       this.computeKpis();
-      this.computePlannedToday();   // NEW: compute planned values and deltas
+      this.computePlannedToday(); // NEW: planned vs actual
       this.drawCharts();
       this.filterIssues();
       this.computeCountdown();
@@ -98,8 +98,8 @@ function app(){
       return set.size ? [...set].sort() : ['Web','App','BOSS'];
     },
     onFilterChange(){ this.computeKpis(); this.filterIssues(); },
-
-    /* ----- Planned helpers ----- */
+    
+    /* ---- Planned vs Actual helpers (NEW) ---- */
     plannedExecutedPct(dayIndex){
       const execDays = this.raw.plan?.exec_days ?? 10;
       if (dayIndex <= 0) return 0;
@@ -108,71 +108,61 @@ function app(){
     },
     plannedPassPct(dayIndex){
       const passDays = this.raw.plan?.pass_days ?? 15;
-      const passTarget = (this.raw.plan?.pass_target ?? 95) / 100; // transform to ratio
+      const passTarget = (this.raw.plan?.pass_target ?? 95) / 100; // convert to ratio
       if (dayIndex <= 0) return 0;
       const capped = Math.min(dayIndex, passDays);
       const pct = (capped * (passTarget / passDays)) * 100;
-      // Cap at 95 after day 15
-      const capped95 = Math.min(pct, 95);
-      return Math.round(capped95);
+      return Math.round(Math.min(pct, 95)); // cap at 95 after day 15
     },
     kpiColorPlan(actual, planned){
-      const diff = actual - planned; // percentage points
+      const diff = (actual||0) - (planned||0);
       if (diff >= 0) return 'text-emerald-400';
       if (diff >= -5) return 'text-amber-300';
       return 'text-rose-400';
     },
-
     computePlannedToday(){
-      // Determine working-day index from schedule using BizCal
+      // Determine working-day index using BizCal (schedule.start/end + timezone)
       const sch = this.raw.schedule || {};
       const cal = BizCal(sch);
       const today = cal.todayTZ();
-      let todayIndex = 1;
+      let idx = 1;
       if (cal.start && cal.end){
-        if (today < cal.start) todayIndex = 1;
-        else if (today > cal.end) todayIndex = cal.businessDays().length;
-        else todayIndex = cal.indexFor(today);
+        if (today < cal.start) idx = 1;
+        else if (today > cal.end) idx = cal.businessDays().length;
+        else idx = cal.indexFor(today);
       } else {
-        // Fallback: infer from progressDaily length
+        // Fallback: progress length
         const p = this.raw.progressDaily || [];
-        todayIndex = p.length ? p.length : 1;
+        idx = p.length ? p.length : 1;
       }
-
-      // Prefer plannedSeries arrays if present and aligned to business days
+      // Prefer arrays from plannedSeries if provided
       if (this.raw.plannedSeries?.planned_executed_pct?.length){
-        const i = Math.min(todayIndex, this.raw.plannedSeries.planned_executed_pct.length) - 1;
-        this.planned.exec = this.raw.plannedSeries.planned_executed_pct[i] ?? this.plannedExecutedPct(todayIndex);
+        const i = Math.min(idx, this.raw.plannedSeries.planned_executed_pct.length) - 1;
+        this.planned.exec = this.raw.plannedSeries.planned_executed_pct[i];
       } else {
-        this.planned.exec = this.plannedExecutedPct(todayIndex);
+        this.planned.exec = this.plannedExecutedPct(idx);
       }
       if (this.raw.plannedSeries?.planned_pass_pct?.length){
-        const i = Math.min(todayIndex, this.raw.plannedSeries.planned_pass_pct.length) - 1;
-        this.planned.pass = this.raw.plannedSeries.planned_pass_pct[i] ?? this.plannedPassPct(todayIndex);
+        const i = Math.min(idx, this.raw.plannedSeries.planned_pass_pct.length) - 1;
+        this.planned.pass = this.raw.plannedSeries.planned_pass_pct[i];
       } else {
-        this.planned.pass = this.plannedPassPct(todayIndex);
+        this.planned.pass = this.plannedPassPct(idx);
       }
-
-      // Actuals from last progressDaily entry
+      // Actuals from latest progressDaily
       const p = this.raw.progressDaily || [];
-      let actualExec = 0, actualPass = 0;
-      if (p.length){
-        actualExec = +p[p.length-1].executedPct || 0;
-        actualPass = +p[p.length-1].passPct || 0;
-      }
+      const actualExec = p.length ? (+p[p.length-1].executedPct||0) : 0;
+      const actualPass = p.length ? (+p[p.length-1].passPct||0) : 0;
       this.deltas.exec = Math.round(actualExec - this.planned.exec);
       this.deltas.pass = Math.round(actualPass - this.planned.pass);
-
-      // Store also in kpis for quick templating (no HTML changes yet; will be used in next step)
+      // Expose to kpis for binding in HTML (optional)
       this.kpis.plannedExecutedPct = this.planned.exec;
       this.kpis.plannedPassPct = this.planned.pass;
-      this.kpis.execColorClass = this.kpiColorPlan(actualExec, this.planned.exec);
-      this.kpis.passColorClass = this.kpiColorPlan(actualPass, this.planned.pass);
       this.kpis.execDelta = this.deltas.exec;
       this.kpis.passDelta = this.deltas.pass;
+      this.kpis.execColorClass = this.kpiColorPlan(actualExec, this.planned.exec);
+      this.kpis.passColorClass = this.kpiColorPlan(actualPass, this.planned.pass);
     },
-
-    computeKpis(){
+computeKpis(){
       const p = this.raw.progressDaily || [];
       if(p.length){
         const last = p[p.length-1];
@@ -211,8 +201,8 @@ function app(){
       const exec   = (this.raw.progressDaily||[]).map(r=>+r.executedPct||0);
       const pass   = (this.raw.progressDaily||[]).map(r=>+r.passPct||0);
 
-      // Build planned series aligned to the number of business days captured in progressDaily
-      const n = labels.length || Math.max(this.raw.plannedSeries?.planned_executed_pct?.length||0, this.raw.plannedSeries?.planned_pass_pct?.length||0) || 0;
+      // Build planned series aligned to the number of days we have in progressDaily
+      const n = labels.length || 0;
       const plannedExec = [];
       const plannedPass = [];
       for (let i=1;i<=n;i++){
@@ -245,7 +235,6 @@ function app(){
           }
         }
       });
-
       const labelsD = (this.raw.defectsDaily||[]).map(r=>r.date);
       const open    = (this.raw.defectsDaily||[]).map(r=>+r.openDefects||0);
       if(this.defectChart){ this.defectChart.destroy(); }
@@ -391,7 +380,7 @@ function app(){
       }catch{ return '—'; }
     },
     mdToHtml(md){
-      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#39;');
       return esc(md)
         .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
         .replace(/^• /gm,'<li>')
