@@ -347,6 +347,7 @@ computeKpis(){
     async openInfo(){
       this.infoOpen = true;
       this.infoHtml = '<p class="text-slate-400">Loading…</p>';
+      document.documentElement.classList.add('modal-open');
       const url = this.raw.infoUrl || './about-uat.md';
       try{
         const res = await fetch(url, { cache:'no-store' });
@@ -355,8 +356,14 @@ computeKpis(){
       }catch{
         this.infoHtml = '<p class="text-rose-400">Failed to load info.</p>';
       }
+      // focus after DOM paint
+      requestAnimationFrame(()=> this.$refs?.infoDialog?.focus());
     },
-
+    closeInfo(){
+      this.infoOpen = false;
+      document.documentElement.classList.remove('modal-open');
+    },
+    
     generateAIStatus(){
       this.aiOpen = true;
       const plat = this.filters.platform || 'All platforms';
