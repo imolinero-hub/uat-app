@@ -84,3 +84,42 @@ body{
 .theme-light .kpi-delta   { color: #111827; } /* near-black */
 .theme-dark  .kpi-delta   { color: #e5e7eb; } /* slate-200 */
 
+/* Modal base */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(2, 6, 23, .45); /* slate-950 with alpha */
+  backdrop-filter: blur(2px);
+  z-index: 50;
+}
+.modal-wrap {
+  position: fixed; inset: 0; z-index: 51;
+  display: grid; place-items: center;
+  padding: 1rem;
+}
+.modal-panel {
+  width: min(920px, 96vw);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  outline: none;
+}
+.theme-light .modal-panel { background: #ffffff; color: #0f172a; } /* slate-900 */
+.theme-dark  .modal-panel { background: #0f172a; color: #e2e8f0; } /* slate-200 */
+
+/* Header/footer */
+.modal-header, .modal-footer {
+  padding: .875rem 1rem;
+  border-bottom: 1px solid rgba(148,163,184,.2);
+}
+.modal-footer { border-top: 1px solid rgba(148,163,184,.2); border-bottom: 0; }
+
+/* Scrollable content area */
+.modal-body {
+  padding: 1rem;
+  max-height: min(80vh, 700px);
+  overflow: auto;               /* <- gives the scrollbar */
+}
+
+/* Prevent background scroll when any modal open */
+html.modal-open, body.modal-open { overflow: hidden !important; }
+
+
