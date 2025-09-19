@@ -474,6 +474,75 @@ function app(){
           return `<p>${block.replace(/\n/g,'<br>')}</p>`;
         }).join('');
     },
+
+    mdToHtml(md){
+      // --- simple, safe, dependency-free Markdown -> HTML ---
+      const esc = (s) =>
+        s.replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#39;");
+    
+      if (!md || typeof md !== "string") return "";
+    
+      // normalise line endings & trim edges
+      const lines = md.replace(/\r\n?/g, "\n").trim().split("\n");
+    
+      let html = "";
+      let inList = false;
+    
+      const flushList = () => {
+        if (inList) { html += "</ul>"; inList = false; }
+      };
+    
+      for (let raw of lines) {
+        const line = raw; // keep raw for pattern checks
+    
+        // horizontal rule: --- on its own line
+        if (/^\s*---\s*$/.test(line)) { flushList(); html += "<hr>"; continue; }
+    
+        // headings: #, ##, ###
+        const h = line.match(/^\s*(#{1,3})\s+(.+)$/);
+        if (h) {
+          flushList();
+          const level = h[1].length;                 // 1..3
+          const text  = h[2].trim();
+          html += `<h${level}>${esc(text)}</h${level}>`;
+          continue;
+        }
+    
+        // list item: - item  OR  * item
+        const li = line.match(/^\s*[-*]\s+(.+)$/);
+        if (li) {
+          if (!inList) { html += '<ul class="list-disc pl-5 space-y-1">'; inList = true; }
+          // inline emphasis inside list items
+          let item = esc(li[1]);
+          item = item.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+                     .replace(/(?:^|[^*])\*(.+?)\*(?!\*)/g, (m, g1) => m.replace(`*${g1}*`, `<em>${g1}</em>`));
+          html += `<li>${item}</li>`;
+          continue;
+        }
+    
+        // blank line -> paragraph break
+        if (/^\s*$/.test(line)) { flushList(); html += "<p></p>"; continue; }
+    
+        // regular paragraph with inline emphasis
+        flushList();
+        let text = esc(line);
+        text = text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+                   .replace(/(?:^|[^*])\*(.+?)\*(?!\*)/g, (m, g1) => m.replace(`*${g1}*`, `<em>${g1}</em>`));
+        html += `<p>${text}</p>`;
+      }
+    
+      flushList();
+    
+      // cleanup double-empty paras that may occur from multiple blank lines
+      html = html.replace(/<p>\s*<\/p>/g, "");
+    
+      return html;
+    },
+    
     htmlToText(html){ const tmp=document.createElement('div'); tmp.innerHTML=html; return tmp.innerText; }
   }
 }
