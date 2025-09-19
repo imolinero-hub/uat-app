@@ -347,6 +347,7 @@ function app(){
     async openInfo(){
       this.infoOpen = true;
       this.infoHtml = '<p class="text-slate-400">Loading…</p>';
+      this.lockScroll(); // << prevent background scroll without jumping
       document.documentElement.classList.add('modal-open');
       const url = this.raw.infoUrl || './about-uat.md';
       try{
@@ -361,6 +362,7 @@ function app(){
     },
     closeInfo(){
       this.infoOpen = false;
+      this.unlockScroll(); // << restore exact scroll position
       document.documentElement.classList.remove('modal-open');
     },
 
