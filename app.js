@@ -162,7 +162,7 @@ function app(){
       this.kpis.execColorClass = this.kpiColorPlan(actualExec, plannedExec);
       this.kpis.passColorClass = this.kpiColorPlan(actualPass, plannedPass);
     },
-computeKpis(){
+    computeKpis(){
       const p = this.raw.progressDaily || [];
       if(p.length){
         const last = p[p.length-1];
@@ -363,7 +363,28 @@ computeKpis(){
       this.infoOpen = false;
       document.documentElement.classList.remove('modal-open');
     },
-    
+
+    // --- Scroll lock helpers (no layout jump) ---
+    lockScroll(){
+      this._scrollY = window.scrollY || window.pageYOffset || 0;
+      const b = document.body;
+      b.style.position = 'fixed';
+      b.style.top = `-${this._scrollY}px`;
+      b.style.left = '0';
+      b.style.right = '0';
+      b.style.width = '100%';
+    },
+    unlockScroll(){
+      const b = document.body;
+      const y = this._scrollY || 0;
+      b.style.position = '';
+      b.style.top = '';
+      b.style.left = '';
+      b.style.right = '';
+      b.style.width = '';
+      window.scrollTo(0, y);
+    },
+
     generateAIStatus(){
       this.aiOpen = true;
       const plat = this.filters.platform || 'All platforms';
