@@ -50,8 +50,10 @@ function BizCal(schedule){
 /* ---------- Alpine app() (unchanged logic) ---------- */
 function app(){
   return {
-    raw:{ overview:{}, progressDaily:[], defectsDaily:[], issues:[], keyDates:[], schedule:{} },
+    raw:{ overview:{}, progressDaily:[], defectsDaily:[], issues:[], keyDates:[], schedule:{}, plannedSeries:{}, plan:{} },
     kpis:{ inScope:0, executedPct:0, passPct:0, openDefects:0, critical:0 },
+    planned:{ exec:0, pass:0 },
+    deltas:{ exec:0, pass:0 },
     platforms:[], filters:{ platform:'' },
     lastUpdate:'', issues:[],
     execChart:null, defectChart:null,
@@ -74,6 +76,7 @@ function app(){
       this.lastUpdate = this.raw.overview?.lastUpdate || '';
       this.platforms  = this.getPlatforms();
       this.computeKpis();
+      this.computePlannedToday();
       this.drawCharts();
       this.filterIssues();
       this.computeCountdown();
@@ -95,7 +98,71 @@ function app(){
       return set.size ? [...set].sort() : ['Web','App','BOSS'];
     },
     onFilterChange(){ this.computeKpis(); this.filterIssues(); },
-    computeKpis(){
+    
+    /* ---- Planned vs Actual helpers ---- */
+    plannedExecutedPct(dayIndex){
+      const execDays = this.raw.plan?.exec_days ?? 10;
+      if (dayIndex <= 0) return 0;
+      if (dayIndex >= execDays) return 100;
+      return Math.round((dayIndex / execDays) * 100);
+    },
+    plannedPassPct(dayIndex){
+      const passDays = this.raw.plan?.pass_days ?? 15;
+      const passTarget = (this.raw.plan?.pass_target ?? 95) / 100;
+      if (dayIndex <= 0) return 0;
+      const capped = Math.min(dayIndex, passDays);
+      const pct = (capped * (passTarget / passDays)) * 100;
+      return Math.round(Math.min(pct, 95));
+    },
+    kpiColorPlan(actual, planned){
+      const diff = (actual||0) - (planned||0);
+      if (diff >= 0) return 'text-emerald-400';
+      if (diff >= -5) return 'text-amber-300';
+      return 'text-rose-400';
+    },
+    computePlannedToday(){
+      // Determine working-day index using BizCal or fallback to progress length
+      const cal = BizCal(this.raw.schedule||{});
+      const today = cal.todayTZ();
+      let idx = 1;
+      if (cal.start && cal.end){
+        if (today < cal.start) idx = 1;
+        else if (today > cal.end) idx = cal.businessDays().length;
+        else idx = cal.indexFor(today);
+      } else {
+        const p = this.raw.progressDaily || [];
+        idx = p.length ? p.length : 1;
+      }
+      // planned values
+      if (this.raw.plannedSeries?.planned_executed_pct?.length){
+        const i = Math.min(idx, this.raw.plannedSeries.planned_executed_pct.length) - 1;
+        this.planned.exec = Number(this.raw.plannedSeries.planned_executed_pct[i]) || this.plannedExecutedPct(idx);
+      } else {
+        this.planned.exec = this.plannedExecutedPct(idx);
+      }
+      if (this.raw.plannedSeries?.planned_pass_pct?.length){
+        const i = Math.min(idx, this.raw.plannedSeries.planned_pass_pct.length) - 1;
+        this.planned.pass = Number(this.raw.plannedSeries.planned_pass_pct[i]) || this.plannedPassPct(idx);
+      } else {
+        this.planned.pass = this.plannedPassPct(idx);
+      }
+      // actuals
+      const p = this.raw.progressDaily || [];
+      const actualExec = p.length ? (Number(p[p.length-1].executedPct)||0) : 0;
+      const actualPass = p.length ? (Number(p[p.length-1].passPct)||0) : 0;
+      const plannedExec = Number(this.planned.exec)||0;
+      const plannedPass = Number(this.planned.pass)||0;
+      this.deltas.exec = Math.round(actualExec - plannedExec);
+      this.deltas.pass = Math.round(actualPass - plannedPass);
+      // expose to kpis for bindings
+      this.kpis.plannedExecutedPct = plannedExec;
+      this.kpis.plannedPassPct = plannedPass;
+      this.kpis.execDelta = this.deltas.exec;
+      this.kpis.passDelta = this.deltas.pass;
+      this.kpis.execColorClass = this.kpiColorPlan(actualExec, plannedExec);
+      this.kpis.passColorClass = this.kpiColorPlan(actualPass, plannedPass);
+    },
+computeKpis(){
       const p = this.raw.progressDaily || [];
       if(p.length){
         const last = p[p.length-1];
@@ -130,85 +197,13 @@ function app(){
         elements: { line: { borderWidth: 2 }, point: { radius: 3, hitRadius: 6, hoverRadius: 4 } },
         plugins:{ legend:{ position:'bottom', labels:{ color:'#94a3b8', usePointStyle:true } } }
       };
-      const pd = this.raw.progressDaily||[];
-      let labels = pd.map(r=>r.date);
-
-      // If no actual labels, generate labels from business days (schedule) or fallback to N=19
-      if (!labels.length){
-        const cal = BizCal(this.raw.schedule||{});
-        const biz = (cal.start && cal.end) ? cal.businessDays() : [];
-        if (biz.length){
-          labels = biz.map(d => new Date(d).toISOString().slice(0,10));
-        } else {
-          const N = Math.max(this.raw.plannedSeries?.planned_executed_pct?.length||0, this.raw.plannedSeries?.planned_pass_pct?.length||0, 19);
-          const today = new Date(); // simple synthetic labels
-          labels = Array.from({length:N}, (_,i)=> new Date(today.getTime()+i*86400000).toISOString().slice(0,10));
-        }
-      }
-
-      const exec   = pd.map(r=>+r.executedPct||0);
-      const pass   = pd.map(r=>+r.passPct||0);
-
-      // Planned series aligned to labels length
-      const n = labels.length;
-      const plannedExec = Array.from({length:n}, (_,i)=>{
-        const day = i+1;
-        if (this.raw.plannedSeries?.planned_executed_pct?.length >= day){
-          return this.raw.plannedSeries.planned_executed_pct[day-1];
-        }
-        return this.plannedExecutedPct(day);
-      });
-      const plannedPass = Array.from({length:n}, (_,i)=>{
-        const day = i+1;
-        if (this.raw.plannedSeries?.planned_pass_pct?.length >= day){
-          return this.raw.plannedSeries.planned_pass_pct[day-1];
-        }
-        return this.plannedPassPct(day);
-      });
-
-      if(this.execChart){ this.execChart.destroy(); }
-      this.execChart = new Chart(document.getElementById('execChart'), {
-        type:'line',
-        data:{ labels, datasets:[
-          {label:'Executed %', data:exec, borderColor:'#60a5fa', backgroundColor:'#60a5fa', tension:.25, spanGaps:true},
-          {label:'Pass %',     data:pass, borderColor:'#a78bfa', backgroundColor:'#a78bfa', tension:.25, spanGaps:true},
-          {label:'Executed % (Planned)', data:plannedExec, borderColor:'#64748b', borderDash:[8,6], tension:.25, spanGaps:true, pointRadius:0, pointStyle:'line'},
-          {label:'Pass % (Planned)',     data:plannedPass, borderColor:'#cbd5e1', borderDash:[2,6], tension:.25, spanGaps:true, pointRadius:0, pointStyle:'line'}
-        ]},
-        options:{
-          ...common,
-          scales:{
-            x:{ type:'time', time:{ unit:'day' }, grid:{ color:'rgba(148,163,184,.2)'} },
-            y:{ beginAtZero:true, max:100, ticks:{ callback:v=>v+'%' }, grid:{ color:'rgba(148,163,184,.2)'} }
-          }
-        }
-      });
-
-      const labelsD = (this.raw.defectsDaily||[]).map(r=>r.date);
-      const open    = (this.raw.defectsDaily||[]).map(r=>+r.openDefects||0);
-      if(this.defectChart){ this.defectChart.destroy(); }
-      this.defectChart = new Chart(document.getElementById('defectChart'), {
-        type:'line',
-        data:{ labels: labelsD, datasets:[
-          {label:'Open defects', data:open, borderColor:'#34d399', backgroundColor:'#34d399', tension:.25, spanGaps:true}
-        ]},
-        options:{
-          ...common,
-          scales:{
-            x:{ type:'time', time:{ unit:'day' }, grid:{ color:'rgba(148,163,184,.2)'} },
-            y:{ beginAtZero:true, grid:{ color:'rgba(148,163,184,.2)'} }
-          }
-        }
-      });
-    }
-      const common = {
-        responsive:true, maintainAspectRatio:false, animation:false,
-        elements: { line: { borderWidth: 2 }, point: { radius: 3, hitRadius: 6, hoverRadius: 4 } },
-        plugins:{ legend:{ position:'bottom', labels:{ color:'#94a3b8' } } }
-      };
       const labels = (this.raw.progressDaily||[]).map(r=>r.date);
       const exec   = (this.raw.progressDaily||[]).map(r=>+r.executedPct||0);
       const pass   = (this.raw.progressDaily||[]).map(r=>+r.passPct||0);
+      // Build planned series aligned to labels (fallback to helpers)
+      const n = labels.length || Math.max(this.raw.plannedSeries?.planned_executed_pct?.length||0, this.raw.plannedSeries?.planned_pass_pct?.length||0) || 0;
+      const plannedExec = Array.from({length:n}, (_,i)=> (this.raw.plannedSeries?.planned_executed_pct?.[i] ?? this.plannedExecutedPct(i+1)) );
+      const plannedPass = Array.from({length:n}, (_,i)=> (this.raw.plannedSeries?.planned_pass_pct?.[i] ?? this.plannedPassPct(i+1)) );
       if(this.execChart){ this.execChart.destroy(); }
       this.execChart = new Chart(document.getElementById('execChart'), {
         type:'line',
