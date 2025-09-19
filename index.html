@@ -95,8 +95,8 @@
   <!-- ============================== KPIs ============================== -->
   <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
     <div class="card p-4"><div class="kpi-label">In Scope</div><div class="kpi-value mt-1" x-text="kpis.inScope"></div></div>
-    <div class="card p-4"><div class="kpi-label">Executed %</div><div class="kpi-value mt-1" :class="(kpis.execColorClass||kpiColor(kpis.executedPct))" x-text="fmtPct(kpis.executedPct)"></div><div class="text-xs text-slate-400 mt-1">Planned today: <span class="text-slate-300" x-text="fmtPct(kpis.plannedExecutedPct||0)"></span><span class="ml-2 font-medium" :class="(kpis.execDelta>=0?'text-emerald-400':'text-rose-400')" x-text="kpis.execDelta>=0 ? ('▲ +' + kpis.execDelta + 'pp') : ('▼ ' + kpis.execDelta + 'pp')"></span></div></div>
-    <div class="card p-4"><div class="kpi-label">Pass %</div><div class="kpi-value mt-1" :class="(kpis.passColorClass||kpiColor(kpis.passPct))" x-text="fmtPct(kpis.passPct)"></div><div class="text-xs text-slate-400 mt-1">Planned today: <span class="text-slate-300" x-text="fmtPct(kpis.plannedPassPct||0)"></span><span class="ml-2 font-medium" :class="(kpis.passDelta>=0?'text-emerald-400':'text-rose-400')" x-text="kpis.passDelta>=0 ? ('▲ +' + kpis.passDelta + 'pp') : ('▼ ' + kpis.passDelta + 'pp')"></span></div></div>
+    <div class="card p-4"><div class="kpi-label">Executed %</div><div class="kpi-value mt-1" :class="kpiColor(kpis.executedPct)" x-text="fmtPct(kpis.executedPct)"></div></div>
+    <div class="card p-4"><div class="kpi-label">Pass %</div><div class="kpi-value mt-1" :class="kpiColor(kpis.passPct)" x-text="fmtPct(kpis.passPct)"></div></div>
     <div class="card p-4"><div class="kpi-label">Open Defects</div><div class="kpi-value mt-1" x-text="kpis.openDefects"></div></div>
     <div class="card p-4"><div class="kpi-label">Blocker / Critical</div><div class="kpi-value mt-1" :class="kpis.critical>0?'text-rose-400':'text-emerald-400'" x-text="kpis.critical"></div></div>
   </section>
