@@ -50,10 +50,8 @@ function BizCal(schedule){
 /* ---------- Alpine app() (unchanged logic) ---------- */
 function app(){
   return {
-    raw:{ overview:{}, progressDaily:[], defectsDaily:[], issues:[], keyDates:[], schedule:{}, plannedSeries:{}, plan:{} },
+    raw:{ overview:{}, progressDaily:[], defectsDaily:[], issues:[], keyDates:[], schedule:{} },
     kpis:{ inScope:0, executedPct:0, passPct:0, openDefects:0, critical:0 },
-    planned:{ exec:0, pass:0 },
-    deltas:{ exec:0, pass:0 },
     platforms:[], filters:{ platform:'' },
     lastUpdate:'', issues:[],
     execChart:null, defectChart:null,
@@ -76,7 +74,6 @@ function app(){
       this.lastUpdate = this.raw.overview?.lastUpdate || '';
       this.platforms  = this.getPlatforms();
       this.computeKpis();
-      this.computePlannedToday(); // NEW: planned vs actual
       this.drawCharts();
       this.filterIssues();
       this.computeCountdown();
@@ -98,71 +95,7 @@ function app(){
       return set.size ? [...set].sort() : ['Web','App','BOSS'];
     },
     onFilterChange(){ this.computeKpis(); this.filterIssues(); },
-    
-    /* ---- Planned vs Actual helpers (NEW) ---- */
-    plannedExecutedPct(dayIndex){
-      const execDays = this.raw.plan?.exec_days ?? 10;
-      if (dayIndex <= 0) return 0;
-      if (dayIndex >= execDays) return 100;
-      return Math.round((dayIndex / execDays) * 100);
-    },
-    plannedPassPct(dayIndex){
-      const passDays = this.raw.plan?.pass_days ?? 15;
-      const passTarget = (this.raw.plan?.pass_target ?? 95) / 100; // convert to ratio
-      if (dayIndex <= 0) return 0;
-      const capped = Math.min(dayIndex, passDays);
-      const pct = (capped * (passTarget / passDays)) * 100;
-      return Math.round(Math.min(pct, 95)); // cap at 95 after day 15
-    },
-    kpiColorPlan(actual, planned){
-      const diff = (actual||0) - (planned||0);
-      if (diff >= 0) return 'text-emerald-400';
-      if (diff >= -5) return 'text-amber-300';
-      return 'text-rose-400';
-    },
-    computePlannedToday(){
-      // Determine working-day index using BizCal (schedule.start/end + timezone)
-      const sch = this.raw.schedule || {};
-      const cal = BizCal(sch);
-      const today = cal.todayTZ();
-      let idx = 1;
-      if (cal.start && cal.end){
-        if (today < cal.start) idx = 1;
-        else if (today > cal.end) idx = cal.businessDays().length;
-        else idx = cal.indexFor(today);
-      } else {
-        // Fallback: progress length
-        const p = this.raw.progressDaily || [];
-        idx = p.length ? p.length : 1;
-      }
-      // Prefer arrays from plannedSeries if provided
-      if (this.raw.plannedSeries?.planned_executed_pct?.length){
-        const i = Math.min(idx, this.raw.plannedSeries.planned_executed_pct.length) - 1;
-        this.planned.exec = this.raw.plannedSeries.planned_executed_pct[i];
-      } else {
-        this.planned.exec = this.plannedExecutedPct(idx);
-      }
-      if (this.raw.plannedSeries?.planned_pass_pct?.length){
-        const i = Math.min(idx, this.raw.plannedSeries.planned_pass_pct.length) - 1;
-        this.planned.pass = this.raw.plannedSeries.planned_pass_pct[i];
-      } else {
-        this.planned.pass = this.plannedPassPct(idx);
-      }
-      // Actuals from latest progressDaily
-      const p = this.raw.progressDaily || [];
-      const actualExec = p.length ? (+p[p.length-1].executedPct||0) : 0;
-      const actualPass = p.length ? (+p[p.length-1].passPct||0) : 0;
-      this.deltas.exec = Math.round(actualExec - this.planned.exec);
-      this.deltas.pass = Math.round(actualPass - this.planned.pass);
-      // Expose to kpis for binding in HTML (optional)
-      this.kpis.plannedExecutedPct = this.planned.exec;
-      this.kpis.plannedPassPct = this.planned.pass;
-      this.kpis.execDelta = this.deltas.exec;
-      this.kpis.passDelta = this.deltas.pass;
-      this.kpis.execColorClass = this.kpiColorPlan(actualExec, this.planned.exec);
-      this.kpis.passColorClass = this.kpiColorPlan(actualPass, this.planned.pass);
-    },
-computeKpis(){
+    computeKpis(){
       const p = this.raw.progressDaily || [];
       if(p.length){
         const last = p[p.length-1];
@@ -200,32 +133,12 @@ computeKpis(){
       const labels = (this.raw.progressDaily||[]).map(r=>r.date);
       const exec   = (this.raw.progressDaily||[]).map(r=>+r.executedPct||0);
       const pass   = (this.raw.progressDaily||[]).map(r=>+r.passPct||0);
-
-      // Build planned series aligned to the number of days we have in progressDaily
-      const n = labels.length || 0;
-      const plannedExec = [];
-      const plannedPass = [];
-      for (let i=1;i<=n;i++){
-        if (this.raw.plannedSeries?.planned_executed_pct?.length >= i){
-          plannedExec.push(this.raw.plannedSeries.planned_executed_pct[i-1]);
-        } else {
-          plannedExec.push(this.plannedExecutedPct(i));
-        }
-        if (this.raw.plannedSeries?.planned_pass_pct?.length >= i){
-          plannedPass.push(this.raw.plannedSeries.planned_pass_pct[i-1]);
-        } else {
-          plannedPass.push(this.plannedPassPct(i));
-        }
-      }
-
       if(this.execChart){ this.execChart.destroy(); }
       this.execChart = new Chart(document.getElementById('execChart'), {
         type:'line',
         data:{ labels, datasets:[
           {label:'Executed %', data:exec, borderColor:'#60a5fa', backgroundColor:'#60a5fa', tension:.25, spanGaps:true},
-          {label:'Pass %',     data:pass, borderColor:'#a78bfa', backgroundColor:'#a78bfa', tension:.25, spanGaps:true},
-          {label:'Executed % (Planned)', data:plannedExec, borderColor:'#94a3b8', backgroundColor:'#94a3b8', borderDash:[6,6], tension:.25, spanGaps:true, pointRadius:0},
-          {label:'Pass % (Planned)',     data:plannedPass, borderColor:'#64748b', backgroundColor:'#64748b', borderDash:[6,6], tension:.25, spanGaps:true, pointRadius:0}
+          {label:'Pass %',     data:pass, borderColor:'#a78bfa', backgroundColor:'#a78bfa', tension:.25, spanGaps:true}
         ]},
         options:{
           ...common,
