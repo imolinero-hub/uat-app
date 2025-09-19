@@ -348,7 +348,6 @@ function app(){
       this.infoOpen = true;
       this.infoHtml = '<p class="text-slate-400">Loading…</p>';
       this.lockScroll(); // << prevent background scroll without jumping
-      document.documentElement.classList.add('modal-open');
       const url = this.raw.infoUrl || './about-uat.md';
       try{
         const res = await fetch(url, { cache:'no-store' });
@@ -357,15 +356,14 @@ function app(){
       }catch{
         this.infoHtml = '<p class="text-rose-400">Failed to load info.</p>';
       }
-      // focus after DOM paint
       requestAnimationFrame(()=> this.$refs?.infoDialog?.focus());
     },
     closeInfo(){
       this.infoOpen = false;
       this.unlockScroll(); // << restore exact scroll position
-      document.documentElement.classList.remove('modal-open');
     },
 
+    
     // --- Scroll lock helpers (no layout jump) ---
     lockScroll(){
       this._scrollY = window.scrollY || window.pageYOffset || 0;
