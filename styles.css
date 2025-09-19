@@ -125,4 +125,28 @@ body{
 /* Prevent background scroll when any modal open */
 html.modal-open, body.modal-open { overflow: hidden !important; }
 
+/* ===== Modal content typography (Info & Daily) ===== */
+.modal-body h1,
+.modal-body h2,
+.modal-body h3 { line-height: 1.25; margin: .75rem 0 .5rem; }
+
+.theme-light .modal-body h1 { color: #0f172a; } /* slate-900 */
+.theme-dark  .modal-body h1 { color: #e2e8f0; } /* slate-200 */
+.theme-light .modal-body h2,
+.theme-light .modal-body h3 { color: #111827; } /* gray-900-ish */
+.theme-dark  .modal-body h2,
+.theme-dark  .modal-body h3 { color: #e5e7eb; } /* gray-200-ish */
+
+.modal-body h1 { font-size: 1.5rem; font-weight: 700; }      /* ≈ text-2xl */
+.modal-body h2 { font-size: 1.125rem; font-weight: 600;      /* ≈ text-lg */
+                  padding-bottom: .25rem;
+                  border-bottom: 1px solid rgba(148,163,184,.25); }
+.modal-body h3 { font-size: 1rem; font-weight: 600; }        /* ≈ text-base */
+
+.modal-body p  { margin: .35rem 0; }
+.modal-body hr { border: 0; border-top: 1px solid rgba(148,163,184,.25); margin: .75rem 0; }
+
+.modal-body ul { margin: .35rem 0 .6rem; padding-left: 1.25rem; }
+.modal-body li { margin: .2rem 0; }
+
 
