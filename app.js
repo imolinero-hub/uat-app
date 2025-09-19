@@ -476,7 +476,12 @@ function app(){
     },
 
     mdToHtml(md){
-      // --- simple, safe, dependency-free Markdown -> HTML ---
+      // --- lightweight Markdown -> HTML (headings, lists, paragraphs, inline bold/italic) ---
+      if (!md || typeof md !== "string") return "";
+    
+      // Normalize & unescape harmless backslash-escapes like "\&" or "\*"
+      md = md.replace(/\r\n?/g, "\n").replace(/\\([&*_])/g, "$1").trim();
+    
       const esc = (s) =>
         s.replace(/&/g, "&amp;")
          .replace(/</g, "&lt;")
@@ -484,60 +489,92 @@ function app(){
          .replace(/"/g, "&quot;")
          .replace(/'/g, "&#39;");
     
-      if (!md || typeof md !== "string") return "";
-    
-      // normalise line endings & trim edges
-      const lines = md.replace(/\r\n?/g, "\n").trim().split("\n");
-    
-      let html = "";
-      let inList = false;
-    
-      const flushList = () => {
-        if (inList) { html += "</ul>"; inList = false; }
+      // Inline emphasis (run AFTER escaping)
+      const formatInline = (text) => {
+        let t = esc(text);
+        t = t.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+        t = t.replace(/(^|[^*])\*(.+?)\*(?!\*)/g, (m, p1, g1) => p1 + "<em>" + g1 + "</em>");
+        return t;
       };
     
-      for (let raw of lines) {
-        const line = raw; // keep raw for pattern checks
+      const lines = md.split("\n");
+      let i = 0, html = "", inList = false;
     
-        // horizontal rule: --- on its own line
-        if (/^\s*---\s*$/.test(line)) { flushList(); html += "<hr>"; continue; }
+      const flushList = () => { if (inList) { html += "</ul>"; inList = false; } };
     
-        // headings: #, ##, ###
+      // Helper: collect consecutive list items (supports "-", "*", "•")
+      const collectList = () => {
+        if (!inList) { html += '<ul class="list-disc pl-5 space-y-1">'; inList = true; }
+        while (i < lines.length) {
+          const m = lines[i].match(/^\s*[-*•]\s+(.+)$/);
+          if (!m) break;
+          html += `<li>${formatInline(m[1])}</li>`;
+          i++;
+        }
+      };
+    
+      // Helper: paragraph block (preserve single line-breaks with <br>)
+      const collectParagraph = (firstLine) => {
+        const block = [firstLine];
+        i++;
+        while (i < lines.length) {
+          const l = lines[i];
+          if (/^\s*$/.test(l)) break;
+          if (/^\s*(#{1,3})\s+/.test(l)) break;
+          if (/^\s*[-*•]\s+/.test(l)) break;
+          if (/^\s*---\s*$/.test(l)) break;
+          block.push(l);
+          i++;
+        }
+        const joined = block.map(formatInline).join("<br>");
+        html += `<p>${joined}</p>`;
+      };
+    
+      // Detect if the very first non-empty line should be auto-promoted to a title (H2)
+      const peekFirstNonEmpty = () => {
+        for (const l of lines) {
+          if (l.trim()) return l.trim();
+        }
+        return "";
+      };
+      const firstLine = peekFirstNonEmpty();
+      let autoTitleUsed = false;
+    
+      while (i < lines.length) {
+        const line = lines[i];
+    
+        // blank line
+        if (/^\s*$/.test(line)) { flushList(); i++; continue; }
+    
+        // horizontal rule
+        if (/^\s*---\s*$/.test(line)) { flushList(); html += "<hr>"; i++; continue; }
+    
+        // headings #, ##, ###
         const h = line.match(/^\s*(#{1,3})\s+(.+)$/);
         if (h) {
           flushList();
-          const level = h[1].length;                 // 1..3
-          const text  = h[2].trim();
-          html += `<h${level}>${esc(text)}</h${level}>`;
-          continue;
+          const level = h[1].length;
+          html += `<h${level}>${formatInline(h[2].trim())}</h${level}>`;
+          i++; continue;
         }
     
-        // list item: - item  OR  * item
-        const li = line.match(/^\s*[-*]\s+(.+)$/);
-        if (li) {
-          if (!inList) { html += '<ul class="list-disc pl-5 space-y-1">'; inList = true; }
-          // inline emphasis inside list items
-          let item = esc(li[1]);
-          item = item.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-                     .replace(/(?:^|[^*])\*(.+?)\*(?!\*)/g, (m, g1) => m.replace(`*${g1}*`, `<em>${g1}</em>`));
-          html += `<li>${item}</li>`;
-          continue;
+        // list
+        if (/^\s*[-*•]\s+/.test(line)) { collectList(); flushList(); continue; }
+    
+        // auto-title (first non-empty line, short-ish, not already started with bullets/markers)
+        if (!autoTitleUsed && line.trim() === firstLine && line.length <= 120) {
+          flushList();
+          html += `<h2>${formatInline(line.trim())}</h2>`;
+          autoTitleUsed = true;
+          i++; continue;
         }
     
-        // blank line -> paragraph break
-        if (/^\s*$/.test(line)) { flushList(); html += "<p></p>"; continue; }
-    
-        // regular paragraph with inline emphasis
-        flushList();
-        let text = esc(line);
-        text = text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-                   .replace(/(?:^|[^*])\*(.+?)\*(?!\*)/g, (m, g1) => m.replace(`*${g1}*`, `<em>${g1}</em>`));
-        html += `<p>${text}</p>`;
+        // paragraph
+        collectParagraph(line);
       }
-    
       flushList();
     
-      // cleanup double-empty paras that may occur from multiple blank lines
+      // Compact empty paragraphs if any
       html = html.replace(/<p>\s*<\/p>/g, "");
     
       return html;
