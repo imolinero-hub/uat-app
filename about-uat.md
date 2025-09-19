@@ -16,3 +16,4 @@ This testing also verifies the integration with critical back-office systems (e.
 
 This coordinated effort involves more than 100 testers from multiple departments, validating more than 2.000 scenarios to ensure a high-quality, stable rollout.
 
+
