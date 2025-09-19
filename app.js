@@ -195,7 +195,7 @@ computeKpis(){
       const common = {
         responsive:true, maintainAspectRatio:false, animation:false,
         elements: { line: { borderWidth: 2 }, point: { radius: 3, hitRadius: 6, hoverRadius: 4 } },
-        plugins:{ legend:{ position:'bottom', labels:{ color:'#94a3b8' } } }
+        plugins:{ legend:{ position:'bottom', labels:{ color:'#94a3b8', usePointStyle:true } } }
       };
       const labels = (this.raw.progressDaily||[]).map(r=>r.date);
       const exec   = (this.raw.progressDaily||[]).map(r=>+r.executedPct||0);
@@ -224,8 +224,8 @@ computeKpis(){
         data:{ labels, datasets:[
           {label:'Executed %', data:exec, borderColor:'#60a5fa', backgroundColor:'#60a5fa', tension:.25, spanGaps:true},
           {label:'Pass %',     data:pass, borderColor:'#a78bfa', backgroundColor:'#a78bfa', tension:.25, spanGaps:true},
-          {label:'Executed % (Planned)', data:plannedExec, borderColor:'#94a3b8', backgroundColor:'#94a3b8', borderDash:[6,6], tension:.25, spanGaps:true, pointRadius:0},
-          {label:'Pass % (Planned)',     data:plannedPass, borderColor:'#64748b', backgroundColor:'#64748b', borderDash:[6,6], tension:.25, spanGaps:true, pointRadius:0}
+          {label:'Executed % (Planned)', data:plannedExec, borderColor:'#94a3b8', borderDash:[6,6], tension:.25, spanGaps:true, pointRadius:0, pointStyle:'line'},
+          {label:'Pass % (Planned)',     data:plannedPass, borderColor:'#64748b', borderDash:[6,6], tension:.25, spanGaps:true, pointRadius:0, pointStyle:'line'}
         ]},
         options:{
           ...common,
