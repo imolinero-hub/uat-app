@@ -47,10 +47,10 @@ body{
 .pill{ border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); border-radius:999px; padding:.2rem .6rem; font-size:.72rem }
 .theme-light .pill{ border-color: rgba(15,23,42,.12); background: rgba(15,23,42,.04) }
 .btn{ border:1px solid rgba(255,255,255,.12); border-radius:.9rem; padding:.55rem .9rem; }
-.btn:hover{ background:rgba(255,255,255,.05) }
+.btn:hover{ background-color: rgba(255,255,255,.05); }
 .theme-light .btn{ border-color: rgba(15,23,42,.12) }
 .btn-primary{ background-image:linear-gradient(135deg,var(--accent-1) 0%,var(--accent-2) 50%,var(--accent-3) 100%); border:none; color:#fff; }
-.btn-primary:hover{ filter:brightness(.98) }
+.btn-primary:hover{ background-image: linear-gradient(135deg, var(--accent-1) 0%, var(--accent-2) 50%, var(--accent-3) 100%); color: #fff; filter: brightness(.98); }
 .badge{ display:inline-flex; align-items:center; gap:.35rem; font-size:.72rem; padding:.2rem .55rem;
   border-radius:999px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04) }
 .theme-light .badge{ border-color:rgba(15,23,42,.12); background:rgba(15,23,42,.04) }
