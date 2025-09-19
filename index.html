@@ -201,14 +201,40 @@
   </section>
 
   <!-- ============================== INFO MODAL ============================== -->
-  <div x-show="infoOpen" x-transition.opacity class="fixed inset-0 bg-black/85 backdrop-blur-[1px] grid place-items-center p-4 z-50">
+<!--  <div x-show="infoOpen" x-transition.opacity class="fixed inset-0 bg-black/85 backdrop-blur-[1px] grid place-items-center p-4 z-50">
     <div class="panel max-w-2xl w-full p-5 relative">
       <button class="icon-btn absolute -top-3 -right-3 btn" @click="infoOpen=false" aria-label="Close">✕</button>
       <div class="font-semibold mb-3">UAT Overview</div>
       <div class="prose prose-invert theme-light:prose max-w-none text-[15px]" x-html="infoHtml || '<p class=&quot;text-slate-400&quot;>No info loaded.</p>'"></div>
     </div>
   </div>
+-->
+  
+<!-- Info Modal -->
+  <div x-show="infoOpen" x-transition.opacity
+       @keydown.escape.window="closeInfo()">
+    <div class="modal-backdrop" @click="closeInfo()"></div>
+    <div class="modal-wrap" aria-modal="true" role="dialog" aria-labelledby="info-title">
+      <div class="modal-panel" tabindex="-1" x-ref="infoDialog">
+        <div class="modal-header flex items-center justify-between">
+          <h2 id="info-title" class="text-base font-semibold">Information</h2>
+          <button class="px-2 py-1 rounded hover:bg-slate-800/10"
+                  @click="closeInfo()" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body prose prose-invert max-w-none"
+             x-html="infoHtml">
+          <!-- content injected by JS -->
+        </div>
+        <div class="modal-footer flex justify-end gap-2">
+          <button class="px-3 py-2 rounded bg-slate-600/10 hover:bg-slate-600/20"
+                  @click="closeInfo()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
+
+  
 </div>
 
 <!-- Our app script (extracted) -->
