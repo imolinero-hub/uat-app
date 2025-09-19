@@ -12,6 +12,7 @@
   },
 
   "infoUrl": "./about-uat.md",
+  "statusUrl": "./daily-status.md",
 
   "plan": {
     "exec_days": 10,
@@ -137,6 +138,7 @@
     { "label": "Go Live",     "date": "2025-12-10",                       "notes": "Go Live of the RI-4" }
   ]
 }
+
 
 
 
