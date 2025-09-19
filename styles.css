@@ -73,3 +73,14 @@ body{
 .text-emerald-400 { color: #10b981; } /* green */
 .text-amber-300   { color: #f59e0b; } /* amber */
 .text-rose-400    { color: #fb7185; } /* red */
+
+/* Theme-aware KPI helper text */
+.kpi-planned { font-size: 0.75rem; }         /* same size as your current text-xs */
+.kpi-delta   { font-size: 0.75rem; font-weight: 400; }
+
+.theme-light .kpi-planned { color: #475569; } /* slate-600 */
+.theme-dark  .kpi-planned { color: #cbd5e1; } /* slate-300 */
+
+.theme-light .kpi-delta   { color: #111827; } /* near-black */
+.theme-dark  .kpi-delta   { color: #e5e7eb; } /* slate-200 */
+
