@@ -142,11 +142,12 @@ html.modal-open, body.modal-open { overflow: hidden !important; }
                   padding-bottom: .25rem;
                   border-bottom: 1px solid rgba(148,163,184,.25); }
 .modal-body h3 { font-size: 1rem; font-weight: 600; }        /* ≈ text-base */
-
 .modal-body p  { margin: .35rem 0; }
 .modal-body hr { border: 0; border-top: 1px solid rgba(148,163,184,.25); margin: .75rem 0; }
-
 .modal-body ul { margin: .35rem 0 .6rem; padding-left: 1.25rem; }
 .modal-body li { margin: .2rem 0; }
 
-
+.header-subtle { font-size: .8125rem; color: #94a3b8; }
+.theme-dark .header-subtle { color: #9ca3af; }
+.header-dot { width: .28rem; height: .28rem; border-radius: 9999px; background: rgba(148,163,184,.6); }
+.theme-dark .header-dot { background: rgba(156,163,175,.6); }
