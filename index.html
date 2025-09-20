@@ -53,10 +53,10 @@
 
       <div>
         <div class="text-xl font-semibold tracking-tight">UAT Dashboard</div>
-        <div class="text-[12px] text-slate-400 flex items-center gap-2">
-          <span x-text="raw.overview?.release || 'Release'"></span>
-          <span class="opacity-40">•</span>
-          Last update: <span class="text-slate-300" x-text="lastUpdate || '—'"></span>
+        <div class="flex items-center gap-2">
+          <span class="text-slate-500 dark:text-slate-400 font-medium" x-text="raw.overview?.release || 'Release'"></span>
+          <span class="header-dot"></span>
+          <span class="header-subtle">Data as of <span x-text="lastUpdate || '-'"></span></span>
         </div>
       </div>
     </div>
