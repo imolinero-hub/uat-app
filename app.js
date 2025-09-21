@@ -74,7 +74,6 @@ function app(){
       }
 
       this.lastUpdate = this.raw.overview?.lastUpdate || '';
-      this.platforms  = this.getPlatforms();
       this.computeKpis();
       this.computePlannedToday();
       this.drawCharts();
@@ -141,11 +140,6 @@ function app(){
       localStorage.setItem('uat-theme', this.theme);
     },
 
-    getPlatforms(){
-      const set = new Set((this.raw.issues||[]).map(i=>i.platform).filter(Boolean));
-      return set.size ? [...set].sort() : ['Web','App','BOSS'];
-    },
-    onFilterChange(){ this.computeKpis(); this.filterIssues(); },
     
     /* ---- Planned vs Actual helpers ---- */
     plannedExecutedPct(dayIndex){
