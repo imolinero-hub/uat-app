@@ -73,6 +73,7 @@ function app(){
       }
 
       this.asOf = this.raw.asOf || this.raw.overview?.lastUpdate || '';
+      this.issues = this.raw.issues || [];
       this.computeKpis();
       this.computePlannedToday();
       this.drawCharts();
