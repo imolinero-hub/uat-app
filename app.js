@@ -231,7 +231,7 @@ function app(){
       this.kpis.plannedExecutedPct = Number(this.kpis.plannedExecutedPct || 0);
       this.kpis.plannedPassPct     = Number(this.kpis.plannedPassPct || 0);
     },
-    
+
     drawCharts(){
       if(!window.Chart){ console.error('Chart.js not loaded'); return; }
     
@@ -241,10 +241,11 @@ function app(){
         plugins:{ legend:{ position:'bottom', labels:{ color:'#94a3b8', usePointStyle:true } } }
       };
     
+      // ---------------- Execution Over Time ----------------
       const pd = this.raw.progressDaily || [];
       let labels = pd.map(r => r.date);
-      const exec   = pd.map(r => +r.executedPct || 0);
-      const pass   = pd.map(r => +r.passPct || 0);
+      const exec = pd.map(r => +r.executedPct || 0);
+      const pass = pd.map(r => +r.passPct || 0);
     
       // If there are no actual labels (early/pre-start), synthesize labels so planned lines still render
       if (!labels.length) {
@@ -263,7 +264,7 @@ function app(){
         }
       }
     
-      // Build planned arrays aligned to labels length
+      // Planned series aligned to labels length
       const n = labels.length;
       const plannedExec = Array.from({length:n}, (_,i)=>{
         const day = i+1;
@@ -303,15 +304,24 @@ function app(){
         }
       });
     
-      // Defect chart (unchanged)
-      const labelsD = (this.raw.defectsDaily||[]).map(r=>r.date);
-      const open    = (this.raw.defectsDaily||[]).map(r=>+r.openDefects||0);
+      // ---------------- Defect Burndown ----------------
+      const dd = this.raw.defectsDaily || [];
+      const labelsD = dd.map(r => r.date);
+      const dataDef = dd.map(r => Number(r.openDefects ?? 0));
+    
+      // Optional guard: if no series yet, show a single zero point so the chart area renders nicely
+      const labelsD2 = labelsD.length ? labelsD : [this.asOf || ''];
+      const dataDef2 = dataDef.length ? dataDef : [0];
+    
       if (this.defectChart) this.defectChart.destroy();
       this.defectChart = new Chart(document.getElementById('defectChart'), {
         type:'line',
-        data:{ labels: labelsD, datasets:[
-          { label:'Open defects', data:open, borderColor:'#34d399', backgroundColor:'#34d399', tension:.25, spanGaps:true }
-        ]},
+        data:{
+          labels: labelsD2,
+          datasets:[
+            { label:'Open defects', data:dataDef2, borderColor:'#34d399', backgroundColor:'#34d399', tension:.25, spanGaps:true }
+          ]
+        },
         options:{
           ...common,
           scales:{
@@ -321,7 +331,7 @@ function app(){
         }
       });
     },
-    
+
     computeCountdown(){
       const sch = this.raw.schedule || {};
       const cal = BizCal(sch);
