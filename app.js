@@ -219,11 +219,11 @@ function app(){
       }
     
       // Defects KPIs
-      // Open defects: prefer defectsDaily latest; fallback to issues length
       const dd = this.raw.defectsDaily || [];
-      this.kpis.openDefects = dd.length ? Number(dd[dd.length - 1].open ?? 0)
-                                        : (this.raw.issues ? this.raw.issues.length : 0);
-    
+      this.kpis.openDefects = dd.length
+        ? Number(dd[dd.length - 1].openDefects ?? 0)
+        : 0;
+      
       // Blocker/Critical: your JSON already contains ONLY open blocker/critical defects
       this.kpis.critical = (this.raw.issues || []).length;
     
