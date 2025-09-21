@@ -61,6 +61,14 @@
       </div>
     </div>
 
+    <!-- RAG Health Badge -->
+    <div class="ml-3">
+      <span class="rag-badge"
+            :class="healthBadge.class"
+            :title="healthBadge.tooltip"
+            x-text="healthBadge.label"></span>
+    </div>
+
     <div class="flex flex-wrap items-center gap-2">
       <!-- Compact UAT Days badge -->
       <div class="flex items-center">
