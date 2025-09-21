@@ -76,7 +76,6 @@ function app(){
       this.computeKpis();
       this.computePlannedToday();
       this.drawCharts();
-      this.filterIssues();
       this.computeCountdown();
     },
 
@@ -203,30 +202,35 @@ function app(){
       this.kpis.execColorClass = this.kpiColorPlan(actualExec, plannedExec);
       this.kpis.passColorClass = this.kpiColorPlan(actualPass, plannedPass);
     },
-    computeKpis(){
-      const p = this.raw.progressDaily || [];
-      if(p.length){
-        const last = p[p.length-1];
-        this.kpis.inScope     = last.inScope ?? this.raw.overview?.inScope ?? 0;
-        this.kpis.executedPct = +last.executedPct || 0;
-        this.kpis.passPct     = +last.passPct || 0;
-      } else {
-        this.kpis.inScope = this.raw.overview?.inScope || 0;
-        this.kpis.executedPct = 0; this.kpis.passPct = 0;
-      }
-      const open = (this.raw.issues||[]).filter(i=>{
-        const isOpen = !i.status || i.status.toLowerCase() !== 'closed';
-        return isOpen && matches;
-      });
-      this.kpis.openDefects = open.length;
-      this.kpis.critical    = open.filter(i=>['Blocker','Critical'].includes(i.priority)).length;
-    },
-    filterIssues(){
-      const keep = new Set(['Blocker','Critical']);
-      this.issues = (this.raw.issues || [])
-        .filter(i => keep.has((i.priority||'').trim()));
-    },
 
+    computeKpis(){
+      // Progress KPIs (from latest progressDaily entry)
+      const p = this.raw.progressDaily || [];
+      if (p.length) {
+        const last = p[p.length - 1];
+        this.kpis.inScope     = Number(last.inScope ?? this.raw.overview?.inScope ?? 0);
+        this.kpis.executedPct = Number(last.executedPct ?? 0);
+        this.kpis.passPct     = Number(last.passPct ?? 0);
+      } else {
+        this.kpis.inScope     = Number(this.raw.overview?.inScope ?? 0);
+        this.kpis.executedPct = 0;
+        this.kpis.passPct     = 0;
+      }
+    
+      // Defects KPIs
+      // Open defects: prefer defectsDaily latest; fallback to issues length
+      const dd = this.raw.defectsDaily || [];
+      this.kpis.openDefects = dd.length ? Number(dd[dd.length - 1].open ?? 0)
+                                        : (this.raw.issues ? this.raw.issues.length : 0);
+    
+      // Blocker/Critical: your JSON already contains ONLY open blocker/critical defects
+      this.kpis.critical = (this.raw.issues || []).length;
+    
+      // Make sure planned values are numbers (avoid NaN in deltas)
+      this.kpis.plannedExecutedPct = Number(this.kpis.plannedExecutedPct || 0);
+      this.kpis.plannedPassPct     = Number(this.kpis.plannedPassPct || 0);
+    },
+    
     drawCharts(){
       if(!window.Chart){ console.error('Chart.js not loaded'); return; }
     
