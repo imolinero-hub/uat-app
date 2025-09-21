@@ -298,8 +298,8 @@ function app(){
         options: {
           ...common,
           scales: {
-            x:{ type:'time', time:{ unit:'day' }, grid:{ color:'rgba(148,163,184,.2)' } },
-            y:{ beginAtZero:true, max:100, ticks:{ callback:v=>v+'%' }, grid:{ color:'rgba(148,163,184,.2)' } }
+            x:{ type:'time', time: { unit:'day', tooltipFormat: 'MMM dd, yyyy', displayFormats: { day: 'MMM dd' }}, grid:{ color:'rgba(148,163,184,.2)' } },
+            y:{ beginAtZero:true, grid:{ color:'rgba(148,163,184,.2)' } }
           }
         }
       });
