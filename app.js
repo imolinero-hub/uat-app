@@ -54,7 +54,7 @@ function app(){
     kpis:{ inScope:0, executedPct:0, passPct:0, openDefects:0, critical:0 },
     planned:{ exec:0, pass:0 },
     deltas:{ exec:0, pass:0 },
-    lastUpdate:'', issues:[],
+    asOf:'', issues:[],
     execChart:null, defectChart:null,
     aiStatus:'', aiOpen:false,
     theme:'theme-dark',
@@ -72,7 +72,7 @@ function app(){
         return;
       }
 
-      this.lastUpdate = this.raw.overview?.lastUpdate || '';
+      this.asOf = this.raw.asOf || this.raw.overview?.lastUpdate || '';
       this.computeKpis();
       this.computePlannedToday();
       this.drawCharts();
@@ -111,7 +111,7 @@ function app(){
         klass = (h.status==='green') ? 'rag-green' :
                 (h.status==='amber') ? 'rag-amber' : 'rag-red';
         label = this.healthLabel(klass);
-        const when = h.asOf ? ` • ${h.asOf}` : '';
+        const when = (this.asOf ? ` • ${this.asOf}` : '');
         tooltip = `Set manually${when}${h.comment ? ' • '+h.comment : ''}`;
       } else {
         // Automatic
@@ -477,7 +477,7 @@ function app(){
       const blob = new Blob([text], {type:'text/markdown'});
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `Daily_Status_${(this.lastUpdate||'').replace(/[: ]/g,'_')}.md`;
+      a.download = `Daily_Status_${(this.asOf||'').replace(/[: ]/g,'_')}.md`;
       a.click(); URL.revokeObjectURL(a.href);
     },
 
