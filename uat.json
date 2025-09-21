@@ -1,8 +1,14 @@
 {
+  "health": {
+    "status": "auto",          // "auto" | "green" | "amber" | "red"
+    "comment": "",             // optional: short reason when not green
+    "asOf": "2025-09-19 17:05" // optional: manual stamp if I override
+  },
+
   "overview": {
     "release": "RI-4",
     "inScope": 3249,
-    "lastUpdate": "2025-08-27 10:00"
+    "lastUpdate": "2025-09-21 09:30"
   },
 
   "schedule": {
@@ -138,6 +144,7 @@
     { "label": "Go Live",     "date": "2025-12-10",                       "notes": "Go Live of the RI-4" }
   ]
 }
+
 
 
 
