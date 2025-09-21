@@ -349,7 +349,7 @@ function app(){
         options:{
           ...common,
           scales:{
-            x:{ type:'time', time:{ unit:'day' }, grid:{ color:'rgba(148,163,184,.2)'} },
+            x:{ type:'time', time:{ unit:'day', displayFormats: { day: 'MMM dd' }, tooltipFormat: 'MMM dd, yyyy' }, grid:{ color:'rgba(148,163,184,.2)'} },
             y:{ beginAtZero:true, grid:{ color:'rgba(148,163,184,.2)'} }
           }
         }
