@@ -54,7 +54,6 @@ function app(){
     kpis:{ inScope:0, executedPct:0, passPct:0, openDefects:0, critical:0 },
     planned:{ exec:0, pass:0 },
     deltas:{ exec:0, pass:0 },
-    platforms:[], filters:{ platform:'' },
     lastUpdate:'', issues:[],
     execChart:null, defectChart:null,
     aiStatus:'', aiOpen:false,
@@ -215,21 +214,17 @@ function app(){
         this.kpis.inScope = this.raw.overview?.inScope || 0;
         this.kpis.executedPct = 0; this.kpis.passPct = 0;
       }
-      const plat = this.filters.platform;
       const open = (this.raw.issues||[]).filter(i=>{
         const isOpen = !i.status || i.status.toLowerCase() !== 'closed';
-        const matches = !plat || i.platform === plat;
         return isOpen && matches;
       });
       this.kpis.openDefects = open.length;
       this.kpis.critical    = open.filter(i=>['Blocker','Critical'].includes(i.priority)).length;
     },
     filterIssues(){
-      const plat = this.filters.platform;
       const keep = new Set(['Blocker','Critical']);
       this.issues = (this.raw.issues || [])
-        .filter(i => keep.has((i.priority||'').trim()))
-        .filter(i => !plat || i.platform === plat);
+        .filter(i => keep.has((i.priority||'').trim()));
     },
 
     drawCharts(){
@@ -459,7 +454,6 @@ function app(){
     // Optional: fallback generator if the MD is missing
     buildDailyFallback(){
       const k = this.kpis;
-      const plat = this.filters.platform || 'All platforms';
       const lines = [
         `# Daily Status – ${plat}`,
         ``,
