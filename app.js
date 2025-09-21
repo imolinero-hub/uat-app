@@ -82,6 +82,54 @@ function app(){
       this.computeCountdown();
     },
 
+    // Map for labels
+    healthLabel(c){
+      if(c==='rag-green') return 'On Track';
+      if(c==='rag-amber') return 'At Risk';
+      return 'Off Track';
+    },
+    
+    // Auto health rules (you can tweak thresholds here)
+    autoHealthClass(){
+      const k = this.kpis;
+      const execOK = (k.executedPct >= (k.plannedExecutedPct||0));
+      const passOK = (k.passPct     >= (k.plannedPassPct||0));
+      const nearOK = (k.executedPct >= (k.plannedExecutedPct||0) - 5) &&
+                     (k.passPct     >= (k.plannedPassPct||0)     - 5);
+      const blockers = k.critical||0;
+    
+      if (execOK && passOK && blockers <= 2) return 'rag-green';
+      if (nearOK && blockers <= 5)           return 'rag-amber';
+      return 'rag-red';
+    },
+    
+    // Build the badge model for the template
+    get healthBadge(){
+      const h = this.raw.health || { status:'auto' };
+      let klass = 'rag-green', label = 'On Track', tooltip = '';
+    
+      if (h.status && h.status !== 'auto') {
+        // Manual override
+        klass = (h.status==='green') ? 'rag-green' :
+                (h.status==='amber') ? 'rag-amber' : 'rag-red';
+        label = this.healthLabel(klass);
+        const when = h.asOf ? ` • ${h.asOf}` : '';
+        tooltip = `Set manually${when}${h.comment ? ' • '+h.comment : ''}`;
+      } else {
+        // Automatic
+        klass = this.autoHealthClass();
+        label = this.healthLabel(klass);
+        const k = this.kpis;
+        tooltip = (klass==='rag-green')
+          ? 'Exec & Pass ≥ plan; Blockers ≤ 2'
+          : (klass==='rag-amber')
+            ? 'Within 5pp of plan or Blockers ≤ 5'
+            : 'Lagging plan or higher blocker count';
+      }
+      return { class: klass, label, tooltip };
+    },
+
+  
     initTheme(){
       const saved = localStorage.getItem('uat-theme');
       this.theme = saved || 'theme-dark';
