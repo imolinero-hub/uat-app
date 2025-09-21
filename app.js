@@ -298,16 +298,30 @@ function app(){
         options: {
           ...common,
           scales: {
-            x:{ type:'time', time: { unit:'day', tooltipFormat: 'MMM dd, yyyy', displayFormats: { day: 'MMM dd' }}, grid:{ color:'rgba(148,163,184,.2)' } },
-            y:{ beginAtZero:true, grid:{ color:'rgba(148,163,184,.2)' } }
+            x: {
+              type: 'time',
+              time: {
+                unit: 'day',
+                displayFormats: { day: 'MMM dd' },     // axis shows date only
+                tooltipFormat: 'MMM dd, yyyy'          // tooltip shows date only
+              },
+              grid: { color:'rgba(148,163,184,.2)' }
+            },
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: { callback: v => v + '%' },
+              grid: { color:'rgba(148,163,184,.2)' }
+            }
           },
-        plugins: {
-          tooltip: {
-            callbacks: {
-              title: (ctx) => {
-                // format tooltip title: only date
-                const d = ctx[0].parsed.x;
-                return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+          plugins: {
+            ...(common.plugins || {}),                 // <- keep legend from common
+            tooltip: {
+              callbacks: {
+                title: (ctx) => {
+                  const d = ctx[0].parsed.x;
+                  return new Date(d).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+                }
               }
             }
           }
