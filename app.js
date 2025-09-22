@@ -1,5 +1,5 @@
 /* =====================================================================
-   UAT Dashboard – app.js (cleaned & organized)
+   UAT Dashboard – app.js (cleaned, organized, with Daily Status RAG fix)
    Sections:
      1) BizCal (calendar helpers)
      2) Alpine component: state & lifecycle
@@ -9,8 +9,8 @@
      6) Countdown widget
      7) Info modal
      8) Scroll lock helpers
-     9) Daily Status modal (with RAG injection & fallback)
-    10) Markdown helpers (single, deduplicated mdToHtml) + utilities
+     9) Daily Status modal (normalized RAG + insertion under title)
+    10) Markdown helpers (single mdToHtml) + utilities
     11) Alpine registration
    ===================================================================== */
 
@@ -130,7 +130,7 @@ function app(){
      * 4) KPI planned/actual helpers & calculations
      * ===================================================== */
 
-    // Small helpers for RAG label/emoji (used in Daily Status too)
+    // Small helpers for RAG (also used in Daily Status)
     healthEmoji(status){
       return status==='green' ? '🟢'
            : status==='amber' ? '🟠'
@@ -146,6 +146,21 @@ function app(){
       if(statusClass==='rag-green') return 'On Track';
       if(statusClass==='rag-amber') return 'At Risk';
       return 'Off Track';
+    },
+
+    // Normalize RAG parts once (manual override or auto)
+    overallStatusParts(){
+      const rawStatus = this.raw.health?.status || 'auto';
+      const klass = (rawStatus === 'auto')
+        ? this.autoHealthClass()
+        : this.healthLabelClass(rawStatus);
+
+      const emoji = (klass === 'rag-green') ? '🟢'
+                  : (klass === 'rag-amber') ? '🟠'
+                  : '🔴';
+      const label = this.healthText(klass);
+      const comment = (this.raw.health?.comment || '').trim();
+      return { emoji, label, comment };
     },
 
     // Auto health rules (tweak thresholds as needed)
@@ -516,7 +531,7 @@ function app(){
     },
 
     /* =====================================================
-     * 9) Daily Status modal (RAG injection + fallback)
+     * 9) Daily Status modal (normalized RAG + insertion under title)
      * ===================================================== */
     async openDaily(){
       this.dailyOpen = true;
@@ -525,16 +540,27 @@ function app(){
 
       const url = this.raw.statusUrl || './daily-status.md';
 
-      // Compose a small RAG header line we can prepend to the MD
-      const h  = this.raw.health || {};
-      const ragLine = `**Overall Status:** ${this.healthEmoji(h.status)} ${this.healthText(this.healthLabelClass(h.status||'green'))}` +
-                      (h.comment ? ` — ${h.comment}` : '');
+      // Build a normalized Overall Status line (smaller heading, under title)
+      const { emoji, label, comment } = this.overallStatusParts();
+      const ragLine = `#### Overall Status: ${emoji} ${label}${comment ? ' — ' + comment : ''}`;
 
       try{
         const res = await fetch(url, { cache: 'no-store' });
         if (res.ok) {
           const md = await res.text();
-          const mdWithRag = `${ragLine}\n\n${md}`;
+
+          // If MD starts with "# ..." on the first line, put RAG right after title.
+          let mdWithRag;
+          const m = md.match(/^\s*#\s+.*$/m);
+          if (m && m.index === 0) {
+            const firstNL = md.indexOf('\n');
+            const title   = md.slice(0, firstNL >= 0 ? firstNL : md.length);
+            const rest    = firstNL >= 0 ? md.slice(firstNL + 1) : '';
+            mdWithRag = `${title}\n\n${ragLine}\n\n${rest.trimStart()}`;
+          } else {
+            mdWithRag = `${ragLine}\n\n${md}`;
+          }
+
           this.dailyHtml = this.mdToHtml(mdWithRag);
         } else {
           this.dailyHtml = this.mdToHtml(this.buildDailyFallback(ragLine));
@@ -551,6 +577,10 @@ function app(){
 
     // Fallback daily if external MD is missing
     buildDailyFallback(ragLine=''){
+      if (!ragLine) {
+        const { emoji, label, comment } = this.overallStatusParts();
+        ragLine = `#### Overall Status: ${emoji} ${label}${comment ? ' — ' + comment : ''}`;
+      }
       const k = this.kpis;
       const dateLine = this.asOf ? `**Date:** ${this.asOf}` : '';
       const lines = [
@@ -595,7 +625,7 @@ function app(){
      * 10) Markdown helpers (single version) + utilities
      * ===================================================== */
 
-    // Markdown -> HTML (headings #/##/###, lists -,*,•, paragraphs, bold/italic)
+    // Markdown -> HTML (headings up to ####, lists -,*,•, paragraphs, bold/italic)
     mdToHtml(md){
       if (!md || typeof md !== "string") return "";
       md = md.replace(/\r\n?/g, "\n").replace(/\\([&*_])/g, "$1").trim();
@@ -634,7 +664,7 @@ function app(){
         while (i < lines.length) {
           const l = lines[i];
           if (/^\s*$/.test(l)) break;
-          if (/^\s*(#{1,3})\s+/.test(l)) break;
+          if (/^\s*(#{1,4})\s+/.test(l)) break;     // allow ####
           if (/^\s*[-*•]\s+/.test(l)) break;
           if (/^\s*---\s*$/.test(l)) break;
           block.push(l); i++;
@@ -656,7 +686,7 @@ function app(){
         if (/^\s*$/.test(line)) { flushList(); i++; continue; }            // blank
         if (/^\s*---\s*$/.test(line)) { flushList(); html += "<hr>"; i++; continue; } // rule
 
-        const h = line.match(/^\s*(#{1,3})\s+(.+)$/); // heading #..###
+        const h = line.match(/^\s*(#{1,4})\s+(.+)$/); // heading #..####
         if (h) { flushList(); const level = h[1].length; html += `<h${level}>${formatInline(h[2].trim())}</h${level}>`; i++; continue; }
 
         if (/^\s*[-*•]\s+/.test(line)) { collectList(); flushList(); continue; } // list
