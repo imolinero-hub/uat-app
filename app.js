@@ -121,7 +121,7 @@ function app(){
       try{
         const s = await fetch('./uat-static.json?v=' + Date.now(), { cache:'no-store' });
         if (s.ok) staticData = await s.json();
-      }catch(e){ /* optional, ignore */ }
+      }catch(e){ console.warn('Static file not found (uat-static.json). Using defaults.', e); }
 
       // 2) Dynamic file (required)
       try{
