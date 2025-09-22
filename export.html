@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>UAT JSON Export (Updated)</title>
+<title>UAT JSON Export (verbatim plan/planned)</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
   :root { --bg:#0b1620; --panel:#0f2233; --text:#d9e7ff; --muted:#8fb3d9; }
@@ -25,10 +25,10 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>UAT JSON Export (Updated)</h1>
+  <h1>UAT JSON Export</h1>
 
   <div class="card">
-    <h3>1) Workbook & Header Fields</h3>
+    <h3>1) Workbook & Header</h3>
     <div class="row">
       <input id="file" type="file" accept=".xlsx" />
       <span id="status" class="muted"></span>
@@ -58,7 +58,8 @@
       </label>
     </div>
     <div class="small muted" style="margin-top:6px">
-      Exporter emits: asOf, infoUrl, statusUrl, overview, health, schedule, plan, plannedSeries, progressDaily, defectsDaily, issues, keyDates.
+      Sheets used: <code>overview</code> (release), <code>plan</code>, <code>planned</code>, <code>testDaily</code>, <code>defectsDaily</code>, <code>issues</code>, <code>keyDates</code>.
+      Plan & planned are copied verbatim (no auto generation).
     </div>
   </div>
 
@@ -78,12 +79,13 @@
 
 <script>
 (function(){
+  // -------- DOM --------
   const $ = s => document.querySelector(s);
   const statusEl = $('#status'), preview = $('#preview');
   const btnJson = $('#dlJson'), btnBak = $('#dlBackup');
   const $asof = $('#asof'), $info = $('#infoUrl'), $stUrl = $('#statusUrl'), $hStat = $('#healthStatus'), $hCmt = $('#healthComment');
 
-  // seed asOf to "now"
+  // seed asOf to now
   (function(){
     const d=new Date(); const pad=n=>n<10?'0'+n:n;
     $asof.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -91,7 +93,7 @@
 
   let lastText = '';
 
-  // ---------- helpers ----------
+  // -------- helpers --------
   const epoch = Date.UTC(1899,11,30);
   const xlDate = v => {
     if (v==null || v==='') return '';
@@ -108,7 +110,7 @@
   const rows = ws => ws ? XLSX.utils.sheet_to_json(ws,{defval:'',raw:true}) : [];
   const toInt = v => Number.isFinite(+v) ? parseInt(v,10) : 0;
 
-  // pretty but keep certain arrays on one line to stay compact
+  // keep big arrays on a single line
   function stringifyOneLine(obj, keys){
     const keep = new Set(keys); const tokens=[]; let i=0;
     const json = JSON.stringify(obj,function(k,v){
@@ -119,39 +121,15 @@
     },2);
     return tokens.reduce((acc,[t,s])=>acc.replace(new RegExp(`"${t}"`,'g'), s), json);
   }
-
-  function bizDayCount(startISO,endISO){
-    if (!startISO || !endISO) return 0;
-    const start=new Date(startISO+'T00:00:00Z'), end=new Date(endISO+'T00:00:00Z');
-    let n=0; for(let d=start; d<=end; d=new Date(d.getTime()+86400000)){ const wd=d.getUTCDay(); if(wd!==0 && wd!==6) n++; }
-    return n || 19; // default 19 if dates absent
+  function stamp(){
+    const d=new Date(), p=n=>n<10?'0'+n:n;
+    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`;
   }
 
-  function buildPlannedFromPlan(plan, bizCount){
-    const labels = Array.from({length:bizCount},(_,i)=>`Day ${i+1}`);
-
-    // Executed: reach 100% by exec_days
-    const pe = labels.map((_,i)=>{
-      const day=i+1; if (!plan.exec_days) return Math.min(100, Math.round(day/bizCount*100));
-      return Math.min(100, Math.round(day/plan.exec_days*100));
-    });
-
-    // Pass: cumulative towards pass_target by pass_days
-    const pp = labels.map((_,i)=>{
-      const day=i+1, d=Math.min(day, plan.pass_days||15);
-      const target = plan.pass_target ?? 95;
-      return Math.round(Math.min(target, d*(target/(plan.pass_days||15))));
-    });
-
-    return { labels, planned_executed_pct: pe, planned_pass_pct: pp };
-    // If you ever want labels to be actual dates, we could switch easily.
-  }
-
-  // ---------- main ----------
+  // -------- main --------
   $('#file').addEventListener('change', async (ev)=>{
     btnJson.disabled = btnBak.disabled = true;
-    preview.textContent = '// (no preview)';
-    statusEl.textContent = '';
+    preview.textContent = '// (no preview)'; statusEl.textContent = '';
 
     const f = ev.target.files?.[0]; if (!f) return;
 
@@ -159,101 +137,86 @@
       const buf = await f.arrayBuffer();
       const wb  = XLSX.read(buf, {type:'array', cellDates:false});
 
-      // Sheets you maintain in the template:
-      const wsOverview   = sheet(wb,'overview');
-      const wsSchedule   = sheet(wb,'schedule');
-      const wsPlan       = sheet(wb,'plan');
-      const wsPlanned    = sheet(wb,'planned');      // (optional override)
-      const wsTestsDaily = sheet(wb,'testsDaily');   // -> progressDaily
-      const wsDefDaily   = sheet(wb,'defectsDaily'); // -> defectsDaily
-      const wsIssues     = sheet(wb,'issues');       // -> issues
-      const wsKeyDates   = sheet(wb,'keyDates');     // -> keyDates
+      // Sheets (case-insensitive)
+      const wsOverview   = sheet(wb,'overview');    // release only
+      const wsPlan       = sheet(wb,'plan');        // exec_days, pass_days, pass_target
+      const wsPlanned    = sheet(wb,'planned');     // label, planned_executed_pct, planned_pass_pct
+      const wsTests      = sheet(wb,'testDaily');   // date, inScope, executedPct, passPct
+      const wsDefects    = sheet(wb,'defectsDaily');// date, openDefects
+      const wsIssues     = sheet(wb,'issues');      // open Blocker/Critical rows
+      const wsKeyDates   = sheet(wb,'keyDates');    // label, date, dateRange, notes
 
-      const o1 = rows(wsOverview)[0] || {};
-      const scheduleRow = rows(wsSchedule)[0] || {};
-      const planRow = rows(wsPlan)[0] || {};
+      // overview: only release comes from sheet; inScope is dynamic per day
+      const o = rows(wsOverview)[0] || {};
+      const overview = { release: o.release ?? '' };
 
-      const overview = {
-        release: o1.release ?? '',
-        inScope: toInt(o1.inScope)
-      };
+      // plan: verbatim (if present)
+      let plan = undefined;
+      const rPlan = rows(wsPlan)[0];
+      if (rPlan) {
+        plan = {
+          exec_days:   toInt(rPlan.exec_days),
+          pass_days:   toInt(rPlan.pass_days),
+          pass_target: toInt(rPlan.pass_target)
+        };
+      }
 
-      const schedule = {
-        start: xlDate(scheduleRow.start),
-        end:   xlDate(scheduleRow.end),
-        timezone: scheduleRow.timezone || 'Europe/Berlin'
-      };
-
-      const plan = {
-        exec_days:   toInt(planRow.exec_days || 10),
-        pass_days:   toInt(planRow.pass_days || 15),
-        pass_target: toInt(planRow.pass_target || 95)
-      };
-
-      // Planned series: use the "planned" sheet if it exists; otherwise compute from plan
-      let plannedSeries;
-      const plannedRows = rows(wsPlanned);
-      if (plannedRows.length){
+      // plannedSeries: verbatim (if present)
+      let plannedSeries = undefined;
+      const rPlanned = rows(wsPlanned);
+      if (rPlanned.length){
         const labels=[], pe=[], pp=[];
-        plannedRows.forEach((r,i)=>{
+        rPlanned.forEach((r,i)=>{
           labels.push(r.label || `Day ${i+1}`);
           pe.push(toInt(r.planned_executed_pct));
           pp.push(toInt(r.planned_pass_pct));
         });
         plannedSeries = { labels, planned_executed_pct: pe, planned_pass_pct: pp };
-      } else {
-        const biz = bizDayCount(schedule.start, schedule.end);
-        plannedSeries = buildPlannedFromPlan(plan, biz);
       }
 
-      // progressDaily
-      const progressDaily = rows(wsTestsDaily).map(r=>({
+      // progressDaily (from testDaily)
+      const progressDaily = rows(wsTests).map(r=>({
         date: xlDate(r.date),
-        inScope: r.inScope!=='' ? toInt(r.inScope) : undefined, // keep first value if present
+        inScope: r.inScope!=='' ? toInt(r.inScope) : undefined,
         executedPct: toInt(r.executedPct),
         passPct: toInt(r.passPct)
       }));
 
       // defectsDaily
-      const defectsDaily = rows(wsDefDaily).map(r=>({
+      const defectsDaily = rows(wsDefects).map(r=>({
         date: xlDate(r.date),
         openDefects: toInt(r.openDefects)
       }));
 
-      // issues
+      // issues (verbatim)
       const issues = rows(wsIssues).map(r=>({
-        key: r.key||'', priority:r.priority||'', summary:r.summary||'',
+        key:r.key||'', priority:r.priority||'', summary:r.summary||'',
         reporter:r.reporter||'', team:r.team||'', platform:r.platform||'',
         status:r.status||'', link:r.link||''
       }));
 
-      // keyDates (supports “dateStart/dateEnd” or single “date” or “dateRange” text)
-      const keyDates = rows(wsKeyDates).map(r=>{
-        let dateStr = '';
-        const ds = xlDate(r.dateStart), de = xlDate(r.dateEnd), d = xlDate(r.date);
-        if (ds && de) dateStr = `${ds} to ${de}`;
-        else if (d)   dateStr = d;
-        else if (r.dateRange) dateStr = String(r.dateRange);
-        return { label:r.label||'', date:dateStr, notes:r.notes||'' };
-      });
+      // keyDates (keep your columns)
+      const keyDates = rows(wsKeyDates).map(r=>({
+        label: r.label || '',
+        date:  r.date ? xlDate(r.date) : '',
+        dateRange: r.dateRange || '',
+        notes: r.notes || ''
+      }));
 
-      // top header fields
+      // assemble
       const data = {
         asOf: ($asof.value||'').trim(),
         infoUrl: ($info.value||'').trim(),
         statusUrl: ($stUrl.value||'').trim(),
         overview,
         health: { status: ($hStat.value||'auto'), comment: ($hCmt.value||'') },
-        schedule,
-        plan,
-        plannedSeries,
-        progressDaily,
-        defectsDaily,
-        issues,
-        keyDates
+        ...(plan ? { plan } : {}),
+        ...(plannedSeries ? { plannedSeries } : {}),
+        progressDaily, defectsDaily, issues, keyDates
       };
 
-      lastText = stringifyOneLine(data, ['planned_executed_pct','planned_pass_pct','labels','progressDaily','defectsDaily']);
+      // compact the heavy arrays
+      lastText = stringifyOneLine(data, ['labels','planned_executed_pct','planned_pass_pct','progressDaily','defectsDaily']);
       preview.textContent = lastText;
       btnJson.disabled = btnBak.disabled = false;
       statusEl.textContent = 'Parsed ✓';
@@ -263,11 +226,6 @@
       preview.textContent = '// (no preview)';
     }
   });
-
-  function stamp(){
-    const d=new Date(), p=n=>n<10?'0'+n:n;
-    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`;
-  }
 
   $('#dlJson').addEventListener('click', ()=>{
     if (!lastText) return;
@@ -280,7 +238,8 @@
     if (!lastText) return;
     const a=document.createElement('a');
     a.href=URL.createObjectURL(new Blob([lastText],{type:'application/json'}));
-    a.download=`uat-backup_${stamp()}.json`; a.click(); URL.revokeObjectURL(a.href);
+    a.download=`uat-backup_${(new Date()).toISOString().slice(0,16).replace(/[:T]/g,'_')}.json`;
+    a.click(); URL.revokeObjectURL(a.href);
   });
 })();
 </script>
