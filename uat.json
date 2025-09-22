@@ -1,132 +1,58 @@
 {
-  "asOf": "2025-09-19 17:05", 
+  "asOf": "2025-09-22 16:51",
   "infoUrl": "./about-uat.md",
   "statusUrl": "./daily-status.md",
-
   "overview": {
-    "release": "RI-4",
-    "inScope": 3249
+    "release": "RI-4"
   },
-
   "health": {
-    "status": "auto", 
-    "comment": ""
+    "status": "amber",
+    "comment": "Delay in test execution by sales"
   },
-
-  "schedule": {
-    "start": "2025-10-13",
-    "end":   "2025-11-06", 
-    "timezone": "Europe/Berlin"
-  },
-
-  "plan": {
-    "exec_days": 10,
-    "pass_days": 15,
-    "pass_target": 95
-  },
-
-  "plannedSeries": {
-    "labels": [
-      "Day 1","Day 2","Day 3","Day 4","Day 5","Day 6","Day 7","Day 8","Day 9",
-      "Day 10","Day 11","Day 12","Day 13","Day 14","Day 15","Day 16","Day 17","Day 18","Day 19"
-    ],
-    "planned_executed_pct": [
-      10, 20, 30, 40, 50, 60, 70, 80, 90,
-      100, 100, 100, 100, 100, 100, 100, 100, 100, 100
-    ],
-    "planned_pass_pct": [
-       6, 13, 19, 25, 32, 38, 44, 51, 57,
-      63, 70, 76, 82, 89, 95, 95, 95, 95, 95
-    ]
-  },
-
-  "progressDaily": [
-    { "date": "2025-10-13", "inScope": 3249, "executedPct": 4,  "passPct": 3  },
-    { "date": "2025-10-14", "inScope": 3230, "executedPct": 14, "passPct": 12 },
-    { "date": "2025-10-15", "inScope": 3225, "executedPct": 24, "passPct": 20 },
-    { "date": "2025-10-16", "inScope": 3220, "executedPct": 33, "passPct": 28 },
-    { "date": "2025-10-17", "inScope": 3220, "executedPct": 39, "passPct": 33 },
-    { "date": "2025-10-20", "inScope": 3204, "executedPct": 52, "passPct": 45 },
-    { "date": "2025-10-21", "inScope": 3211, "executedPct": 63, "passPct": 61 },
-    { "date": "2025-10-22", "inScope": 3124, "executedPct": 78, "passPct": 71 },
-    { "date": "2025-10-23", "inScope": 3120, "executedPct": 85, "passPct": 77 },
-    { "date": "2025-10-24", "inScope": 3108, "executedPct": 93, "passPct": 85 },
-    { "date": "2025-10-27", "inScope": 3083, "executedPct": 97, "passPct": 88 },
-    { "date": "2025-10-28", "inScope": 3071, "executedPct": 98, "passPct": 90 },
-    { "date": "2025-10-29", "inScope": 3068, "executedPct": 99, "passPct": 92 },
-    { "date": "2025-10-30", "inScope": 3068, "executedPct": 99, "passPct": 93 },
-    { "date": "2025-10-31", "inScope": 3063, "executedPct": 99, "passPct": 93 },
-    { "date": "2025-11-01", "inScope": 3063, "executedPct": 100, "passPct": 95 },
-    { "date": "2025-11-04", "inScope": 3063, "executedPct": 100, "passPct": 95 },
-    { "date": "2025-11-05", "inScope": 3063, "executedPct": 100, "passPct": 96 },
-    { "date": "2025-11-06", "inScope": 3063, "executedPct": 100, "passPct": 97 },
-    { "date": "2025-11-07", "inScope": 3063, "executedPct": 100, "passPct": 97 }
-  ],
-
-  "defectsDaily": [
-    { "date": "2025-10-13", "openDefects": 300 },
-    { "date": "2025-10-14", "openDefects": 280 },
-    { "date": "2025-10-15", "openDefects": 260 },
-    { "date": "2025-10-16", "openDefects": 240 },
-    { "date": "2025-10-17", "openDefects": 220 },
-    { "date": "2025-10-20", "openDefects": 200 },
-    { "date": "2025-10-21", "openDefects": 180 },
-    { "date": "2025-10-22", "openDefects": 160 },
-    { "date": "2025-10-23", "openDefects": 140 },
-    { "date": "2025-10-24", "openDefects": 130 },
-    { "date": "2025-10-27", "openDefects": 120 },
-    { "date": "2025-10-28", "openDefects": 110 },
-    { "date": "2025-10-29", "openDefects": 90  },
-    { "date": "2025-10-30", "openDefects": 80  },
-    { "date": "2025-10-31", "openDefects": 70  },
-    { "date": "2025-11-01", "openDefects": 60  },
-    { "date": "2025-11-04", "openDefects": 50  },
-    { "date": "2025-11-05", "openDefects": 40  },
-    { "date": "2025-11-06", "openDefects": 35  },
-    { "date": "2025-11-07", "openDefects": 30  }
-  ],
-
+  "progressDaily": [  ],
+  "defectsDaily": [ {"date":"2025-08-27","openDefects":4} ],
   "issues": [
     {
-      "key": "NGEUIT-22058",
-      "priority": "Critical",
-      "summary": "iOS app crashes on product detail page",
-      "reporter": "Jakub",
-      "team": "Mobile",
-      "platform": "App",
-      "status": "Open",
-      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-22058"
-    },
-    {
-      "key": "UAT-501",
+      "key": "BUG-123",
       "priority": "Blocker",
-      "summary": "Payment service outage blocks checkout on Web",
-      "reporter": "Helena",
+      "summary": "Checkout not working",
+      "reporter": "Alice",
       "team": "eCommerce",
       "platform": "Web",
       "status": "Open",
-      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-22058"
-    },
-    {
-      "key": "UAT-162",
-      "priority": "Critical",
-      "summary": "Translation missing for 'Add to Cart' button (IT)",
-      "reporter": "Juan",
-      "team": "Localization",
-      "platform": "BOSS",
-      "status": "Open",
-      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-22058"
+      "link": "https://jira.example.com/BUG-123"
     }
   ],
-
   "keyDates": [
-    { "label": "Kick-off",    "date": "2025-10-10",                       "notes": "All testers are onboarded" },
-    { "label": "UAT period",  "date": "2025-10-13 to 2025-11-06",         "notes": "Testing period for the UAT" },
-    { "label": "Alpha Demo",  "date": "2025-11-04 to 2025-11-05",         "notes": "First testing with the ABOs" },
-    { "label": "Go / No-Go",  "date": "2025-12-08",                       "notes": "Final leadership decision" },
-    { "label": "Go Live",     "date": "2025-12-10",                       "notes": "Go Live of the RI-4" }
+    {
+      "label": "Kick-off",
+      "date": "2025-10-10",
+      "dateRange": "",
+      "notes": "All testers are onboarded"
+    },
+    {
+      "label": "UAT period",
+      "date": "",
+      "dateRange": "2025-10-13 to 2025-11-06",
+      "notes": "Testing period for the UAT"
+    },
+    {
+      "label": "Alpha Demo",
+      "date": "",
+      "dateRange": "2025-11-04 to 2025-11-05",
+      "notes": "First testing with the ABOs"
+    },
+    {
+      "label": "Go / No-Go",
+      "date": "2025-12-08",
+      "dateRange": "",
+      "notes": "Final leadership decision"
+    },
+    {
+      "label": "Go Live",
+      "date": "2025-12-10",
+      "dateRange": "",
+      "notes": "Go Live of the RI-4"
+    }
   ]
 }
-
-
-
