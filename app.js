@@ -1,19 +1,41 @@
 /* =====================================================================
-   UAT Dashboard – app.js (cleaned, organized, with Daily Status RAG fix)
+   UAT Dashboard – app.js (supports split JSON: uat-static.json + uat.json)
    Sections:
+     0) mergeDeep helper (for static+dynamic JSON)
      1) BizCal (calendar helpers)
-     2) Alpine component: state & lifecycle
+     2) Alpine component: state & lifecycle (init now merges two files)
      3) Theme helpers
      4) KPI planned/actual helpers & calculations
      5) Charts
      6) Countdown widget
      7) Info modal
      8) Scroll lock helpers
-     9) Daily Status modal (normalized RAG + insertion under title)
+     9) Daily Status modal
     10) Markdown helpers (single mdToHtml) + utilities
     11) Alpine registration
    ===================================================================== */
 
+/* =====================================================
+ * 0) Deep merge helper
+ *    - Objects: recursive merge
+ *    - Arrays & primitives: source wins (replace)
+ * ===================================================== */
+function mergeDeep(target = {}, source = {}) {
+  if (typeof target !== 'object' || target === null) return source;
+  if (typeof source !== 'object' || source === null) return source;
+
+  const out = Array.isArray(target) ? target.slice() : { ...target };
+  for (const [k, v] of Object.entries(source)) {
+    if (Array.isArray(v)) {
+      out[k] = v.slice();                 // replace arrays (don’t concat)
+    } else if (typeof v === 'object' && v !== null) {
+      out[k] = mergeDeep(out[k] ?? {}, v); // recurse objects
+    } else {
+      out[k] = v;                         // primitives: replace
+    }
+  }
+  return out;
+}
 
 /* =====================================================
  * 1) BizCal (unchanged)
@@ -65,13 +87,12 @@ function BizCal(schedule){
   return { businessDays, isBusiness, indexFor, nextBusinessAfter, formatDay:fmtDay, todayTZ, start, end, tz };
 }
 
-
 /* =====================================================
  * 2) Alpine component: state & lifecycle
  * ===================================================== */
 function app(){
   return {
-    // ------------- raw data & derived model -------------
+    // raw + derived
     raw:{ overview:{}, progressDaily:[], defectsDaily:[], issues:[], keyDates:[], schedule:{}, plannedSeries:{}, plan:{} },
     kpis:{ inScope:0, executedPct:0, passPct:0, openDefects:0, critical:0 },
     planned:{ exec:0, pass:0 },
@@ -81,7 +102,7 @@ function app(){
     // charts
     execChart:null, defectChart:null,
 
-    // UI state
+    // UI
     theme:'theme-dark',
     countdown:{ title:'UAT Days', label:'—', pct:0, pctShow:false, subtitle:'' },
 
@@ -93,9 +114,19 @@ function app(){
 
     // ---------------- lifecycle ----------------
     async init(){
+      let staticData = {};
+      let dynamicData = {};
+
+      // 1) Try static file (optional)
       try{
-        const res = await fetch('./uat.json?v=' + Date.now(), { cache:'no-store' });
-        if(res.ok){ this.raw = await res.json(); }
+        const s = await fetch('./uat-static.json?v=' + Date.now(), { cache:'no-store' });
+        if (s.ok) staticData = await s.json();
+      }catch(e){ /* optional, ignore */ }
+
+      // 2) Dynamic file (required)
+      try{
+        const d = await fetch('./uat.json?v=' + Date.now(), { cache:'no-store' });
+        if (d.ok) dynamicData = await d.json();
         else throw new Error('Failed to fetch uat.json');
       }catch(e){
         console.error('Failed to fetch uat.json', e);
@@ -103,9 +134,14 @@ function app(){
         return;
       }
 
+      // 3) Merge static → dynamic overrides
+      this.raw = mergeDeep(staticData, dynamicData);
+
+      // Normalize/compat
       this.asOf   = this.raw.asOf || this.raw.overview?.lastUpdate || '';
       this.issues = this.raw.issues || [];
 
+      // Compute derived data & render
       this.computeKpis();
       this.computePlannedToday();
       this.drawCharts();
@@ -130,7 +166,6 @@ function app(){
      * 4) KPI planned/actual helpers & calculations
      * ===================================================== */
 
-    // Small helpers for RAG (also used in Daily Status)
     healthEmoji(status){
       return status==='green' ? '🟢'
            : status==='amber' ? '🟠'
@@ -148,7 +183,6 @@ function app(){
       return 'Off Track';
     },
 
-    // Normalize RAG parts once (manual override or auto)
     overallStatusParts(){
       const rawStatus = this.raw.health?.status || 'auto';
       const klass = (rawStatus === 'auto')
@@ -163,7 +197,6 @@ function app(){
       return { emoji, label, comment };
     },
 
-    // Auto health rules (tweak thresholds as needed)
     autoHealthClass(){
       const k = this.kpis;
       const execOK = (k.executedPct >= (k.plannedExecutedPct||0));
@@ -177,19 +210,16 @@ function app(){
       return 'rag-red';
     },
 
-    // Header badge model
     get healthBadge(){
       const h = this.raw.health || { status:'auto' };
       let klass = 'rag-green', label = 'On Track', tooltip = '';
 
       if (h.status && h.status !== 'auto') {
-        // manual override from JSON
         klass = this.healthLabelClass(h.status);
         label = this.healthText(klass);
         const when = (this.asOf ? ` • ${this.asOf}` : '');
         tooltip = `Set manually${when}${h.comment ? ' • '+h.comment : ''}`;
       } else {
-        // automatic
         klass = this.autoHealthClass();
         label = this.healthText(klass);
         const k = this.kpis;
@@ -202,7 +232,6 @@ function app(){
       return { class: klass, label, tooltip };
     },
 
-    // Planned targets (used for KPI deltas & chart planned lines)
     plannedExecutedPct(dayIndex){
       const execDays = this.raw.plan?.exec_days ?? 10;
       if (dayIndex <= 0) return 0;
@@ -225,7 +254,6 @@ function app(){
     },
 
     computePlannedToday(){
-      // Determine working-day index using BizCal or fallback to progress length
       const cal = BizCal(this.raw.schedule||{});
       const today = cal.todayTZ();
       let idx = 1;
@@ -238,7 +266,6 @@ function app(){
         idx = p.length ? p.length : 1;
       }
 
-      // planned values
       if (this.raw.plannedSeries?.planned_executed_pct?.length){
         const i = Math.min(idx, this.raw.plannedSeries.planned_executed_pct.length) - 1;
         this.planned.exec = Number(this.raw.plannedSeries.planned_executed_pct[i]) || this.plannedExecutedPct(idx);
@@ -252,7 +279,6 @@ function app(){
         this.planned.pass = this.plannedPassPct(idx);
       }
 
-      // actuals
       const p = this.raw.progressDaily || [];
       const actualExec = p.length ? (Number(p[p.length-1].executedPct)||0) : 0;
       const actualPass = p.length ? (Number(p[p.length-1].passPct)||0) : 0;
@@ -262,7 +288,6 @@ function app(){
       this.deltas.exec = Math.round(actualExec - plannedExec);
       this.deltas.pass = Math.round(actualPass - plannedPass);
 
-      // expose to kpis for bindings
       this.kpis.plannedExecutedPct = plannedExec;
       this.kpis.plannedPassPct     = plannedPass;
       this.kpis.execDelta          = this.deltas.exec;
@@ -272,7 +297,6 @@ function app(){
     },
 
     computeKpis(){
-      // Progress KPIs (from latest progressDaily entry)
       const p = this.raw.progressDaily || [];
       if (p.length) {
         const last = p[p.length - 1];
@@ -285,16 +309,13 @@ function app(){
         this.kpis.passPct     = 0;
       }
 
-      // Defects KPIs: take latest point; fallback to 0
       const dd = this.raw.defectsDaily || [];
       this.kpis.openDefects = dd.length
         ? Number(dd[dd.length - 1].openDefects ?? 0)
         : 0;
 
-      // Blocker/Critical is simply the number of open issues in JSON
       this.kpis.critical = (this.raw.issues || []).length;
 
-      // Ensure planned values are numbers to avoid NaN in deltas
       this.kpis.plannedExecutedPct = Number(this.kpis.plannedExecutedPct || 0);
       this.kpis.plannedPassPct     = Number(this.kpis.plannedPassPct || 0);
     },
@@ -311,13 +332,12 @@ function app(){
         plugins:{ legend:{ position:'bottom', labels:{ color:'#94a3b8', usePointStyle:true } } }
       };
 
-      // ----- Execution Over Time -----
+      // Execution Over Time
       const pd = this.raw.progressDaily || [];
       let labels = pd.map(r => r.date);
       const exec = pd.map(r => +r.executedPct || 0);
       const pass = pd.map(r => +r.passPct || 0);
 
-      // If there are no actual labels (pre-start), synthesize labels so planned lines still render
       if (!labels.length) {
         const cal = BizCal(this.raw.schedule || {});
         const biz = (cal.start && cal.end) ? cal.businessDays() : [];
@@ -334,7 +354,6 @@ function app(){
         }
       }
 
-      // Planned series aligned to labels length
       const n = labels.length;
       const plannedExec = Array.from({length:n}, (_,i)=>{
         const day = i+1;
@@ -359,7 +378,6 @@ function app(){
           datasets: [
             { label:'Executed %', data:exec, borderColor:'#60a5fa', backgroundColor:'#60a5fa', tension:.25, spanGaps:true },
             { label:'Pass %',     data:pass, borderColor:'#a78bfa', backgroundColor:'#a78bfa', tension:.25, spanGaps:true },
-            // Planned (dotted)
             { label:'Executed % (Planned)', data:plannedExec, borderColor:'#64748b', borderDash:[8,6], tension:.25, spanGaps:true, pointRadius:0, pointStyle:'line' },
             { label:'Pass % (Planned)',     data:plannedPass, borderColor:'#cbd5e1', borderDash:[2,6], tension:.25, spanGaps:true, pointRadius:0, pointStyle:'line' }
           ]
@@ -367,16 +385,8 @@ function app(){
         options: {
           ...common,
           scales: {
-            x: {
-              type: 'time',
-              time: { unit:'day', displayFormats:{ day:'MMM dd' }, tooltipFormat:'MMM dd, yyyy' },
-              grid: { color:'rgba(148,163,184,.2)' }
-            },
-            y: {
-              beginAtZero:true, max:100,
-              ticks:{ callback:v=>v+'%' },
-              grid:{ color:'rgba(148,163,184,.2)' }
-            }
+            x: { type:'time', time:{ unit:'day', displayFormats:{ day:'MMM dd' }, tooltipFormat:'MMM dd, yyyy' }, grid:{ color:'rgba(148,163,184,.2)' } },
+            y: { beginAtZero:true, max:100, ticks:{ callback:v=>v+'%' }, grid:{ color:'rgba(148,163,184,.2)' } }
           },
           plugins: {
             ...(common.plugins || {}),
@@ -392,7 +402,7 @@ function app(){
         }
       });
 
-      // ----- Defect Burndown -----
+      // Defect Burndown
       const dd = this.raw.defectsDaily || [];
       const labelsD = dd.map(r => r.date);
       const dataDef = dd.map(r => Number(r.openDefects ?? 0));
@@ -402,19 +412,8 @@ function app(){
       if (this.defectChart) this.defectChart.destroy();
       this.defectChart = new Chart(document.getElementById('defectChart'), {
         type:'line',
-        data:{
-          labels: labelsD2,
-          datasets:[
-            { label:'Open defects', data:dataDef2, borderColor:'#34d399', backgroundColor:'#34d399', tension:.25, spanGaps:true }
-          ]
-        },
-        options:{
-          ...common,
-          scales:{
-            x:{ type:'time', time:{ unit:'day', displayFormats:{ day:'MMM dd' }, tooltipFormat:'MMM dd, yyyy' }, grid:{ color:'rgba(148,163,184,.2)'} },
-            y:{ beginAtZero:true, grid:{ color:'rgba(148,163,184,.2)'} }
-          }
-        }
+        data:{ labels: labelsD2, datasets:[ { label:'Open defects', data:dataDef2, borderColor:'#34d399', backgroundColor:'#34d399', tension:.25, spanGaps:true } ] },
+        options:{ ...common, scales:{ x:{ type:'time', time:{ unit:'day', displayFormats:{ day:'MMM dd' }, tooltipFormat:'MMM dd, yyyy' }, grid:{ color:'rgba(148,163,184,.2)' } }, y:{ beginAtZero:true, grid:{ color:'rgba(148,163,184,.2)' } } } }
       });
     },
 
@@ -531,7 +530,7 @@ function app(){
     },
 
     /* =====================================================
-     * 9) Daily Status modal (normalized RAG + insertion under title)
+     * 9) Daily Status modal
      * ===================================================== */
     async openDaily(){
       this.dailyOpen = true;
@@ -539,8 +538,6 @@ function app(){
       this.lockScroll();
 
       const url = this.raw.statusUrl || './daily-status.md';
-
-      // Build a normalized Overall Status line (smaller heading, under title)
       const { emoji, label, comment } = this.overallStatusParts();
       const ragLine = `#### Overall Status: ${emoji} ${label}${comment ? ' — ' + comment : ''}`;
 
@@ -548,8 +545,6 @@ function app(){
         const res = await fetch(url, { cache: 'no-store' });
         if (res.ok) {
           const md = await res.text();
-
-          // If MD starts with "# ..." on the first line, put RAG right after title.
           let mdWithRag;
           const m = md.match(/^\s*#\s+.*$/m);
           if (m && m.index === 0) {
@@ -560,7 +555,6 @@ function app(){
           } else {
             mdWithRag = `${ragLine}\n\n${md}`;
           }
-
           this.dailyHtml = this.mdToHtml(mdWithRag);
         } else {
           this.dailyHtml = this.mdToHtml(this.buildDailyFallback(ragLine));
@@ -574,8 +568,6 @@ function app(){
       this.dailyOpen = false;
       this.unlockScroll();
     },
-
-    // Fallback daily if external MD is missing
     buildDailyFallback(ragLine=''){
       if (!ragLine) {
         const { emoji, label, comment } = this.overallStatusParts();
@@ -585,10 +577,7 @@ function app(){
       const dateLine = this.asOf ? `**Date:** ${this.asOf}` : '';
       const lines = [
         `# UAT Daily Status — ${this.raw.overview?.release || ''}`,
-        dateLine,
-        '',
-        ragLine || '',
-        '',
+        dateLine, '', ragLine, '',
         '### Key Highlights',
         '- Execution is progressing on **plan**.',
         '- Defects remain manageable; blockers are **under control**.',
@@ -609,8 +598,6 @@ function app(){
       ];
       return lines.join('\n');
     },
-
-    // Utilities for Daily Status
     copyDaily(){ if(this.dailyHtml){ navigator.clipboard.writeText(this.htmlToText(this.dailyHtml)); } },
     downloadDaily(){
       const text = this.dailyHtml ? this.htmlToText(this.dailyHtml) : '';
@@ -622,10 +609,8 @@ function app(){
     },
 
     /* =====================================================
-     * 10) Markdown helpers (single version) + utilities
+     * 10) Markdown helpers + utilities
      * ===================================================== */
-
-    // Markdown -> HTML (headings up to ####, lists -,*,•, paragraphs, bold/italic)
     mdToHtml(md){
       if (!md || typeof md !== "string") return "";
       md = md.replace(/\r\n?/g, "\n").replace(/\\([&*_])/g, "$1").trim();
@@ -664,7 +649,7 @@ function app(){
         while (i < lines.length) {
           const l = lines[i];
           if (/^\s*$/.test(l)) break;
-          if (/^\s*(#{1,4})\s+/.test(l)) break;     // allow ####
+          if (/^\s*(#{1,4})\s+/.test(l)) break;
           if (/^\s*[-*•]\s+/.test(l)) break;
           if (/^\s*---\s*$/.test(l)) break;
           block.push(l); i++;
@@ -683,15 +668,14 @@ function app(){
       while (i < lines.length) {
         const line = lines[i];
 
-        if (/^\s*$/.test(line)) { flushList(); i++; continue; }            // blank
-        if (/^\s*---\s*$/.test(line)) { flushList(); html += "<hr>"; i++; continue; } // rule
+        if (/^\s*$/.test(line)) { flushList(); i++; continue; }
+        if (/^\s*---\s*$/.test(line)) { flushList(); html += "<hr>"; i++; continue; }
 
-        const h = line.match(/^\s*(#{1,4})\s+(.+)$/); // heading #..####
+        const h = line.match(/^\s*(#{1,4})\s+(.+)$/);
         if (h) { flushList(); const level = h[1].length; html += `<h${level}>${formatInline(h[2].trim())}</h${level}>`; i++; continue; }
 
-        if (/^\s*[-*•]\s+/.test(line)) { collectList(); flushList(); continue; } // list
+        if (/^\s*[-*•]\s+/.test(line)) { collectList(); flushList(); continue; }
 
-        // auto title for first non-empty line
         if (!autoTitleUsed && line.trim() === firstLine && line.length <= 120) {
           flushList(); html += `<h2>${formatInline(line.trim())}</h2>`; autoTitleUsed = true; i++; continue;
         }
@@ -705,7 +689,6 @@ function app(){
 
     htmlToText(html){ const tmp=document.createElement('div'); tmp.innerHTML=html; return tmp.innerText; },
 
-    // display helpers
     fmtPct(v){ return (v??0).toFixed(0)+'%'; },
     kpiColor(v){ return v>=90 ? 'text-emerald-400' : (v>=70 ? 'text-amber-300' : 'text-rose-400'); },
     sevDot(p){ const c = p==='Blocker' ? '#fb7185' : p==='Critical' ? '#fca5a5' : '#f59e0b'; return `background:${c}`; },
@@ -726,7 +709,6 @@ function app(){
     },
   }
 }
-
 
 /* =====================================================
  * 11) Alpine registration
