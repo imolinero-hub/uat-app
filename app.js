@@ -125,15 +125,15 @@ function app(){
 
       // 2) Dynamic file (required)
       try{
-        const d = await fetch('./uat.json?v=' + Date.now(), { cache:'no-store' });
+        const d = await fetch('./uat-dynamic.json?v=' + Date.now(), { cache:'no-store' });
         if (d.ok) dynamicData = await d.json();
-        else throw new Error('Failed to fetch uat.json');
+        else throw new Error('Failed to fetch uat-dynamic.json');
       }catch(e){
-        console.error('Failed to fetch uat.json', e);
-        document.body.insertAdjacentHTML('beforeend','<div class="toast">uat.json could not be loaded</div>');
+        console.error('Failed to fetch uat-dynamic.json', e);
+        document.body.insertAdjacentHTML('beforeend','<div class="toast">uat-dynamic.json could not be loaded</div>');
         return;
       }
-
+       
       // 3) Merge static → dynamic overrides
       this.raw = mergeDeep(staticData, dynamicData);
 
