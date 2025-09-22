@@ -1,16 +1,16 @@
 {
-  "asOf": "2025-09-22 16:51",
+  "asOf": "2025-09-22 17:11",
   "infoUrl": "./about-uat.md",
   "statusUrl": "./daily-status.md",
   "overview": {
     "release": "RI-4"
   },
   "health": {
-    "status": "amber",
-    "comment": "Delay in test execution by sales"
+    "status": "auto",
+    "comment": "Test execution 5% behind plan"
   },
   "progressDaily": [  ],
-  "defectsDaily": [ {"date":"2025-08-27","openDefects":4} ],
+  "defectsDaily": [ {"date":"2025-10-13","openDefects":32}, {"date":"2025-10-14","openDefects":65}, {"date":"2025-10-15","openDefects":86} ],
   "issues": [
     {
       "key": "BUG-123",
@@ -20,7 +20,7 @@
       "team": "eCommerce",
       "platform": "Web",
       "status": "Open",
-      "link": "https://jira.example.com/BUG-123"
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-22058"
     }
   ],
   "keyDates": [
