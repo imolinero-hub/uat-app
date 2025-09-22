@@ -1,299 +1,286 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>UAT JSON Export</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    :root { --bg:#0b1620; --panel:#0f2233; --text:#d9e7ff; --muted:#8fb3d9; --accent:#61dafb; }
-    html,body{height:100%}
-    body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial}
-    h1{font-size:24px;margin:24px 0 12px}
-    .wrap{max-width:1200px;margin:0 auto;padding:20px}
-    .card{background:var(--panel);border-radius:10px;padding:16px;margin:12px 0}
-    .row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
-    input[type=file]{color:var(--text)}
-    input[type=text], select { background:#07121a; color:var(--text); border:1px solid #15314b; border-radius:8px; padding:8px 10px; min-width:240px; }
-    label{display:inline-flex; align-items:center; gap:8px}
-    pre{white-space:pre-wrap;background:#07121a;border-radius:10px;padding:16px;overflow:auto}
-    button{border:0;border-radius:8px;padding:10px 14px;color:#001a2c;background:linear-gradient(135deg,#6dd5fa,#2980b9);cursor:pointer}
-    button[disabled]{opacity:.5;cursor:not-allowed}
-    .muted{color:var(--muted)}
-    .small{font-size:12px}
-  </style>
-  <!-- SheetJS (xlsx) -->
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<meta charset="utf-8" />
+<title>UAT JSON Export (Updated)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root { --bg:#0b1620; --panel:#0f2233; --text:#d9e7ff; --muted:#8fb3d9; }
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial}
+  h1{font-size:22px;margin:20px 0 10px}
+  .wrap{max-width:1200px;margin:0 auto;padding:18px}
+  .card{background:#0f2233;border-radius:10px;padding:16px;margin:12px 0}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  label{display:inline-flex;align-items:center;gap:8px}
+  input,select{background:#07121a;color:var(--text);border:1px solid #15314b;border-radius:8px;padding:8px 10px}
+  input[type=file]{padding:6px}
+  pre{white-space:pre-wrap;background:#07121a;border-radius:10px;padding:14px;overflow:auto;max-height:50vh}
+  button{border:0;border-radius:8px;padding:10px 14px;color:#001a2c;background:linear-gradient(135deg,#6dd5fa,#2980b9);cursor:pointer}
+  button[disabled]{opacity:.5;cursor:not-allowed}
+  .muted{color:var(--muted)}
+  .small{font-size:12px}
+</style>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
-  <div class="wrap">
-    <h1>UAT JSON Export</h1>
+<div class="wrap">
+  <h1>UAT JSON Export (Updated)</h1>
 
-    <div class="card">
-      <h3>1) Upload workbook (.xlsx)</h3>
-      <div class="row">
-        <input id="file" type="file" accept=".xlsx" />
-        <span id="status" class="muted"></span>
-      </div>
-      <div class="row" style="margin-top:10px">
-        <label>As of:
-          <input id="asof" type="text" placeholder="YYYY-MM-DD HH:mm" />
-        </label>
-        <label>Info URL:
-          <input id="infoUrl" type="text" placeholder="./about-uat.md" />
-        </label>
-        <label>Daily Status URL:
-          <input id="statusUrl" type="text" placeholder="./daily-status.md" />
-        </label>
-      </div>
-      <div class="row" style="margin-top:10px">
-        <label>Health:
-          <select id="healthStatus">
-            <option value="auto">auto (let app decide)</option>
-            <option value="green">green (On Track)</option>
-            <option value="amber">amber (At Risk)</option>
-            <option value="red">red (Off Track)</option>
-          </select>
-        </label>
-        <label>Comment:
-          <input id="healthComment" type="text" placeholder="optional short note for non-green" />
-        </label>
-      </div>
-      <div class="small muted" style="margin-top:6px">
-        Tip: leave Health on <code>auto</code> for the dashboard to compute RAG using KPI vs plan and blockers.
-      </div>
+  <div class="card">
+    <h3>1) Workbook & Header Fields</h3>
+    <div class="row">
+      <input id="file" type="file" accept=".xlsx" />
+      <span id="status" class="muted"></span>
     </div>
-
-    <div class="card">
-      <h3>2) Preview</h3>
-      <pre id="preview">// (no preview)</pre>
+    <div class="row" style="margin-top:10px">
+      <label>As of:
+        <input id="asof" type="text" placeholder="YYYY-MM-DD HH:mm">
+      </label>
+      <label>Info URL:
+        <input id="infoUrl" type="text" placeholder="./about-uat.md" value="./about-uat.md">
+      </label>
+      <label>Daily Status URL:
+        <input id="statusUrl" type="text" placeholder="./daily-status.md" value="./daily-status.md">
+      </label>
     </div>
-
-    <div class="card">
-      <h3>3) Export</h3>
-      <div class="row">
-        <button id="dlJson" disabled>Download uat.json</button>
-        <button id="dlBackup" disabled>Download backup</button>
-      </div>
-      <div class="small muted" style="margin-top:8px">
-        The preview above is exactly the content that will be downloaded.
-      </div>
+    <div class="row" style="margin-top:10px">
+      <label>Health:
+        <select id="healthStatus">
+          <option value="auto">auto (let app compute)</option>
+          <option value="green">green (On Track)</option>
+          <option value="amber">amber (At Risk)</option>
+          <option value="red">red (Off Track)</option>
+        </select>
+      </label>
+      <label>Comment:
+        <input id="healthComment" type="text" placeholder="optional note for non-green">
+      </label>
+    </div>
+    <div class="small muted" style="margin-top:6px">
+      Exporter emits: asOf, infoUrl, statusUrl, overview, health, schedule, plan, plannedSeries, progressDaily, defectsDaily, issues, keyDates.
     </div>
   </div>
 
+  <div class="card">
+    <h3>2) Preview</h3>
+    <pre id="preview">// (no preview)</pre>
+  </div>
+
+  <div class="card">
+    <h3>3) Export</h3>
+    <div class="row">
+      <button id="dlJson" disabled>Download uat.json</button>
+      <button id="dlBackup" disabled>Download backup</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function(){
-  const $ = sel => document.querySelector(sel);
-  const status = $('#status');
-  const preview = $('#preview');
-  const btnJson = $('#dlJson');
-  const btnBak  = $('#dlBackup');
+  const $ = s => document.querySelector(s);
+  const statusEl = $('#status'), preview = $('#preview');
+  const btnJson = $('#dlJson'), btnBak = $('#dlBackup');
+  const $asof = $('#asof'), $info = $('#infoUrl'), $stUrl = $('#statusUrl'), $hStat = $('#healthStatus'), $hCmt = $('#healthComment');
 
-  const $asof = $('#asof');
-  const $infoUrl = $('#infoUrl');
-  const $statusUrl = $('#statusUrl');
-  const $healthStatus = $('#healthStatus');
-  const $healthComment = $('#healthComment');
-
-  // default "as of" = now(YYYY-MM-DD HH:mm)
-  (function seedAsOf(){
+  // seed asOf to "now"
+  (function(){
     const d=new Date(); const pad=n=>n<10?'0'+n:n;
     $asof.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   })();
-  $infoUrl.value = './about-uat.md';
-  $statusUrl.value = './daily-status.md';
 
-  let lastRendered = '';  // what you see is what you download
+  let lastText = '';
 
-  // ---- helpers -------------------------------------------------------------
-  const EPOCH = Date.UTC(1899, 11, 30); // Excel epoch (with 1900 leap bug)
-  function xlToISO(v){
-    if (v == null || v === '') return '';
+  // ---------- helpers ----------
+  const epoch = Date.UTC(1899,11,30);
+  const xlDate = v => {
+    if (v==null || v==='') return '';
     if (v instanceof Date) return v.toISOString().slice(0,10);
-    if (typeof v === 'number') {
-      const t = EPOCH + Math.round(v * 86400000);
-      return new Date(t).toISOString().slice(0,10);
-    }
-    const s = String(v);
-    const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
-    return m ? m[1] : s;
-  }
-
-  function getSheetCase(wb, wanted){
-    if (wb.Sheets[wanted]) return wb.Sheets[wanted];
-    const lower = wanted.toLowerCase();
-    for (const name of wb.SheetNames){
-      if (name.toLowerCase() === lower) return wb.Sheets[name];
-    }
+    if (typeof v==='number') return new Date(epoch + Math.round(v*86400000)).toISOString().slice(0,10);
+    const s = String(v); const m=s.match(/^(\d{4}-\d{2}-\d{2})/); return m?m[1]:s;
+  };
+  const sheet = (wb, name)=>{
+    if (wb.Sheets[name]) return wb.Sheets[name];
+    const lower=name.toLowerCase();
+    for (const n of wb.SheetNames) if (n.toLowerCase()===lower) return wb.Sheets[n];
     return null;
-  }
+  };
+  const rows = ws => ws ? XLSX.utils.sheet_to_json(ws,{defval:'',raw:true}) : [];
+  const toInt = v => Number.isFinite(+v) ? parseInt(v,10) : 0;
 
-  function sheetToObjects(ws){
-    if (!ws) return [];
-    return XLSX.utils.sheet_to_json(ws, {defval:'', raw:true});
-  }
-
-  function toInt(v){
-    const n = parseInt(v, 10);
-    return Number.isFinite(n) ? n : 0;
-  }
-
-  // --- robust formatter (preserve arrays on one line) -----------------------
-  function stringifyWithOneLineArrays(obj, keysOneLine){
-    const targets = new Set(keysOneLine);
-    const tokens = []; // {t, s}
-    let tokenIdx = 0;
-    const toOneLine = (arr) => '[ ' + arr.map(e => JSON.stringify(e)).join(', ') + ' ]';
-
-    const json = JSON.stringify(obj, function (key, value){
-      if (Array.isArray(value) && targets.has(key)) {
-        const token = `__ONELINE__${tokenIdx++}__`;
-        tokens.push({ t: token, s: toOneLine(value) });
-        return token;
+  // pretty but keep certain arrays on one line to stay compact
+  function stringifyOneLine(obj, keys){
+    const keep = new Set(keys); const tokens=[]; let i=0;
+    const json = JSON.stringify(obj,function(k,v){
+      if (Array.isArray(v) && keep.has(k)){
+        const t = `__ONELINE__${i++}__`; tokens.push([t,'[ '+v.map(x=>JSON.stringify(x)).join(', ')+' ]']); return t;
       }
-      return value;
-    }, 2);
-
-    let out = json;
-    for (const {t, s} of tokens){
-      out = out.replace(new RegExp(`"${t}"`, 'g'), s);
-    }
-    return out;
+      return v;
+    },2);
+    return tokens.reduce((acc,[t,s])=>acc.replace(new RegExp(`"${t}"`,'g'), s), json);
   }
 
-  function nowStamp(){
-    const d = new Date();
-    const pad = n => (n<10?'0':'')+n;
-    return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'_'+
-           pad(d.getHours())+pad(d.getMinutes());
+  function bizDayCount(startISO,endISO){
+    if (!startISO || !endISO) return 0;
+    const start=new Date(startISO+'T00:00:00Z'), end=new Date(endISO+'T00:00:00Z');
+    let n=0; for(let d=start; d<=end; d=new Date(d.getTime()+86400000)){ const wd=d.getUTCDay(); if(wd!==0 && wd!==6) n++; }
+    return n || 19; // default 19 if dates absent
   }
 
-  // ---- main ---------------------------------------------------------------
+  function buildPlannedFromPlan(plan, bizCount){
+    const labels = Array.from({length:bizCount},(_,i)=>`Day ${i+1}`);
+
+    // Executed: reach 100% by exec_days
+    const pe = labels.map((_,i)=>{
+      const day=i+1; if (!plan.exec_days) return Math.min(100, Math.round(day/bizCount*100));
+      return Math.min(100, Math.round(day/plan.exec_days*100));
+    });
+
+    // Pass: cumulative towards pass_target by pass_days
+    const pp = labels.map((_,i)=>{
+      const day=i+1, d=Math.min(day, plan.pass_days||15);
+      const target = plan.pass_target ?? 95;
+      return Math.round(Math.min(target, d*(target/(plan.pass_days||15))));
+    });
+
+    return { labels, planned_executed_pct: pe, planned_pass_pct: pp };
+    // If you ever want labels to be actual dates, we could switch easily.
+  }
+
+  // ---------- main ----------
   $('#file').addEventListener('change', async (ev)=>{
     btnJson.disabled = btnBak.disabled = true;
     preview.textContent = '// (no preview)';
-    status.textContent = '';
+    statusEl.textContent = '';
 
-    const file = ev.target.files && ev.target.files[0];
-    if (!file) return;
+    const f = ev.target.files?.[0]; if (!f) return;
 
     try{
-      const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, {type:'array', cellDates:false});
+      const buf = await f.arrayBuffer();
+      const wb  = XLSX.read(buf, {type:'array', cellDates:false});
 
-      const wsOverview    = getSheetCase(wb, 'overview');
-      const wsTestsDaily  = getSheetCase(wb, 'testsDaily');
-      const wsDefDaily    = getSheetCase(wb, 'defectsDaily') || getSheetCase(wb, 'DefectsDaily');
-      const wsIssues      = getSheetCase(wb, 'issues');
-      const wsTeams       = getSheetCase(wb, 'teams');
-      const wsKeyDates    = getSheetCase(wb, 'keyDates');
+      // Sheets you maintain in the template:
+      const wsOverview   = sheet(wb,'overview');
+      const wsSchedule   = sheet(wb,'schedule');
+      const wsPlan       = sheet(wb,'plan');
+      const wsPlanned    = sheet(wb,'planned');      // (optional override)
+      const wsTestsDaily = sheet(wb,'testsDaily');   // -> progressDaily
+      const wsDefDaily   = sheet(wb,'defectsDaily'); // -> defectsDaily
+      const wsIssues     = sheet(wb,'issues');       // -> issues
+      const wsKeyDates   = sheet(wb,'keyDates');     // -> keyDates
 
-      const rowsOverview  = sheetToObjects(wsOverview);
-      const rowsTests     = sheetToObjects(wsTestsDaily);
-      const rowsDef       = sheetToObjects(wsDefDaily);
-      const rowsIssues    = sheetToObjects(wsIssues);
-      const rowsTeams     = sheetToObjects(wsTeams);
-      const rowsKeyDates  = sheetToObjects(wsKeyDates);
+      const o1 = rows(wsOverview)[0] || {};
+      const scheduleRow = rows(wsSchedule)[0] || {};
+      const planRow = rows(wsPlan)[0] || {};
 
-      // overview (excel)
-      const o = rowsOverview[0] || {};
       const overview = {
-        release:        o.release ?? '',
-        inScope:        toInt(o.inScope ?? 0), // optional; app also takes latest from progressDaily
-        schedule_start: xlToISO(o.schedule_start),
-        schedule_end:   xlToISO(o.schedule_end),
-        business_days:  toInt(o.business_days)
+        release: o1.release ?? '',
+        inScope: toInt(o1.inScope)
       };
 
+      const schedule = {
+        start: xlDate(scheduleRow.start),
+        end:   xlDate(scheduleRow.end),
+        timezone: scheduleRow.timezone || 'Europe/Berlin'
+      };
+
+      const plan = {
+        exec_days:   toInt(planRow.exec_days || 10),
+        pass_days:   toInt(planRow.pass_days || 15),
+        pass_target: toInt(planRow.pass_target || 95)
+      };
+
+      // Planned series: use the "planned" sheet if it exists; otherwise compute from plan
+      let plannedSeries;
+      const plannedRows = rows(wsPlanned);
+      if (plannedRows.length){
+        const labels=[], pe=[], pp=[];
+        plannedRows.forEach((r,i)=>{
+          labels.push(r.label || `Day ${i+1}`);
+          pe.push(toInt(r.planned_executed_pct));
+          pp.push(toInt(r.planned_pass_pct));
+        });
+        plannedSeries = { labels, planned_executed_pct: pe, planned_pass_pct: pp };
+      } else {
+        const biz = bizDayCount(schedule.start, schedule.end);
+        plannedSeries = buildPlannedFromPlan(plan, biz);
+      }
+
       // progressDaily
-      const progressDaily = rowsTests.map(r => ({
-        date: xlToISO(r.date),
-        platform: 'ALL',
-        team: 'ALL',
-        inScope: toInt(r.inScope),
+      const progressDaily = rows(wsTestsDaily).map(r=>({
+        date: xlDate(r.date),
+        inScope: r.inScope!=='' ? toInt(r.inScope) : undefined, // keep first value if present
         executedPct: toInt(r.executedPct),
         passPct: toInt(r.passPct)
       }));
 
       // defectsDaily
-      const defectsDaily = rowsDef.map(r => ({
-        date: xlToISO(r.date),
-        platform: 'ALL',
-        team: 'ALL',
+      const defectsDaily = rows(wsDefDaily).map(r=>({
+        date: xlDate(r.date),
         openDefects: toInt(r.openDefects)
       }));
 
       // issues
-      const issues = rowsIssues.map(r => ({
-        key:       r.key       ?? '',
-        priority:  r.priority  ?? '',
-        summary:   r.summary   ?? '',
-        reporter:  r.reporter  ?? '',
-        team:      r.team      ?? '',
-        platform:  r.platform  ?? '',
-        status:    r.status    ?? '',
-        link:      r.link      ?? ''
+      const issues = rows(wsIssues).map(r=>({
+        key: r.key||'', priority:r.priority||'', summary:r.summary||'',
+        reporter:r.reporter||'', team:r.team||'', platform:r.platform||'',
+        status:r.status||'', link:r.link||''
       }));
 
-      // teams + keyDates
-      const teams = rowsTeams.map(r => ({
-        name:     r.name ?? '',
-        platform: r.platform ?? '',
-        lead:     r.lead ?? '',
-        email:    r.email ?? ''
-      }));
+      // keyDates (supports “dateStart/dateEnd” or single “date” or “dateRange” text)
+      const keyDates = rows(wsKeyDates).map(r=>{
+        let dateStr = '';
+        const ds = xlDate(r.dateStart), de = xlDate(r.dateEnd), d = xlDate(r.date);
+        if (ds && de) dateStr = `${ds} to ${de}`;
+        else if (d)   dateStr = d;
+        else if (r.dateRange) dateStr = String(r.dateRange);
+        return { label:r.label||'', date:dateStr, notes:r.notes||'' };
+      });
 
-      const keyDates = rowsKeyDates.map(r => ({
-        label:     r.label ?? '',
-        date:      xlToISO(r.date),
-        dateRange: r.dateRange ?? '',
-        notes:     r.notes ?? ''
-      }));
-
-      // top-level extras for the dashboard
-      const asOf     = ($asof.value || '').trim();
-      const infoUrl  = ($infoUrl.value || '').trim();
-      const statusUrl= ($statusUrl.value || '').trim();
-      const health = {
-        status: ($healthStatus.value || 'auto'),
-        comment: ($healthComment.value || '')
+      // top header fields
+      const data = {
+        asOf: ($asof.value||'').trim(),
+        infoUrl: ($info.value||'').trim(),
+        statusUrl: ($stUrl.value||'').trim(),
+        overview,
+        health: { status: ($hStat.value||'auto'), comment: ($hCmt.value||'') },
+        schedule,
+        plan,
+        plannedSeries,
+        progressDaily,
+        defectsDaily,
+        issues,
+        keyDates
       };
 
-      const data = { asOf, infoUrl, statusUrl, overview, health, progressDaily, defectsDaily, issues, teams, keyDates };
-
-      // Flatten specific arrays to one-line safely
-      lastRendered = stringifyWithOneLineArrays(
-        data,
-        ['progressDaily','defectsDaily','teams','keyDates']
-      );
-
-      preview.textContent = lastRendered;
+      lastText = stringifyOneLine(data, ['planned_executed_pct','planned_pass_pct','labels','progressDaily','defectsDaily']);
+      preview.textContent = lastText;
       btnJson.disabled = btnBak.disabled = false;
-      status.textContent = 'Parsed ✓';
-    }catch(err){
-      console.error(err);
-      status.textContent = 'Error: ' + (err?.message || err);
+      statusEl.textContent = 'Parsed ✓';
+    }catch(e){
+      console.error(e);
+      statusEl.textContent = 'Error: ' + (e?.message||e);
       preview.textContent = '// (no preview)';
     }
   });
 
-  btnJson.addEventListener('click', ()=>{
-    if (!lastRendered) return;
-    const blob = new Blob([lastRendered], {type:'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'uat.json';
-    a.click();
-    URL.revokeObjectURL(a.href);
+  function stamp(){
+    const d=new Date(), p=n=>n<10?'0'+n:n;
+    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`;
+  }
+
+  $('#dlJson').addEventListener('click', ()=>{
+    if (!lastText) return;
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([lastText],{type:'application/json'}));
+    a.download='uat.json'; a.click(); URL.revokeObjectURL(a.href);
   });
 
-  btnBak.addEventListener('click', ()=>{
-    if (!lastRendered) return;
-    const blob = new Blob([lastRendered], {type:'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `uat-backup_${nowStamp()}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+  $('#dlBackup').addEventListener('click', ()=>{
+    if (!lastText) return;
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([lastText],{type:'application/json'}));
+    a.download=`uat-backup_${stamp()}.json`; a.click(); URL.revokeObjectURL(a.href);
   });
 })();
 </script>
