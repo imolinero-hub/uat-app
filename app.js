@@ -1,4 +1,23 @@
-/* ---------- BizCal (unchanged) ---------- */
+/* =====================================================================
+   UAT Dashboard – app.js (cleaned & organized)
+   Sections:
+     1) BizCal (calendar helpers)
+     2) Alpine component: state & lifecycle
+     3) Theme helpers
+     4) KPI planned/actual helpers & calculations
+     5) Charts
+     6) Countdown widget
+     7) Info modal
+     8) Scroll lock helpers
+     9) Daily Status modal (with RAG injection & fallback)
+    10) Markdown helpers (single, deduplicated mdToHtml) + utilities
+    11) Alpine registration
+   ===================================================================== */
+
+
+/* =====================================================
+ * 1) BizCal (unchanged)
+ * ===================================================== */
 function BizCal(schedule){
   const tz = schedule.timezone || 'Europe/Berlin';
   const holidays = new Set(Array.isArray(schedule.holidays) ? schedule.holidays : []);
@@ -37,7 +56,6 @@ function BizCal(schedule){
   };
 
   const indexFor = (d) => businessDays().filter(x => x <= d).length;
-
   const nextBusinessAfter = (d) => {
     let n = new Date(d.getTime()+86400000);
     while(!isBusiness(n)) n = new Date(n.getTime()+86400000);
@@ -47,20 +65,33 @@ function BizCal(schedule){
   return { businessDays, isBusiness, indexFor, nextBusinessAfter, formatDay:fmtDay, todayTZ, start, end, tz };
 }
 
-/* ---------- Alpine app() (unchanged logic) ---------- */
+
+/* =====================================================
+ * 2) Alpine component: state & lifecycle
+ * ===================================================== */
 function app(){
   return {
+    // ------------- raw data & derived model -------------
     raw:{ overview:{}, progressDaily:[], defectsDaily:[], issues:[], keyDates:[], schedule:{}, plannedSeries:{}, plan:{} },
     kpis:{ inScope:0, executedPct:0, passPct:0, openDefects:0, critical:0 },
     planned:{ exec:0, pass:0 },
     deltas:{ exec:0, pass:0 },
     asOf:'', issues:[],
+
+    // charts
     execChart:null, defectChart:null,
-    aiStatus:'', aiOpen:false,
+
+    // UI state
     theme:'theme-dark',
     countdown:{ title:'UAT Days', label:'—', pct:0, pctShow:false, subtitle:'' },
+
+    // Info modal
     infoOpen:false, infoHtml:'',
 
+    // Daily Status modal
+    dailyOpen:false, dailyHtml:'',
+
+    // ---------------- lifecycle ----------------
     async init(){
       try{
         const res = await fetch('./uat.json?v=' + Date.now(), { cache:'no-store' });
@@ -72,62 +103,18 @@ function app(){
         return;
       }
 
-      this.asOf = this.raw.asOf || this.raw.overview?.lastUpdate || '';
+      this.asOf   = this.raw.asOf || this.raw.overview?.lastUpdate || '';
       this.issues = this.raw.issues || [];
+
       this.computeKpis();
       this.computePlannedToday();
       this.drawCharts();
       this.computeCountdown();
     },
 
-    // Map for labels
-    healthLabel(c){
-      if(c==='rag-green') return 'On Track';
-      if(c==='rag-amber') return 'At Risk';
-      return 'Off Track';
-    },
-    
-    // Auto health rules (you can tweak thresholds here)
-    autoHealthClass(){
-      const k = this.kpis;
-      const execOK = (k.executedPct >= (k.plannedExecutedPct||0));
-      const passOK = (k.passPct     >= (k.plannedPassPct||0));
-      const nearOK = (k.executedPct >= (k.plannedExecutedPct||0) - 5) &&
-                     (k.passPct     >= (k.plannedPassPct||0)     - 5);
-      const blockers = k.critical||0;
-    
-      if (execOK && passOK && blockers <= 2) return 'rag-green';
-      if (nearOK && blockers <= 5)           return 'rag-amber';
-      return 'rag-red';
-    },
-    
-    // Build the badge model for the template
-    get healthBadge(){
-      const h = this.raw.health || { status:'auto' };
-      let klass = 'rag-green', label = 'On Track', tooltip = '';
-    
-      if (h.status && h.status !== 'auto') {
-        // Manual override
-        klass = (h.status==='green') ? 'rag-green' :
-                (h.status==='amber') ? 'rag-amber' : 'rag-red';
-        label = this.healthLabel(klass);
-        const when = (this.asOf ? ` • ${this.asOf}` : '');
-        tooltip = `Set manually${when}${h.comment ? ' • '+h.comment : ''}`;
-      } else {
-        // Automatic
-        klass = this.autoHealthClass();
-        label = this.healthLabel(klass);
-        const k = this.kpis;
-        tooltip = (klass==='rag-green')
-          ? 'Exec & Pass ≥ plan; Blockers ≤ 2'
-          : (klass==='rag-amber')
-            ? 'Within 5pp of plan or Blockers ≤ 5'
-            : 'Lagging plan or higher blocker count';
-      }
-      return { class: klass, label, tooltip };
-    },
-
-  
+    /* =====================================================
+     * 3) Theme helpers
+     * ===================================================== */
     initTheme(){
       const saved = localStorage.getItem('uat-theme');
       this.theme = saved || 'theme-dark';
@@ -139,8 +126,68 @@ function app(){
       localStorage.setItem('uat-theme', this.theme);
     },
 
-    
-    /* ---- Planned vs Actual helpers ---- */
+    /* =====================================================
+     * 4) KPI planned/actual helpers & calculations
+     * ===================================================== */
+
+    // Small helpers for RAG label/emoji (used in Daily Status too)
+    healthEmoji(status){
+      return status==='green' ? '🟢'
+           : status==='amber' ? '🟠'
+           : status==='red'   ? '🔴'
+           : '🟢';
+    },
+    healthLabelClass(status){
+      return status==='green' ? 'rag-green'
+           : status==='amber' ? 'rag-amber'
+           : 'rag-red';
+    },
+    healthText(statusClass){
+      if(statusClass==='rag-green') return 'On Track';
+      if(statusClass==='rag-amber') return 'At Risk';
+      return 'Off Track';
+    },
+
+    // Auto health rules (tweak thresholds as needed)
+    autoHealthClass(){
+      const k = this.kpis;
+      const execOK = (k.executedPct >= (k.plannedExecutedPct||0));
+      const passOK = (k.passPct     >= (k.plannedPassPct||0));
+      const nearOK = (k.executedPct >= (k.plannedExecutedPct||0) - 5) &&
+                     (k.passPct     >= (k.plannedPassPct||0)     - 5);
+      const blockers = k.critical||0;
+
+      if (execOK && passOK && blockers <= 2) return 'rag-green';
+      if (nearOK && blockers <= 5)           return 'rag-amber';
+      return 'rag-red';
+    },
+
+    // Header badge model
+    get healthBadge(){
+      const h = this.raw.health || { status:'auto' };
+      let klass = 'rag-green', label = 'On Track', tooltip = '';
+
+      if (h.status && h.status !== 'auto') {
+        // manual override from JSON
+        klass = this.healthLabelClass(h.status);
+        label = this.healthText(klass);
+        const when = (this.asOf ? ` • ${this.asOf}` : '');
+        tooltip = `Set manually${when}${h.comment ? ' • '+h.comment : ''}`;
+      } else {
+        // automatic
+        klass = this.autoHealthClass();
+        label = this.healthText(klass);
+        const k = this.kpis;
+        tooltip = (klass==='rag-green')
+          ? 'Exec & Pass ≥ plan; Blockers ≤ 2'
+          : (klass==='rag-amber')
+            ? 'Within 5pp of plan or Blockers ≤ 5'
+            : 'Lagging plan or higher blocker count';
+      }
+      return { class: klass, label, tooltip };
+    },
+
+    // Planned targets (used for KPI deltas & chart planned lines)
     plannedExecutedPct(dayIndex){
       const execDays = this.raw.plan?.exec_days ?? 10;
       if (dayIndex <= 0) return 0;
@@ -161,6 +208,7 @@ function app(){
       if (diff >= -5) return 'text-amber-300';
       return 'text-rose-400';
     },
+
     computePlannedToday(){
       // Determine working-day index using BizCal or fallback to progress length
       const cal = BizCal(this.raw.schedule||{});
@@ -174,6 +222,7 @@ function app(){
         const p = this.raw.progressDaily || [];
         idx = p.length ? p.length : 1;
       }
+
       // planned values
       if (this.raw.plannedSeries?.planned_executed_pct?.length){
         const i = Math.min(idx, this.raw.plannedSeries.planned_executed_pct.length) - 1;
@@ -187,21 +236,24 @@ function app(){
       } else {
         this.planned.pass = this.plannedPassPct(idx);
       }
+
       // actuals
       const p = this.raw.progressDaily || [];
       const actualExec = p.length ? (Number(p[p.length-1].executedPct)||0) : 0;
       const actualPass = p.length ? (Number(p[p.length-1].passPct)||0) : 0;
       const plannedExec = Number(this.planned.exec)||0;
       const plannedPass = Number(this.planned.pass)||0;
+
       this.deltas.exec = Math.round(actualExec - plannedExec);
       this.deltas.pass = Math.round(actualPass - plannedPass);
+
       // expose to kpis for bindings
       this.kpis.plannedExecutedPct = plannedExec;
-      this.kpis.plannedPassPct = plannedPass;
-      this.kpis.execDelta = this.deltas.exec;
-      this.kpis.passDelta = this.deltas.pass;
-      this.kpis.execColorClass = this.kpiColorPlan(actualExec, plannedExec);
-      this.kpis.passColorClass = this.kpiColorPlan(actualPass, plannedPass);
+      this.kpis.plannedPassPct     = plannedPass;
+      this.kpis.execDelta          = this.deltas.exec;
+      this.kpis.passDelta          = this.deltas.pass;
+      this.kpis.execColorClass     = this.kpiColorPlan(actualExec, plannedExec);
+      this.kpis.passColorClass     = this.kpiColorPlan(actualPass, plannedPass);
     },
 
     computeKpis(){
@@ -217,37 +269,40 @@ function app(){
         this.kpis.executedPct = 0;
         this.kpis.passPct     = 0;
       }
-    
-      // Defects KPIs
+
+      // Defects KPIs: take latest point; fallback to 0
       const dd = this.raw.defectsDaily || [];
       this.kpis.openDefects = dd.length
         ? Number(dd[dd.length - 1].openDefects ?? 0)
         : 0;
-      
-      // Blocker/Critical: your JSON already contains ONLY open blocker/critical defects
+
+      // Blocker/Critical is simply the number of open issues in JSON
       this.kpis.critical = (this.raw.issues || []).length;
-    
-      // Make sure planned values are numbers (avoid NaN in deltas)
+
+      // Ensure planned values are numbers to avoid NaN in deltas
       this.kpis.plannedExecutedPct = Number(this.kpis.plannedExecutedPct || 0);
       this.kpis.plannedPassPct     = Number(this.kpis.plannedPassPct || 0);
     },
 
+    /* =====================================================
+     * 5) Charts
+     * ===================================================== */
     drawCharts(){
       if(!window.Chart){ console.error('Chart.js not loaded'); return; }
-    
+
       const common = {
         responsive:true, maintainAspectRatio:false, animation:false,
         elements: { line: { borderWidth: 2 }, point: { radius: 3, hitRadius: 6, hoverRadius: 4 } },
         plugins:{ legend:{ position:'bottom', labels:{ color:'#94a3b8', usePointStyle:true } } }
       };
-    
-      // ---------------- Execution Over Time ----------------
+
+      // ----- Execution Over Time -----
       const pd = this.raw.progressDaily || [];
       let labels = pd.map(r => r.date);
       const exec = pd.map(r => +r.executedPct || 0);
       const pass = pd.map(r => +r.passPct || 0);
-    
-      // If there are no actual labels (early/pre-start), synthesize labels so planned lines still render
+
+      // If there are no actual labels (pre-start), synthesize labels so planned lines still render
       if (!labels.length) {
         const cal = BizCal(this.raw.schedule || {});
         const biz = (cal.start && cal.end) ? cal.businessDays() : [];
@@ -263,7 +318,7 @@ function app(){
           labels = Array.from({length:N}, (_,i)=> new Date(t0.getTime()+i*86400000).toISOString().slice(0,10));
         }
       }
-    
+
       // Planned series aligned to labels length
       const n = labels.length;
       const plannedExec = Array.from({length:n}, (_,i)=>{
@@ -280,8 +335,7 @@ function app(){
         }
         return this.plannedPassPct(day);
       });
-    
-      // (Re)draw Execution chart
+
       if (this.execChart) this.execChart.destroy();
       this.execChart = new Chart(document.getElementById('execChart'), {
         type: 'line',
@@ -300,22 +354,17 @@ function app(){
           scales: {
             x: {
               type: 'time',
-              time: {
-                unit: 'day',
-                displayFormats: { day: 'MMM dd' },     // axis shows date only
-                tooltipFormat: 'MMM dd, yyyy'          // tooltip shows date only
-              },
+              time: { unit:'day', displayFormats:{ day:'MMM dd' }, tooltipFormat:'MMM dd, yyyy' },
               grid: { color:'rgba(148,163,184,.2)' }
             },
             y: {
-              beginAtZero: true,
-              max: 100,
-              ticks: { callback: v => v + '%' },
-              grid: { color:'rgba(148,163,184,.2)' }
+              beginAtZero:true, max:100,
+              ticks:{ callback:v=>v+'%' },
+              grid:{ color:'rgba(148,163,184,.2)' }
             }
           },
           plugins: {
-            ...(common.plugins || {}),                 // <- keep legend from common
+            ...(common.plugins || {}),
             tooltip: {
               callbacks: {
                 title: (ctx) => {
@@ -327,16 +376,14 @@ function app(){
           }
         }
       });
-    
-      // ---------------- Defect Burndown ----------------
+
+      // ----- Defect Burndown -----
       const dd = this.raw.defectsDaily || [];
       const labelsD = dd.map(r => r.date);
       const dataDef = dd.map(r => Number(r.openDefects ?? 0));
-    
-      // Optional guard: if no series yet, show a single zero point so the chart area renders nicely
       const labelsD2 = labelsD.length ? labelsD : [this.asOf || ''];
       const dataDef2 = dataDef.length ? dataDef : [0];
-    
+
       if (this.defectChart) this.defectChart.destroy();
       this.defectChart = new Chart(document.getElementById('defectChart'), {
         type:'line',
@@ -349,13 +396,16 @@ function app(){
         options:{
           ...common,
           scales:{
-            x:{ type:'time', time:{ unit:'day', displayFormats: { day: 'MMM dd' }, tooltipFormat: 'MMM dd, yyyy' }, grid:{ color:'rgba(148,163,184,.2)'} },
+            x:{ type:'time', time:{ unit:'day', displayFormats:{ day:'MMM dd' }, tooltipFormat:'MMM dd, yyyy' }, grid:{ color:'rgba(148,163,184,.2)'} },
             y:{ beginAtZero:true, grid:{ color:'rgba(148,163,184,.2)'} }
           }
         }
       });
     },
 
+    /* =====================================================
+     * 6) Countdown widget
+     * ===================================================== */
     computeCountdown(){
       const sch = this.raw.schedule || {};
       const cal = BizCal(sch);
@@ -420,10 +470,13 @@ function app(){
       };
     },
 
+    /* =====================================================
+     * 7) Info modal
+     * ===================================================== */
     async openInfo(){
       this.infoOpen = true;
       this.infoHtml = '<p class="text-slate-400">Loading…</p>';
-      this.lockScroll(); // << prevent background scroll without jumping
+      this.lockScroll();
       const url = this.raw.infoUrl || './about-uat.md';
       try{
         const res = await fetch(url, { cache:'no-store' });
@@ -436,11 +489,12 @@ function app(){
     },
     closeInfo(){
       this.infoOpen = false;
-      this.unlockScroll(); // << restore exact scroll position
+      this.unlockScroll();
     },
 
-    
-    // --- Scroll lock helpers (no layout jump) ---
+    /* =====================================================
+     * 8) Scroll lock helpers
+     * ===================================================== */
     lockScroll(){
       this._scrollY = window.scrollY || window.pageYOffset || 0;
       const b = document.body;
@@ -461,27 +515,32 @@ function app(){
       window.scrollTo(0, y);
     },
 
-    // ---- Daily Status modal state ----
-    dailyOpen: false,
-    dailyHtml: '',
-    
-    // Open Daily Status: fetch external MD (fallback to generated text)
+    /* =====================================================
+     * 9) Daily Status modal (RAG injection + fallback)
+     * ===================================================== */
     async openDaily(){
       this.dailyOpen = true;
       this.dailyHtml = '<p class="text-slate-400">Loading…</p>';
-      this.lockScroll();    // reuse the helpers you added for Info
-    
+      this.lockScroll();
+
       const url = this.raw.statusUrl || './daily-status.md';
+
+      // Compose a small RAG header line we can prepend to the MD
+      const h  = this.raw.health || {};
+      const ragLine = `**Overall Status:** ${this.healthEmoji(h.status)} ${this.healthText(this.healthLabelClass(h.status||'green'))}` +
+                      (h.comment ? ` — ${h.comment}` : '');
+
       try{
         const res = await fetch(url, { cache: 'no-store' });
         if (res.ok) {
           const md = await res.text();
-          this.dailyHtml = this.mdToHtml(md);
+          const mdWithRag = `${ragLine}\n\n${md}`;
+          this.dailyHtml = this.mdToHtml(mdWithRag);
         } else {
-          this.dailyHtml = this.mdToHtml(this.buildDailyFallback());
+          this.dailyHtml = this.mdToHtml(this.buildDailyFallback(ragLine));
         }
       }catch{
-        this.dailyHtml = this.mdToHtml(this.buildDailyFallback());
+        this.dailyHtml = this.mdToHtml(this.buildDailyFallback(ragLine));
       }
       requestAnimationFrame(()=> this.$refs?.dailyDialog?.focus());
     },
@@ -489,27 +548,39 @@ function app(){
       this.dailyOpen = false;
       this.unlockScroll();
     },
-    
-    // Optional: fallback generator if the MD is missing
-    buildDailyFallback(){
+
+    // Fallback daily if external MD is missing
+    buildDailyFallback(ragLine=''){
       const k = this.kpis;
+      const dateLine = this.asOf ? `**Date:** ${this.asOf}` : '';
       const lines = [
-        `# Daily Status – ${plat}`,
-        ``,
-        `**Execution**`,
-        `- Executed: ${this.fmtPct(k.executedPct)} (plan ${this.fmtPct(this.kpis.plannedExecutedPct||0)}; Δ ${k.execDelta>0?'+':''}${k.execDelta}pp)`,
-        `- Pass rate: ${this.fmtPct(k.passPct)} (plan ${this.fmtPct(this.kpis.plannedPassPct||0)}; Δ ${k.passDelta>0?'+':''}${k.passDelta}pp)`,
-        ``,
-        `**Defects**`,
-        `- Open: ${k.openDefects} · Blocker/Critical: ${k.critical}`,
-        ``,
-        `**Notes**`,
-        `- Key dates on track.`,
+        `# UAT Daily Status — ${this.raw.overview?.release || ''}`,
+        dateLine,
+        '',
+        ragLine || '',
+        '',
+        '### Key Highlights',
+        '- Execution is progressing on **plan**.',
+        '- Defects remain manageable; blockers are **under control**.',
+        `- No risks impacting the **Go/No-Go decision** today.`,
+        '',
+        '### Status Summary',
+        `- **Executed:** ${this.fmtPct(k.executedPct)} (Planned: ${this.fmtPct(this.kpis.plannedExecutedPct||0)} · Δ ${k.execDelta>0?'+':''}${k.execDelta}pp)`,
+        `- **Pass rate:** ${this.fmtPct(k.passPct)} (Planned: ${this.fmtPct(this.kpis.plannedPassPct||0)} · Δ ${k.passDelta>0?'+':''}${k.passDelta}pp)`,
+        `- **Open defects:** ${k.openDefects}`,
+        `- **Blocker/Critical:** ${k.critical}`,
+        '',
+        '### Defect Overview',
+        `- Trend: ${this.trendText('defects')==='down' ? 'Improving' : this.trendText('defects')==='up' ? 'Worsening' : 'Stable'} compared to yesterday.`,
+        '',
+        '### Next Steps',
+        '- Continue retesting open defects.',
+        '- Maintain focus on **high-severity** defect resolution.'
       ];
       return lines.join('\n');
     },
-    
-    // Utilities to copy/download the rendered status
+
+    // Utilities for Daily Status
     copyDaily(){ if(this.dailyHtml){ navigator.clipboard.writeText(this.htmlToText(this.dailyHtml)); } },
     downloadDaily(){
       const text = this.dailyHtml ? this.htmlToText(this.dailyHtml) : '';
@@ -520,6 +591,91 @@ function app(){
       a.click(); URL.revokeObjectURL(a.href);
     },
 
+    /* =====================================================
+     * 10) Markdown helpers (single version) + utilities
+     * ===================================================== */
+
+    // Markdown -> HTML (headings #/##/###, lists -,*,•, paragraphs, bold/italic)
+    mdToHtml(md){
+      if (!md || typeof md !== "string") return "";
+      md = md.replace(/\r\n?/g, "\n").replace(/\\([&*_])/g, "$1").trim();
+
+      const esc = (s) =>
+        s.replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#39;");
+
+      const formatInline = (text) => {
+        let t = esc(text);
+        t = t.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+        t = t.replace(/(^|[^*])\*(.+?)\*(?!\*)/g, (m, p1, g1) => p1 + "<em>" + g1 + "</em>");
+        return t;
+      };
+
+      const lines = md.split("\n");
+      let i = 0, html = "", inList = false;
+
+      const flushList = () => { if (inList) { html += "</ul>"; inList = false; } };
+
+      const collectList = () => {
+        if (!inList) { html += '<ul class="list-disc pl-5 space-y-1">'; inList = true; }
+        while (i < lines.length) {
+          const m = lines[i].match(/^\s*[-*•]\s+(.+)$/);
+          if (!m) break;
+          html += `<li>${formatInline(m[1])}</li>`;
+          i++;
+        }
+      };
+
+      const collectParagraph = (firstLine) => {
+        const block = [firstLine]; i++;
+        while (i < lines.length) {
+          const l = lines[i];
+          if (/^\s*$/.test(l)) break;
+          if (/^\s*(#{1,3})\s+/.test(l)) break;
+          if (/^\s*[-*•]\s+/.test(l)) break;
+          if (/^\s*---\s*$/.test(l)) break;
+          block.push(l); i++;
+        }
+        const joined = block.map(formatInline).join("<br>");
+        html += `<p>${joined}</p>`;
+      };
+
+      const peekFirstNonEmpty = () => {
+        for (const l of lines) if (l.trim()) return l.trim();
+        return "";
+      };
+      const firstLine = peekFirstNonEmpty();
+      let autoTitleUsed = false;
+
+      while (i < lines.length) {
+        const line = lines[i];
+
+        if (/^\s*$/.test(line)) { flushList(); i++; continue; }            // blank
+        if (/^\s*---\s*$/.test(line)) { flushList(); html += "<hr>"; i++; continue; } // rule
+
+        const h = line.match(/^\s*(#{1,3})\s+(.+)$/); // heading #..###
+        if (h) { flushList(); const level = h[1].length; html += `<h${level}>${formatInline(h[2].trim())}</h${level}>`; i++; continue; }
+
+        if (/^\s*[-*•]\s+/.test(line)) { collectList(); flushList(); continue; } // list
+
+        // auto title for first non-empty line
+        if (!autoTitleUsed && line.trim() === firstLine && line.length <= 120) {
+          flushList(); html += `<h2>${formatInline(line.trim())}</h2>`; autoTitleUsed = true; i++; continue;
+        }
+
+        collectParagraph(line);
+      }
+      flushList();
+      html = html.replace(/<p>\s*<\/p>/g, "");
+      return html;
+    },
+
+    htmlToText(html){ const tmp=document.createElement('div'); tmp.innerHTML=html; return tmp.innerText; },
+
+    // display helpers
     fmtPct(v){ return (v??0).toFixed(0)+'%'; },
     kpiColor(v){ return v>=90 ? 'text-emerald-400' : (v>=70 ? 'text-amber-300' : 'text-rose-400'); },
     sevDot(p){ const c = p==='Blocker' ? '#fb7185' : p==='Critical' ? '#fca5a5' : '#f59e0b'; return `background:${c}`; },
@@ -538,126 +694,11 @@ function app(){
         }
       }catch{ return '—'; }
     },
-    mdToHtml(md){
-      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#39;');
-      return esc(md)
-        .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-        .replace(/^• /gm,'<li>')
-        .replace(/\n{2,}/g,'\n\n')
-        .split('\n\n').map(block=>{
-          if(block.startsWith('<li>')) return `<ul class="list-disc pl-5 space-y-1">${block.replace(/<li>/g,'<li class="marker:text-slate-400">')}</ul>`;
-          return `<p>${block.replace(/\n/g,'<br>')}</p>`;
-        }).join('');
-    },
-
-    mdToHtml(md){
-      // --- lightweight Markdown -> HTML (headings, lists, paragraphs, inline bold/italic) ---
-      if (!md || typeof md !== "string") return "";
-    
-      // Normalize & unescape harmless backslash-escapes like "\&" or "\*"
-      md = md.replace(/\r\n?/g, "\n").replace(/\\([&*_])/g, "$1").trim();
-    
-      const esc = (s) =>
-        s.replace(/&/g, "&amp;")
-         .replace(/</g, "&lt;")
-         .replace(/>/g, "&gt;")
-         .replace(/"/g, "&quot;")
-         .replace(/'/g, "&#39;");
-    
-      // Inline emphasis (run AFTER escaping)
-      const formatInline = (text) => {
-        let t = esc(text);
-        t = t.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-        t = t.replace(/(^|[^*])\*(.+?)\*(?!\*)/g, (m, p1, g1) => p1 + "<em>" + g1 + "</em>");
-        return t;
-      };
-    
-      const lines = md.split("\n");
-      let i = 0, html = "", inList = false;
-    
-      const flushList = () => { if (inList) { html += "</ul>"; inList = false; } };
-    
-      // Helper: collect consecutive list items (supports "-", "*", "•")
-      const collectList = () => {
-        if (!inList) { html += '<ul class="list-disc pl-5 space-y-1">'; inList = true; }
-        while (i < lines.length) {
-          const m = lines[i].match(/^\s*[-*•]\s+(.+)$/);
-          if (!m) break;
-          html += `<li>${formatInline(m[1])}</li>`;
-          i++;
-        }
-      };
-    
-      // Helper: paragraph block (preserve single line-breaks with <br>)
-      const collectParagraph = (firstLine) => {
-        const block = [firstLine];
-        i++;
-        while (i < lines.length) {
-          const l = lines[i];
-          if (/^\s*$/.test(l)) break;
-          if (/^\s*(#{1,3})\s+/.test(l)) break;
-          if (/^\s*[-*•]\s+/.test(l)) break;
-          if (/^\s*---\s*$/.test(l)) break;
-          block.push(l);
-          i++;
-        }
-        const joined = block.map(formatInline).join("<br>");
-        html += `<p>${joined}</p>`;
-      };
-    
-      // Detect if the very first non-empty line should be auto-promoted to a title (H2)
-      const peekFirstNonEmpty = () => {
-        for (const l of lines) {
-          if (l.trim()) return l.trim();
-        }
-        return "";
-      };
-      const firstLine = peekFirstNonEmpty();
-      let autoTitleUsed = false;
-    
-      while (i < lines.length) {
-        const line = lines[i];
-    
-        // blank line
-        if (/^\s*$/.test(line)) { flushList(); i++; continue; }
-    
-        // horizontal rule
-        if (/^\s*---\s*$/.test(line)) { flushList(); html += "<hr>"; i++; continue; }
-    
-        // headings #, ##, ###
-        const h = line.match(/^\s*(#{1,3})\s+(.+)$/);
-        if (h) {
-          flushList();
-          const level = h[1].length;
-          html += `<h${level}>${formatInline(h[2].trim())}</h${level}>`;
-          i++; continue;
-        }
-    
-        // list
-        if (/^\s*[-*•]\s+/.test(line)) { collectList(); flushList(); continue; }
-    
-        // auto-title (first non-empty line, short-ish, not already started with bullets/markers)
-        if (!autoTitleUsed && line.trim() === firstLine && line.length <= 120) {
-          flushList();
-          html += `<h2>${formatInline(line.trim())}</h2>`;
-          autoTitleUsed = true;
-          i++; continue;
-        }
-    
-        // paragraph
-        collectParagraph(line);
-      }
-      flushList();
-    
-      // Compact empty paragraphs if any
-      html = html.replace(/<p>\s*<\/p>/g, "");
-    
-      return html;
-    },
-    
-    htmlToText(html){ const tmp=document.createElement('div'); tmp.innerHTML=html; return tmp.innerText; }
   }
 }
 
-/* Alpine registration */
+
+/* =====================================================
+ * 11) Alpine registration
+ * ===================================================== */
 document.addEventListener('alpine:init',()=>{ Alpine.data('app', app) });
