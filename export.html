@@ -13,6 +13,8 @@
     .card{background:var(--panel);border-radius:10px;padding:16px;margin:12px 0}
     .row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
     input[type=file]{color:var(--text)}
+    input[type=text], select { background:#07121a; color:var(--text); border:1px solid #15314b; border-radius:8px; padding:8px 10px; min-width:240px; }
+    label{display:inline-flex; align-items:center; gap:8px}
     pre{white-space:pre-wrap;background:#07121a;border-radius:10px;padding:16px;overflow:auto}
     button{border:0;border-radius:8px;padding:10px 14px;color:#001a2c;background:linear-gradient(135deg,#6dd5fa,#2980b9);cursor:pointer}
     button[disabled]{opacity:.5;cursor:not-allowed}
@@ -31,6 +33,33 @@
       <div class="row">
         <input id="file" type="file" accept=".xlsx" />
         <span id="status" class="muted"></span>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <label>As of:
+          <input id="asof" type="text" placeholder="YYYY-MM-DD HH:mm" />
+        </label>
+        <label>Info URL:
+          <input id="infoUrl" type="text" placeholder="./about-uat.md" />
+        </label>
+        <label>Daily Status URL:
+          <input id="statusUrl" type="text" placeholder="./daily-status.md" />
+        </label>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <label>Health:
+          <select id="healthStatus">
+            <option value="auto">auto (let app decide)</option>
+            <option value="green">green (On Track)</option>
+            <option value="amber">amber (At Risk)</option>
+            <option value="red">red (Off Track)</option>
+          </select>
+        </label>
+        <label>Comment:
+          <input id="healthComment" type="text" placeholder="optional short note for non-green" />
+        </label>
+      </div>
+      <div class="small muted" style="margin-top:6px">
+        Tip: leave Health on <code>auto</code> for the dashboard to compute RAG using KPI vs plan and blockers.
       </div>
     </div>
 
@@ -58,6 +87,20 @@
   const preview = $('#preview');
   const btnJson = $('#dlJson');
   const btnBak  = $('#dlBackup');
+
+  const $asof = $('#asof');
+  const $infoUrl = $('#infoUrl');
+  const $statusUrl = $('#statusUrl');
+  const $healthStatus = $('#healthStatus');
+  const $healthComment = $('#healthComment');
+
+  // default "as of" = now(YYYY-MM-DD HH:mm)
+  (function seedAsOf(){
+    const d=new Date(); const pad=n=>n<10?'0'+n:n;
+    $asof.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  })();
+  $infoUrl.value = './about-uat.md';
+  $statusUrl.value = './daily-status.md';
 
   let lastRendered = '';  // what you see is what you download
 
@@ -94,31 +137,25 @@
     return Number.isFinite(n) ? n : 0;
   }
 
-  // --- robust one-line array formatter (no regex on JSON) -------------------
+  // --- robust formatter (preserve arrays on one line) -----------------------
   function stringifyWithOneLineArrays(obj, keysOneLine){
     const targets = new Set(keysOneLine);
     const tokens = []; // {t, s}
     let tokenIdx = 0;
+    const toOneLine = (arr) => '[ ' + arr.map(e => JSON.stringify(e)).join(', ') + ' ]';
 
-    function toOneLine(arr){
-      return '[ ' + arr.map(e => JSON.stringify(e)).join(', ') + ' ]';
-    }
-
-    // replacer: turn targeted arrays into unique tokens
     const json = JSON.stringify(obj, function (key, value){
       if (Array.isArray(value) && targets.has(key)) {
         const token = `__ONELINE__${tokenIdx++}__`;
         tokens.push({ t: token, s: toOneLine(value) });
-        return token; // temporarily emit a string token
+        return token;
       }
       return value;
     }, 2);
 
-    // Replace quoted tokens with the stored one-liners
     let out = json;
     for (const {t, s} of tokens){
-      const re = new RegExp(`"${t}"`, 'g');
-      out = out.replace(re, s);
+      out = out.replace(new RegExp(`"${t}"`, 'g'), s);
     }
     return out;
   }
@@ -157,11 +194,11 @@
       const rowsTeams     = sheetToObjects(wsTeams);
       const rowsKeyDates  = sheetToObjects(wsKeyDates);
 
-      // overview
+      // overview (excel)
       const o = rowsOverview[0] || {};
       const overview = {
         release:        o.release ?? '',
-        lastUpdate:     (o.lastUpdate ?? '').toString(),
+        inScope:        toInt(o.inScope ?? 0), // optional; app also takes latest from progressDaily
         schedule_start: xlToISO(o.schedule_start),
         schedule_end:   xlToISO(o.schedule_end),
         business_days:  toInt(o.business_days)
@@ -177,7 +214,7 @@
         passPct: toInt(r.passPct)
       }));
 
-      // defectsDaily (lowercase key is enforced later when assembling)
+      // defectsDaily
       const defectsDaily = rowsDef.map(r => ({
         date: xlToISO(r.date),
         platform: 'ALL',
@@ -185,7 +222,7 @@
         openDefects: toInt(r.openDefects)
       }));
 
-      // issues (pretty multiline)
+      // issues
       const issues = rowsIssues.map(r => ({
         key:       r.key       ?? '',
         priority:  r.priority  ?? '',
@@ -197,7 +234,7 @@
         link:      r.link      ?? ''
       }));
 
-      // teams + keyDates (flatten to one line later)
+      // teams + keyDates
       const teams = rowsTeams.map(r => ({
         name:     r.name ?? '',
         platform: r.platform ?? '',
@@ -212,7 +249,16 @@
         notes:     r.notes ?? ''
       }));
 
-      const data = { overview, progressDaily, defectsDaily, issues, teams, keyDates };
+      // top-level extras for the dashboard
+      const asOf     = ($asof.value || '').trim();
+      const infoUrl  = ($infoUrl.value || '').trim();
+      const statusUrl= ($statusUrl.value || '').trim();
+      const health = {
+        status: ($healthStatus.value || 'auto'),
+        comment: ($healthComment.value || '')
+      };
+
+      const data = { asOf, infoUrl, statusUrl, overview, health, progressDaily, defectsDaily, issues, teams, keyDates };
 
       // Flatten specific arrays to one-line safely
       lastRendered = stringifyWithOneLineArrays(
