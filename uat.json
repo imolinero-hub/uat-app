@@ -1,10 +1,5 @@
 {
   "asOf": "2025-09-22 17:38",
-  "infoUrl": "./about-uat.md",
-  "statusUrl": "./daily-status.md",
-  "overview": {
-    "release": "RI-4"
-  },
   "health": {
     "status": "amber",
     "comment": "too many open defects"
@@ -23,36 +18,5 @@
       "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-22058"
     }
   ],
-  "keyDates": [
-    {
-      "label": "Kick-off",
-      "date": "2025-10-10",
-      "dateRange": "",
-      "notes": "All testers are onboarded"
-    },
-    {
-      "label": "UAT period",
-      "date": "",
-      "dateRange": "2025-10-13 to 2025-11-06",
-      "notes": "Testing period for the UAT"
-    },
-    {
-      "label": "Alpha Demo",
-      "date": "",
-      "dateRange": "2025-11-04 to 2025-11-05",
-      "notes": "First testing with the ABOs"
-    },
-    {
-      "label": "Go / No-Go",
-      "date": "2025-12-08",
-      "dateRange": "",
-      "notes": "Final leadership decision"
-    },
-    {
-      "label": "Go Live",
-      "date": "2025-12-10",
-      "dateRange": "",
-      "notes": "Go Live of the RI-4"
-    }
   ]
 }
