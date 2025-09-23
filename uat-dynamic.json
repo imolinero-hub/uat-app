@@ -1,7 +1,7 @@
-
+{
   "asOf": "2025-09-19 17:05", 
   "health": {
-    "status": "auto", 
+    "status": "red", 
     "comment": "Too many open defects"
   },
 
@@ -84,6 +84,7 @@
     }
   ]
 }
+
 
 
 
