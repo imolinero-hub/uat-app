@@ -1,247 +1,254 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<title>UAT JSON Export (verbatim plan/planned)</title>
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<style>
-  :root { --bg:#0b1620; --panel:#0f2233; --text:#d9e7ff; --muted:#8fb3d9; }
-  html,body{height:100%}
-  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial}
-  h1{font-size:22px;margin:20px 0 10px}
-  .wrap{max-width:1200px;margin:0 auto;padding:18px}
-  .card{background:#0f2233;border-radius:10px;padding:16px;margin:12px 0}
-  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-  label{display:inline-flex;align-items:center;gap:8px}
-  input,select{background:#07121a;color:var(--text);border:1px solid #15314b;border-radius:8px;padding:8px 10px}
-  input[type=file]{padding:6px}
-  pre{white-space:pre-wrap;background:#07121a;border-radius:10px;padding:14px;overflow:auto;max-height:50vh}
-  button{border:0;border-radius:8px;padding:10px 14px;color:#001a2c;background:linear-gradient(135deg,#6dd5fa,#2980b9);cursor:pointer}
-  button[disabled]{opacity:.5;cursor:not-allowed}
-  .muted{color:var(--muted)}
-  .small{font-size:12px}
-</style>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>UAT JSON Export (Dynamic Only)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#0b1220; --panel:#121a2b; --muted:#a3b1c6; --muted2:#7f8aa3; --fg:#e6edf7;
+      --primary:#3b82f6; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --chip:#1f2937;
+      --code:#0f172a;
+    }
+    * { box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:linear-gradient(160deg,#0b1220 0%, #111a2d 50%, #0b1220 100%);
+      color:var(--fg); line-height:1.45;
+    }
+    .wrap{ max-width:1100px; margin:auto; padding:24px 16px 80px; }
+    h1{ font-size:22px; margin:0 0 16px; }
+    h2{ font-size:16px; margin:24px 0 8px; color:var(--muted); font-weight:600; }
+    .panel{ background:var(--panel); border:1px solid rgba(255,255,255,.06);
+            border-radius:12px; padding:16px; margin-bottom:16px; }
+    .grid{ display:grid; grid-template-columns: repeat(12, 1fr); gap:12px; }
+    .col-3{ grid-column: span 3; } .col-4{ grid-column: span 4; }
+    .col-6{ grid-column: span 6; } .col-8{ grid-column: span 8; } .col-12{ grid-column: span 12; }
+    label{ font-size:12px; color:var(--muted2); display:block; margin-bottom:6px;}
+    input[type=text], select{
+      width:100%; background:#0e1626; border:1px solid rgba(255,255,255,.08);
+      color:var(--fg); border-radius:10px; padding:10px 12px; outline:none;
+    }
+    input[type=file]{ color:var(--muted); }
+    .hint{ color:var(--muted2); font-size:12px; }
+    .btn{
+      appearance:none; border:none; background:linear-gradient(135deg,#4f46e5 0%,#06b6d4 100%);
+      color:white; padding:10px 14px; border-radius:10px; font-weight:600; cursor:pointer;
+    }
+    .btn:disabled{ opacity:.5; cursor:not-allowed; }
+    .tag{ background:var(--chip); color:var(--muted); font-size:12px; padding:4px 8px; border-radius:999px; }
+    pre{
+      background:var(--code); color:#e6edf7; border:1px solid rgba(255,255,255,.06);
+      border-radius:12px; padding:14px; overflow:auto; max-height:420px; margin:0;
+    }
+    .pill{ padding:.25rem .5rem; border-radius:999px; font-size:12px; display:inline-flex; gap:.35rem; align-items:center; }
+    .ok{ background: rgba(34,197,94,.12); color:#86efac; }
+    .warn{ background: rgba(245,158,11,.12); color:#facc15; }
+    .bad{ background: rgba(239,68,68,.12); color:#fca5a5; }
+    .row{ display:flex; gap:10px; align-items:center; justify-content:space-between; }
+    .muted{ color:var(--muted); }
+    .mono{ font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace; }
+    .sep{ height:1px; background:rgba(255,255,255,.06); margin:10px 0; }
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>UAT JSON Export</h1>
+  <div class="wrap">
+    <h1>UAT JSON Export <span class="tag">Dynamic only</span></h1>
 
-  <div class="card">
-    <h3>1) Workbook & Header</h3>
-    <div class="row">
-      <input id="file" type="file" accept=".xlsx" />
-      <span id="status" class="muted"></span>
+    <div class="panel">
+      <h2>1) Workbook & header</h2>
+      <div class="grid">
+        <div class="col-6">
+          <label>Choose workbook (.xlsx)</label>
+          <input id="file" type="file" accept=".xlsx,.xlsb,.xlsm,.xls"/>
+          <div class="hint">Sheets expected: <code class="mono">progressDaily</code>, <code class="mono">defectsDaily</code>, <code class="mono">issues</code></div>
+        </div>
+        <div class="col-3">
+          <label>As of</label>
+          <input id="asof" type="text" placeholder="2025-09-22 17:00"/>
+        </div>
+        <div class="col-3">
+          <label>Health</label>
+          <select id="health">
+            <option value="auto">auto (let app compute)</option>
+            <option value="green">green</option>
+            <option value="amber">amber</option>
+            <option value="red">red</option>
+          </select>
+        </div>
+
+        <div class="col-6">
+          <label>Info URL</label>
+          <input id="infourl" type="text" value="./about-uat.md"/>
+        </div>
+        <div class="col-6">
+          <label>Daily Status URL</label>
+          <input id="statusurl" type="text" value="./daily-status.md"/>
+        </div>
+
+        <div class="col-12">
+          <label>Comment (optional, shows when health ≠ auto/green)</label>
+          <input id="comment" type="text" placeholder="e.g., too many open defects"/>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <div class="row">
+        <div class="muted">
+          Sheets used: <span class="mono" id="sheets">–</span>
+        </div>
+        <div>
+          <button class="btn" id="btnDynamic" disabled>Download <span class="mono">uat-dynamic.json</span></button>
+        </div>
+      </div>
     </div>
-    <div class="row" style="margin-top:10px">
-      <label>As of:
-        <input id="asof" type="text" placeholder="YYYY-MM-DD HH:mm">
-      </label>
-      <label>Info URL:
-        <input id="infoUrl" type="text" placeholder="./about-uat.md" value="./about-uat.md">
-      </label>
-      <label>Daily Status URL:
-        <input id="statusUrl" type="text" placeholder="./daily-status.md" value="./daily-status.md">
-      </label>
+
+    <div class="panel">
+      <h2>2) Preview</h2>
+      <pre id="preview">// load a workbook to see the JSON here</pre>
     </div>
-    <div class="row" style="margin-top:10px">
-      <label>Health:
-        <select id="healthStatus">
-          <option value="auto">auto (let app compute)</option>
-          <option value="green">green (On Track)</option>
-          <option value="amber">amber (At Risk)</option>
-          <option value="red">red (Off Track)</option>
-        </select>
-      </label>
-      <label>Comment:
-        <input id="healthComment" type="text" placeholder="optional note for non-green">
-      </label>
-    </div>
-    <div class="small muted" style="margin-top:6px">
-      Sheets used: <code>overview</code> (release), <code>plan</code>, <code>planned</code>, <code>testDaily</code>, <code>defectsDaily</code>, <code>issues</code>, <code>keyDates</code>.
-      Plan & planned are copied verbatim (no auto generation).
+
+    <div class="panel">
+      <h2>Sheet formats</h2>
+      <div class="grid">
+        <div class="col-4">
+          <div class="pill ok">progressDaily</div>
+          <div class="hint" style="margin-top:6px">
+            Columns: <code class="mono">date</code>, <code class="mono">inScope</code>, <code class="mono">executedPct</code>, <code class="mono">passPct</code><br/>
+            <small>Dates: Excel date or <code class="mono">YYYY-MM-DD</code>. Percents 0–100.</small>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="pill warn">defectsDaily</div>
+          <div class="hint" style="margin-top:6px">
+            Columns: <code class="mono">date</code>, <code class="mono">openDefects</code>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="pill bad">issues</div>
+          <div class="hint" style="margin-top:6px">
+            Columns: <code class="mono">key</code>, <code class="mono">priority</code>, <code class="mono">summary</code>, <code class="mono">reporter</code>, <code class="mono">team</code>, <code class="mono">platform</code>, <code class="mono">status</code>, <code class="mono">link</code>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="card">
-    <h3>2) Preview</h3>
-    <pre id="preview">// (no preview)</pre>
-  </div>
+  <!-- SheetJS -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
 
-  <div class="card">
-    <h3>3) Export</h3>
-    <div class="row">
-      <button id="dlJson" disabled>Download uat.json</button>
-      <button id="dlBackup" disabled>Download backup</button>
-    </div>
-  </div>
-</div>
-
-<script>
-(function(){
-  // -------- DOM --------
-  const $ = s => document.querySelector(s);
-  const statusEl = $('#status'), preview = $('#preview');
-  const btnJson = $('#dlJson'), btnBak = $('#dlBackup');
-  const $asof = $('#asof'), $info = $('#infoUrl'), $stUrl = $('#statusUrl'), $hStat = $('#healthStatus'), $hCmt = $('#healthComment');
-
-  // seed asOf to now
-  (function(){
-    const d=new Date(); const pad=n=>n<10?'0'+n:n;
-    $asof.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  })();
-
-  let lastText = '';
-
-  // -------- helpers --------
-  const epoch = Date.UTC(1899,11,30);
-  const xlDate = v => {
-    if (v==null || v==='') return '';
-    if (v instanceof Date) return v.toISOString().slice(0,10);
-    if (typeof v==='number') return new Date(epoch + Math.round(v*86400000)).toISOString().slice(0,10);
-    const s = String(v); const m=s.match(/^(\d{4}-\d{2}-\d{2})/); return m?m[1]:s;
-  };
-  const sheet = (wb, name)=>{
-    if (wb.Sheets[name]) return wb.Sheets[name];
-    const lower=name.toLowerCase();
-    for (const n of wb.SheetNames) if (n.toLowerCase()===lower) return wb.Sheets[n];
-    return null;
-  };
-  const rows = ws => ws ? XLSX.utils.sheet_to_json(ws,{defval:'',raw:true}) : [];
-  const toInt = v => Number.isFinite(+v) ? parseInt(v,10) : 0;
-
-  // keep big arrays on a single line
-  function stringifyOneLine(obj, keys){
-    const keep = new Set(keys); const tokens=[]; let i=0;
-    const json = JSON.stringify(obj,function(k,v){
-      if (Array.isArray(v) && keep.has(k)){
-        const t = `__ONELINE__${i++}__`; tokens.push([t,'[ '+v.map(x=>JSON.stringify(x)).join(', ')+' ]']); return t;
+  <script>
+    // ---------- helpers ----------
+    const toISO = (v) => {
+      if (v === undefined || v === null || v === '') return '';
+      if (typeof v === 'number') {
+        // Excel serial date -> UTC ISO
+        const epoch = new Date(Date.UTC(1899, 11, 30));
+        const d = new Date(epoch.getTime() + v * 86400000);
+        return d.toISOString().slice(0,10);
       }
-      return v;
-    },2);
-    return tokens.reduce((acc,[t,s])=>acc.replace(new RegExp(`"${t}"`,'g'), s), json);
-  }
-  function stamp(){
-    const d=new Date(), p=n=>n<10?'0'+n:n;
-    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`;
-  }
+      // allow dd/mm/yyyy etc; rely on Date parsing then normalize
+      const d = new Date(v);
+      return isNaN(d) ? String(v) : d.toISOString().slice(0,10);
+    };
+    const num = (v) => (v === '' || v == null ? undefined : Number(v));
+    const rows = (wb, name) => {
+      const ws = wb.Sheets[name];
+      if (!ws) return [];
+      return XLSX.utils.sheet_to_json(ws, { defval: '', raw: true });
+    };
 
-  // -------- main --------
-  $('#file').addEventListener('change', async (ev)=>{
-    btnJson.disabled = btnBak.disabled = true;
-    preview.textContent = '// (no preview)'; statusEl.textContent = '';
+    // ---------- build dynamic ----------
+    function buildDynamic(wb, ui){
+      const progressDaily = rows(wb, 'progressDaily').map(r => ({
+        date: toISO(r.date || ''),
+        inScope:     num(r.inScope)     ?? 0,
+        executedPct: num(r.executedPct) ?? 0,
+        passPct:     num(r.passPct)     ?? 0
+      })).filter(r => r.date);
 
-    const f = ev.target.files?.[0]; if (!f) return;
+      const defectsDaily = rows(wb, 'defectsDaily').map(r => ({
+        date: toISO(r.date || ''),
+        openDefects: num(r.openDefects) ?? 0
+      })).filter(r => r.date);
 
-    try{
-      const buf = await f.arrayBuffer();
-      const wb  = XLSX.read(buf, {type:'array', cellDates:false});
+      const issues = rows(wb, 'issues').map(r => ({
+        key:       String(r.key || ''),
+        priority:  String(r.priority || ''),
+        summary:   String(r.summary || ''),
+        reporter:  String(r.reporter || ''),
+        team:      String(r.team || ''),    // may be empty
+        platform:  String(r.platform || ''),
+        status:    String(r.status || ''),
+        link:      String(r.link || '')
+      })).filter(r => r.key);
 
-      // Sheets (case-insensitive)
-      const wsOverview   = sheet(wb,'overview');    // release only
-      const wsPlan       = sheet(wb,'plan');        // exec_days, pass_days, pass_target
-      const wsPlanned    = sheet(wb,'planned');     // label, planned_executed_pct, planned_pass_pct
-      const wsTests      = sheet(wb,'testDaily');   // date, inScope, executedPct, passPct
-      const wsDefects    = sheet(wb,'defectsDaily');// date, openDefects
-      const wsIssues     = sheet(wb,'issues');      // open Blocker/Critical rows
-      const wsKeyDates   = sheet(wb,'keyDates');    // label, date, dateRange, notes
-
-      // overview: only release comes from sheet; inScope is dynamic per day
-      const o = rows(wsOverview)[0] || {};
-      const overview = { release: o.release ?? '' };
-
-      // plan: verbatim (if present)
-      let plan = undefined;
-      const rPlan = rows(wsPlan)[0];
-      if (rPlan) {
-        plan = {
-          exec_days:   toInt(rPlan.exec_days),
-          pass_days:   toInt(rPlan.pass_days),
-          pass_target: toInt(rPlan.pass_target)
-        };
-      }
-
-      // plannedSeries: verbatim (if present)
-      let plannedSeries = undefined;
-      const rPlanned = rows(wsPlanned);
-      if (rPlanned.length){
-        const labels=[], pe=[], pp=[];
-        rPlanned.forEach((r,i)=>{
-          labels.push(r.label || `Day ${i+1}`);
-          pe.push(toInt(r.planned_executed_pct));
-          pp.push(toInt(r.planned_pass_pct));
-        });
-        plannedSeries = { labels, planned_executed_pct: pe, planned_pass_pct: pp };
-      }
-
-      // progressDaily (from testDaily)
-      const progressDaily = rows(wsTests).map(r=>({
-        date: xlDate(r.date),
-        inScope: r.inScope!=='' ? toInt(r.inScope) : undefined,
-        executedPct: toInt(r.executedPct),
-        passPct: toInt(r.passPct)
-      }));
-
-      // defectsDaily
-      const defectsDaily = rows(wsDefects).map(r=>({
-        date: xlDate(r.date),
-        openDefects: toInt(r.openDefects)
-      }));
-
-      // issues (verbatim)
-      const issues = rows(wsIssues).map(r=>({
-        key:r.key||'', priority:r.priority||'', summary:r.summary||'',
-        reporter:r.reporter||'', team:r.team||'', platform:r.platform||'',
-        status:r.status||'', link:r.link||''
-      }));
-
-      // keyDates (keep your columns)
-      const keyDates = rows(wsKeyDates).map(r=>({
-        label: r.label || '',
-        date:  r.date ? xlDate(r.date) : '',
-        dateRange: r.dateRange || '',
-        notes: r.notes || ''
-      }));
-
-      // assemble
-      const data = {
-        asOf: ($asof.value||'').trim(),
-        infoUrl: ($info.value||'').trim(),
-        statusUrl: ($stUrl.value||'').trim(),
-        overview,
-        health: { status: ($hStat.value||'auto'), comment: ($hCmt.value||'') },
-        ...(plan ? { plan } : {}),
-        ...(plannedSeries ? { plannedSeries } : {}),
-        progressDaily, defectsDaily, issues, keyDates
+      return {
+        asOf: ui.asOf,
+        infoUrl: ui.infoUrl || './about-uat.md',
+        statusUrl: ui.statusUrl || './daily-status.md',
+        health: {
+          status: ui.health || 'auto',
+          comment: ui.comment || ''
+        },
+        progressDaily,
+        defectsDaily,
+        issues
       };
-
-      // compact the heavy arrays
-      lastText = stringifyOneLine(data, ['labels','planned_executed_pct','planned_pass_pct','progressDaily','defectsDaily']);
-      preview.textContent = lastText;
-      btnJson.disabled = btnBak.disabled = false;
-      statusEl.textContent = 'Parsed ✓';
-    }catch(e){
-      console.error(e);
-      statusEl.textContent = 'Error: ' + (e?.message||e);
-      preview.textContent = '// (no preview)';
     }
-  });
 
-  $('#dlJson').addEventListener('click', ()=>{
-    if (!lastText) return;
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob([lastText],{type:'application/json'}));
-    a.download='uat.json'; a.click(); URL.revokeObjectURL(a.href);
-  });
+    // ---------- UI state ----------
+    let gWB = null;
 
-  $('#dlBackup').addEventListener('click', ()=>{
-    if (!lastText) return;
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob([lastText],{type:'application/json'}));
-    a.download=`uat-backup_${(new Date()).toISOString().slice(0,16).replace(/[:T]/g,'_')}.json`;
-    a.click(); URL.revokeObjectURL(a.href);
-  });
-})();
-</script>
+    const $ = (sel) => document.querySelector(sel);
+    function uiState(){
+      return {
+        asOf:      $('#asof')?.value || '',
+        infoUrl:   $('#infourl')?.value || './about-uat.md',
+        statusUrl: $('#statusurl')?.value || './daily-status.md',
+        health:    $('#health')?.value || 'auto',
+        comment:   $('#comment')?.value || ''
+      };
+    }
+    function refreshPreview(){
+      if (!gWB) return;
+      const json = buildDynamic(gWB, uiState());
+      $('#preview').textContent = JSON.stringify(json, null, 2);
+    }
+
+    // ---------- events ----------
+    $('#file').addEventListener('change', async (e)=>{
+      const f = e.target.files?.[0];
+      if (!f) return;
+      const buf = await f.arrayBuffer();
+      gWB = XLSX.read(buf);
+
+      // show sheet names
+      $('#sheets').textContent = (gWB.SheetNames || []).join(', ') || '—';
+
+      // enable download and preview
+      $('#btnDynamic').disabled = false;
+      refreshPreview();
+    });
+
+    ['asof','infourl','statusurl','health','comment'].forEach(id=>{
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', refreshPreview);
+    });
+
+    $('#btnDynamic').addEventListener('click', ()=>{
+      if (!gWB) { alert('Please choose a workbook first.'); return; }
+      const json = buildDynamic(gWB, uiState());
+      const blob = new Blob([JSON.stringify(json, null, 2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'uat-dynamic.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  </script>
 </body>
 </html>
