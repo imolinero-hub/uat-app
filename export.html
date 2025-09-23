@@ -285,6 +285,18 @@
     libStateEl.textContent = 'SheetJS: loading failed';
     libStateEl.style.background = '#fee2e2';
   }
+
+// Auto-seed "asOf" once on load if empty
+(function seedAsOf(){
+  if (!asofEl) return;
+  if (!asofEl.value) {
+    const d = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    asofEl.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+})();
+
 </script>
 </body>
 </html>
+
