@@ -1,167 +1,171 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>UAT JSON Export (Dynamic Only)</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <title>UAT JSON Export (Dynamic only)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <!-- SheetJS for XLSX parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
   <style>
-    :root {
-      --bg:#0b1220; --panel:#121a2b; --muted:#a3b1c6; --muted2:#7f8aa3; --fg:#e6edf7;
-      --primary:#3b82f6; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --chip:#1f2937;
-      --code:#0f172a;
+    :root{
+      --bg:#0b1220; --panel:#0f172a; --muted:#93a4b8; --text:#e5eaf1;
+      --ring:#1e293b; --accent1:#7c3aed; --accent2:#22c55e; --accent3:#06b6d4;
+      --btn:#2563eb; --btn2:#9333ea;
+      --chip:#1f2937; --chipText:#cbd5e1; --code:#0b1020; --codeBorder:#1f2937;
     }
-    * { box-sizing:border-box; }
-    html,body{ height:100%; }
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f8fafc; --panel:#ffffff; --muted:#475569; --text:#0f172a;
+        --ring:#e2e8f0; --chip:#eef2f7; --chipText:#334155; --code:#0a1220; --codeBorder:#e2e8f0;
+      }
+    }
+    *{box-sizing:border-box} html,body{height:100%}
     body{
-      margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:linear-gradient(160deg,#0b1220 0%, #111a2d 50%, #0b1220 100%);
-      color:var(--fg); line-height:1.45;
+      margin:0; font:14px/1.5 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background:linear-gradient(160deg, rgba(99,102,241,.15), transparent 40%) , var(--bg) ; color:var(--text);
     }
-    .wrap{ max-width:1100px; margin:auto; padding:24px 16px 80px; }
-    h1{ font-size:22px; margin:0 0 16px; }
-    h2{ font-size:16px; margin:24px 0 8px; color:var(--muted); font-weight:600; }
-    .panel{ background:var(--panel); border:1px solid rgba(255,255,255,.06);
-            border-radius:12px; padding:16px; margin-bottom:16px; }
-    .grid{ display:grid; grid-template-columns: repeat(12, 1fr); gap:12px; }
-    .col-3{ grid-column: span 3; } .col-4{ grid-column: span 4; }
-    .col-6{ grid-column: span 6; } .col-8{ grid-column: span 8; } .col-12{ grid-column: span 12; }
-    label{ font-size:12px; color:var(--muted2); display:block; margin-bottom:6px;}
-    input[type=text], select{
-      width:100%; background:#0e1626; border:1px solid rgba(255,255,255,.08);
-      color:var(--fg); border-radius:10px; padding:10px 12px; outline:none;
+    .wrap{max-width:1100px; margin:28px auto; padding:0 18px}
+    h1{font-size:28px; margin:0 0 12px}
+    .pill{font-size:12px; padding:.25rem .5rem; border-radius:999px; background:var(--chip); color:var(--chipText)}
+    .panel{background:var(--panel); border:1px solid var(--ring); border-radius:14px; padding:18px}
+    .grid{display:grid; gap:14px}
+    .grid-2{grid-template-columns:1fr 1fr}
+    .row{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+    label{display:block; font-weight:600; margin-bottom:6px}
+    input,select,textarea{
+      width:100%; background:transparent; border:1px solid var(--ring); color:inherit; border-radius:10px; padding:.55rem .7rem;
+      outline:none;
     }
-    input[type=file]{ color:var(--muted); }
-    .hint{ color:var(--muted2); font-size:12px; }
+    textarea{min-height:40px; resize:vertical}
+    .muted{color:var(--muted)}
     .btn{
-      appearance:none; border:none; background:linear-gradient(135deg,#4f46e5 0%,#06b6d4 100%);
-      color:white; padding:10px 14px; border-radius:10px; font-weight:600; cursor:pointer;
+      background:linear-gradient(135deg, var(--btn) 0%, var(--btn2) 100%); color:#fff; border:none; border-radius:12px;
+      padding:.65rem 1rem; font-weight:700; cursor:pointer;
     }
-    .btn:disabled{ opacity:.5; cursor:not-allowed; }
-    .tag{ background:var(--chip); color:var(--muted); font-size:12px; padding:4px 8px; border-radius:999px; }
-    pre{
-      background:var(--code); color:#e6edf7; border:1px solid rgba(255,255,255,.06);
-      border-radius:12px; padding:14px; overflow:auto; max-height:420px; margin:0;
+    .btn[disabled]{opacity:.5; cursor:not-allowed}
+    .code{
+      white-space:pre; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      background:var(--code); border:1px solid var(--codeBorder); border-radius:12px; padding:14px; overflow:auto; max-height:420px;
     }
-    .pill{ padding:.25rem .5rem; border-radius:999px; font-size:12px; display:inline-flex; gap:.35rem; align-items:center; }
-    .ok{ background: rgba(34,197,94,.12); color:#86efac; }
-    .warn{ background: rgba(245,158,11,.12); color:#facc15; }
-    .bad{ background: rgba(239,68,68,.12); color:#fca5a5; }
-    .row{ display:flex; gap:10px; align-items:center; justify-content:space-between; }
-    .muted{ color:var(--muted); }
-    .mono{ font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace; }
-    .sep{ height:1px; background:rgba(255,255,255,.06); margin:10px 0; }
+    .badge{display:inline-flex; align-items:center; gap:.35rem; padding:.2rem .5rem; border-radius:999px; font-weight:600; background:#0b1630; border:1px solid var(--ring)}
+    .chip{display:inline-block; padding:.2rem .55rem; border-radius:999px; background:var(--chip); color:var(--chipText); font-weight:700}
+    .legend{display:flex; gap:8px; flex-wrap:wrap}
+    .legend .item{display:flex; align-items:center; gap:8px; background:var(--chip); color:var(--chipText); border-radius:999px; padding:.2rem .6rem}
+    .legend .dot{width:.6rem; height:.6rem; border-radius:999px}
+    .green{background:#16a34a} .cyan{background:#06b6d4} .purple{background:#8b5cf6}
+    .hdr{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:10px}
+    .hr{height:1px; background:var(--ring); margin:8px 0}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>UAT JSON Export <span class="tag">Dynamic only</span></h1>
+    <div class="hdr">
+      <h1>UAT JSON Export <span class="pill">Dynamic only</span></h1>
+      <span class="badge"><span style="color:#93c5fd">xlsx</span> ➜ uat-dynamic.json</span>
+    </div>
 
+    <!-- 1) Workbook & header -->
     <div class="panel">
-      <h2>1) Workbook & header</h2>
-      <div class="grid">
-        <div class="col-6">
+      <div class="grid grid-2">
+        <div>
           <label>Choose workbook (.xlsx)</label>
-          <input id="file" type="file" accept=".xlsx,.xlsb,.xlsm,.xls"/>
-          <div class="hint">Sheets expected: <code class="mono">progressDaily</code>, <code class="mono">defectsDaily</code>, <code class="mono">issues</code></div>
+          <input id="file" type="file" accept=".xlsx,.xlsb,.xlsm,.xls" />
+          <div class="muted" style="margin-top:6px">Sheets expected: <span id="sheets" class="chip">–</span></div>
         </div>
-        <div class="col-3">
-          <label>As of</label>
-          <input id="asof" type="text" placeholder="2025-09-22 17:00"/>
-        </div>
-        <div class="col-3">
-          <label>Health</label>
-          <select id="health">
-            <option value="auto">auto (let app compute)</option>
-            <option value="green">green</option>
-            <option value="amber">amber</option>
-            <option value="red">red</option>
-          </select>
-        </div>
-
-        <div class="col-6">
-          <label>Info URL</label>
-          <input id="infourl" type="text" value="./about-uat.md"/>
-        </div>
-        <div class="col-6">
-          <label>Daily Status URL</label>
-          <input id="statusurl" type="text" value="./daily-status.md"/>
-        </div>
-
-        <div class="col-12">
-          <label>Comment (optional, shows when health ≠ auto/green)</label>
-          <input id="comment" type="text" placeholder="e.g., too many open defects"/>
+        <div class="grid grid-2">
+          <div>
+            <label>As of</label>
+            <input id="asof" type="datetime-local" />
+          </div>
+          <div>
+            <label>Health</label>
+            <select id="health">
+              <option value="auto" selected>auto (let app compute)</option>
+              <option value="green">green</option>
+              <option value="amber">amber</option>
+              <option value="red">red</option>
+            </select>
+          </div>
+          <div>
+            <label>Info URL</label>
+            <input id="infourl" placeholder="./about-uat.md" />
+          </div>
+          <div>
+            <label>Daily Status URL</label>
+            <input id="statusurl" placeholder="./daily-status.md" />
+          </div>
         </div>
       </div>
-      <div class="sep"></div>
-      <div class="row">
-        <div class="muted">
-          Sheets used: <span class="mono" id="sheets">–</span>
+      <div class="grid" style="margin-top:10px">
+        <div>
+          <label>Comment (optional, used when Health ≠ auto/green)</label>
+          <input id="comment" placeholder="e.g., too many open defects" />
+        </div>
+        <div class="row" style="justify-content:flex-end; margin-top:10px">
+          <button id="btnDynamic" class="btn" disabled>Download <b>uat-dynamic.json</b></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2) Preview -->
+    <div class="panel" style="margin-top:14px">
+      <div class="row" style="justify-content:space-between">
+        <div class="legend">
+          <span class="item"><span class="dot green"></span>progressDaily</span>
+          <span class="item"><span class="dot cyan"></span>defectsDaily</span>
+          <span class="item"><span class="dot purple"></span>issues</span>
+        </div>
+        <div class="muted">Preview (read-only)</div>
+      </div>
+      <div id="preview" class="code">// load a workbook to see the JSON here</div>
+    </div>
+
+    <!-- 3) Sheet formats -->
+    <div class="panel" style="margin-top:14px">
+      <div class="row" style="justify-content:space-between">
+        <div style="font-weight:700">Sheet formats</div>
+        <div class="muted">Dates: Excel date or YYYY-MM-DD. Percents 0–100.</div>
+      </div>
+      <div class="hr"></div>
+      <div class="grid grid-2">
+        <div>
+          <div class="chip">progressDaily</div>
+          <div class="muted" style="margin-top:6px">Columns: <b>date</b>, <b>inScope</b>, <b>executedPct</b>, <b>passPct</b></div>
         </div>
         <div>
-          <button class="btn" id="btnDynamic" disabled>Download <span class="mono">uat-dynamic.json</span></button>
+          <div class="chip">defectsDaily</div>
+          <div class="muted" style="margin-top:6px">Columns: <b>date</b>, <b>openDefects</b></div>
         </div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <h2>2) Preview</h2>
-      <pre id="preview">// load a workbook to see the JSON here</pre>
-    </div>
-
-    <div class="panel">
-      <h2>Sheet formats</h2>
-      <div class="grid">
-        <div class="col-4">
-          <div class="pill ok">progressDaily</div>
-          <div class="hint" style="margin-top:6px">
-            Columns: <code class="mono">date</code>, <code class="mono">inScope</code>, <code class="mono">executedPct</code>, <code class="mono">passPct</code><br/>
-            <small>Dates: Excel date or <code class="mono">YYYY-MM-DD</code>. Percents 0–100.</small>
-          </div>
-        </div>
-        <div class="col-4">
-          <div class="pill warn">defectsDaily</div>
-          <div class="hint" style="margin-top:6px">
-            Columns: <code class="mono">date</code>, <code class="mono">openDefects</code>
-          </div>
-        </div>
-        <div class="col-4">
-          <div class="pill bad">issues</div>
-          <div class="hint" style="margin-top:6px">
-            Columns: <code class="mono">key</code>, <code class="mono">priority</code>, <code class="mono">summary</code>, <code class="mono">reporter</code>, <code class="mono">team</code>, <code class="mono">platform</code>, <code class="mono">status</code>, <code class="mono">link</code>
-          </div>
+        <div>
+          <div class="chip">issues</div>
+          <div class="muted" style="margin-top:6px">Columns: <b>key</b>, <b>priority</b>, <b>summary</b>, <b>reporter</b>, <b>team</b>, <b>platform</b>, <b>status</b>, <b>link</b></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- SheetJS -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
-
   <script>
-    // ---------- helpers ----------
+    /* --------------------- utils --------------------- */
+    const $ = s => document.querySelector(s);
+
     const toISO = (v) => {
       if (v === undefined || v === null || v === '') return '';
       if (typeof v === 'number') {
-        // Excel serial date -> UTC ISO
+        // Excel epoch 1899-12-30
         const epoch = new Date(Date.UTC(1899, 11, 30));
         const d = new Date(epoch.getTime() + v * 86400000);
         return d.toISOString().slice(0,10);
       }
-      // allow dd/mm/yyyy etc; rely on Date parsing then normalize
       const d = new Date(v);
       return isNaN(d) ? String(v) : d.toISOString().slice(0,10);
     };
-    const num = (v) => (v === '' || v == null ? undefined : Number(v));
+    const num  = (v) => (v === '' || v == null ? undefined : Number(v));
     const rows = (wb, name) => {
       const ws = wb.Sheets[name];
       if (!ws) return [];
       return XLSX.utils.sheet_to_json(ws, { defval: '', raw: true });
     };
 
-    // ---------- build dynamic ----------
     function buildDynamic(wb, ui){
       const progressDaily = rows(wb, 'progressDaily').map(r => ({
         date: toISO(r.date || ''),
@@ -180,7 +184,7 @@
         priority:  String(r.priority || ''),
         summary:   String(r.summary || ''),
         reporter:  String(r.reporter || ''),
-        team:      String(r.team || ''),    // may be empty
+        team:      String(r.team || ''),
         platform:  String(r.platform || ''),
         status:    String(r.status || ''),
         link:      String(r.link || '')
@@ -190,20 +194,19 @@
         asOf: ui.asOf,
         infoUrl: ui.infoUrl || './about-uat.md',
         statusUrl: ui.statusUrl || './daily-status.md',
-        health: {
-          status: ui.health || 'auto',
-          comment: ui.comment || ''
-        },
-        progressDaily,
-        defectsDaily,
-        issues
+        health: { status: ui.health || 'auto', comment: ui.comment || '' },
+        progressDaily, defectsDaily, issues
       };
     }
 
-    // ---------- UI state ----------
+    /* --------------------- UI state --------------------- */
     let gWB = null;
+    const btn = $('#btnDynamic');
 
-    const $ = (sel) => document.querySelector(sel);
+    function setReady(ready){
+      btn.disabled = !ready;
+      btn.style.filter = ready ? 'brightness(1)' : 'brightness(.85)';
+    }
     function uiState(){
       return {
         asOf:      $('#asof')?.value || '',
@@ -219,28 +222,40 @@
       $('#preview').textContent = JSON.stringify(json, null, 2);
     }
 
-    // ---------- events ----------
-    $('#file').addEventListener('change', async (e)=>{
-      const f = e.target.files?.[0];
-      if (!f) return;
-      const buf = await f.arrayBuffer();
-      gWB = XLSX.read(buf);
+    /* --------------------- file handling --------------------- */
+    async function handleFile(e){
+      const f = e.target.files && e.target.files[0];
+      if (!f){ setReady(false); $('#sheets').textContent='–'; $('#preview').textContent='// load a workbook to see the JSON here'; return; }
+      try{
+        if (typeof XLSX === 'undefined') throw new Error('SheetJS (XLSX) not loaded');
+        const buf = await f.arrayBuffer();
+        gWB = XLSX.read(buf); // may throw on corrupt workbook
+        const names = (gWB.SheetNames || []);
+        $('#sheets').textContent = names.length ? names.join(', ') : '–';
+        setReady(true);
+        refreshPreview();
+      }catch(err){
+        console.error('Workbook parse failed:', err);
+        setReady(false);
+        $('#sheets').textContent = 'error';
+        $('#preview').textContent = `// Error reading workbook:\n${err && err.message ? err.message : String(err)}`;
+      }
+    }
 
-      // show sheet names
-      $('#sheets').textContent = (gWB.SheetNames || []).join(', ') || '—';
+    // Watch both 'change' and 'input' so the button enables reliably
+    const fileEl = document.getElementById('file');
+    fileEl.addEventListener('change', handleFile, { passive:true });
+    fileEl.addEventListener('input', handleFile, { passive:true });
 
-      // enable download and preview
-      $('#btnDynamic').disabled = false;
-      refreshPreview();
-    });
-
+    // Live preview updates
     ['asof','infourl','statusurl','health','comment'].forEach(id=>{
       const el = document.getElementById(id);
       if (el) el.addEventListener('input', refreshPreview);
     });
 
-    $('#btnDynamic').addEventListener('click', ()=>{
-      if (!gWB) { alert('Please choose a workbook first.'); return; }
+    // Download
+    btn.addEventListener('click', ()=>{
+      if (!gWB){ alert('Choose a workbook first.'); return; }
       const json = buildDynamic(gWB, uiState());
       const blob = new Blob([JSON.stringify(json, null, 2)], {type:'application/json'});
       const a = document.createElement('a');
@@ -249,6 +264,16 @@
       a.click();
       URL.revokeObjectURL(a.href);
     });
+
+    // Default "as of" = now (local)
+    (function seedNow(){
+      try{
+        const pad = n => String(n).padStart(2,'0');
+        const d = new Date();
+        const v = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        const el = $('#asof'); if (el && !el.value) el.value = v;
+      }catch{}
+    })();
   </script>
 </body>
 </html>
