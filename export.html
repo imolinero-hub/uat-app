@@ -134,22 +134,22 @@
       return;
     }
 
-    try{
+    try {
+      // Read workbook
       const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type:'array', cellDates:true, cellNF:false, cellText:false });
-
+      const wb  = XLSX.read(buf, { type: 'array', cellDates: true, cellNF: false, cellText: false });
+    
       // Build JSON from workbook
-      const json = parseWorkbook(wb);
-
-      // Preview (compact)
-      preview.textContent = JSON.stringify(json, null, 2);
+      const json   = parseWorkbook(wb);
+    
+      // ---- PRETTY PRINT (multi-line, indented) ----
+      const pretty = JSON.stringify(json, null, 2); // << 2 = add line breaks + indentation
       preview.textContent = pretty;
       statusEl.textContent = 'Ready ✓';
       dlBtn.disabled = false;
-
+    
       // Download handler
       dlBtn.onclick = () => {
-        const pretty = JSON.stringify(json, null, 2);
         const blob = new Blob([pretty + '\n'], { type: 'application/json' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
@@ -157,14 +157,13 @@
         a.click();
         URL.revokeObjectURL(a.href);
       };
-
-    }catch(e){
+    
+    } catch (e) {
       preview.textContent = '';
       errBox.textContent = 'Workbook parse failed: ' + (e && e.message ? e.message : e);
-      dlBtn.disabled = true;
     }
   }
-
+  
   // ===== workbook -> JSON (dynamic only) =====
   function parseWorkbook(wb){
     const used = [];
@@ -247,4 +246,5 @@
 </script>
 </body>
 </html>
+
 
