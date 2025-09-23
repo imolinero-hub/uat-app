@@ -142,13 +142,15 @@
       const json = parseWorkbook(wb);
 
       // Preview (compact)
-      preview.textContent = JSON.stringify(json, null, 0);
+      preview.textContent = JSON.stringify(json, null, 2);
+      preview.textContent = pretty;
       statusEl.textContent = 'Ready ✓';
       dlBtn.disabled = false;
 
       // Download handler
       dlBtn.onclick = () => {
-        const blob = new Blob([JSON.stringify(json, null, 0)], {type:'application/json'});
+        const pretty = JSON.stringify(json, null, 2);
+        const blob = new Blob([pretty + '\n'], { type: 'application/json' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = 'uat-dynamic.json';
@@ -245,3 +247,4 @@
 </script>
 </body>
 </html>
+
