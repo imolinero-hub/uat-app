@@ -1,296 +1,254 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>UAT JSON Export (dynamic only)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root{
-      --bg:#0b1220; --card:#0f172a; --muted:#94a3b8; --text:#e5e7eb;
-      --brand:#7c3aed; --brand2:#22c55e; --accent:#38bdf8; --chip:#1f2a44;
-    }
-    body{margin:0;background:linear-gradient(180deg,#0c1220 0%,#0a1222 100%);color:var(--text);font:14px/1.4 ui-sans-serif,system-ui,"Segoe UI",Roboto,Helvetica,Arial}
-    .wrap{max-width:1100px;margin:28px auto;padding:0 16px}
-    h1{margin:0 0 18px;font-weight:700;letter-spacing:.3px}
-    .badge{font-size:12px;background:#121c33;border:1px solid #1f2a44;color:#cbd5e1;border-radius:10px;padding:2px 10px;margin-left:10px}
-    .card{background:var(--card);border:1px solid #1f2a44;border-radius:14px;padding:18px 18px 14px;margin:12px 0}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-    label{display:block;margin:6px 0 6px;color:var(--muted)}
-    input,select,textarea{width:100%;background:#0b1326;border:1px solid #1d2a46;color:var(--text);border-radius:10px;padding:10px 12px}
-    textarea{min-height:40px}
-    .btn{display:inline-flex;align-items:center;gap:10px;border-radius:12px;border:none;padding:10px 14px;background:linear-gradient(135deg,#3b82f6,#22c55e);color:#fff;font-weight:600;cursor:pointer}
-    .btn:disabled{opacity:.5;cursor:not-allowed}
-    .chip{display:inline-flex;align-items:center;gap:8px;border:1px solid #2a3a62;border-radius:999px;background:var(--chip);padding:6px 10px;color:#cbd5e1;font-size:12px}
-    .pill{border:1px solid #1d2a46;background:#0c152b;padding:2px 8px;border-radius:10px;font-size:12px}
-    pre{background:#0a1224;border:1px solid #1d2748;border-radius:12px;padding:14px;color:#cfd9ff;white-space:pre-wrap}
-    .grid-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
-    .error{color:#fecaca}
-    .ok{color:#86efac}
-  </style>
+<meta charset="utf-8" />
+<title>UAT JSON Export (XLSX • dynamic only)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<!-- SheetJS (fixed version you gave) -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+
+<style>
+  :root{--bg:#0b1220;--card:#0f172a;--border:#1d2a46;--muted:#94a3b8;--text:#e5e7eb;--ok:#22c55e;--brand:#3b82f6}
+  html,body{height:100%} body{margin:0;background:linear-gradient(180deg,#0c1220,#0a1222);color:var(--text);
+  font:14px/1.45 ui-sans-serif,system-ui,"Segoe UI",Roboto,Helvetica,Arial}
+  .wrap{max-width:1100px;margin:28px auto;padding:0 16px}
+  h1{margin:0 0 18px;font-weight:700} .badge{font-size:12px;background:#121c33;border:1px solid var(--border);
+  color:#cbd5e1;border-radius:10px;padding:2px 10px;margin-left:10px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 18px 14px;margin:12px 0}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  label{display:block;margin:6px 0 6px;color:var(--muted)}
+  input,select{width:100%;background:#0b1326;border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 12px}
+  .btn{display:inline-flex;align-items:center;gap:10px;border-radius:12px;border:none;padding:10px 14px;
+       background:linear-gradient(135deg,var(--brand),var(--ok));color:#fff;font-weight:600;cursor:pointer}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:999px;background:#1f2a44;
+        padding:6px 10px;color:#cbd5e1;font-size:12px}
+  pre{background:#0a1224;border:1px solid var(--border);border-radius:12px;padding:14px;color:#cfd9ff;white-space:pre-wrap;min-height:120px}
+  .error{color:#fda4af}
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>UAT JSON Export <span class="badge">dynamic only</span></h1>
+<div class="wrap">
+  <h1>UAT JSON Export <span class="badge">XLSX (dynamic only)</span></h1>
 
-    <div class="card">
-      <div class="row">
-        <div>
-          <label>Choose workbook (.xlsx)</label>
-          <input type="file" id="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
-        </div>
-        <div>
-          <label>As of</label>
-          <input id="asOf" type="datetime-local" />
-        </div>
+  <!-- 1) Workbook & header -->
+  <div class="card">
+    <div class="row">
+      <div>
+        <label>Choose workbook (.xlsx)
+          <span id="libStatus" class="chip" style="margin-left:8px">SheetJS: checking…</span>
+        </label>
+        <input type="file" id="file" accept=".xlsx" />
       </div>
-
-      <div class="row">
-        <div>
-          <label>Health</label>
-          <select id="health">
-            <option value="auto">auto (let app compute)</option>
-            <option value="green">green</option>
-            <option value="amber">amber</option>
-            <option value="red">red</option>
-          </select>
-        </div>
-        <div>
-          <label>Daily Status URL</label>
-          <input id="statusUrl" placeholder="./daily-status.md" value="./daily-status.md" />
-        </div>
+      <div>
+        <label>As of</label>
+        <input id="asOf" type="datetime-local" />
       </div>
-
-      <div class="row">
-        <div>
-          <label>Info URL</label>
-          <input id="infoUrl" placeholder="./about-uat.md" value="./about-uat.md" />
-        </div>
-        <div>
-          <label>Comment (optional, used when Health ≠ auto/green)</label>
-          <input id="comment" placeholder="e.g., too many open defects" />
-        </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Health</label>
+        <select id="health">
+          <option value="auto">auto (let app compute)</option>
+          <option value="green">green</option>
+          <option value="amber">amber</option>
+          <option value="red">red</option>
+        </select>
       </div>
-
-      <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
-        <button class="btn" id="download" disabled>Download <span class="pill">uat-dynamic.json</span></button>
-        <span id="sheetsUsed" class="chip">Sheets used: –</span>
-        <span id="libStatus" class="chip">xlsx loader: <span data-id="status">checking…</span></span>
+      <div>
+        <label>Daily Status URL</label>
+        <input id="statusUrl" placeholder="./daily-status.md" value="./daily-status.md" />
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Info URL</label>
+        <input id="infoUrl" placeholder="./about-uat.md" value="./about-uat.md" />
+      </div>
+      <div>
+        <label>Comment (optional, used when Health ≠ auto/green)</label>
+        <input id="comment" placeholder="e.g., too many open defects" />
       </div>
     </div>
 
-    <div class="card">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <span class="chip"><strong>progressDaily</strong></span>
-        <span class="chip"><strong>defectsDaily</strong></span>
-        <span class="chip"><strong>issues</strong></span>
-        <span style="margin-left:auto;color:#a5b4fc">Preview (read-only)</span>
-      </div>
-      <pre id="preview">// load a workbook to see the JSON here</pre>
-    </div>
-
-    <div class="card">
-      <h3 style="margin:0 0 10px">Sheet formats</h3>
-      <div class="row-3">
-        <div>
-          <div class="chip"><strong>progressDaily</strong></div>
-          <div style="margin-top:6px">Columns: <code>date, inScope, executedPct, passPct</code></div>
-          <div class="pill" style="margin-top:6px">Dates: Excel date or YYYY-MM-DD. Percents 0–100.</div>
-        </div>
-        <div>
-          <div class="chip"><strong>defectsDaily</strong></div>
-          <div style="margin-top:6px">Columns: <code>date, openDefects</code></div>
-        </div>
-        <div>
-          <div class="chip"><strong>issues</strong></div>
-          <div style="margin-top:6px">Columns: <code>key, priority, summary, reporter, team, platform, status, link</code></div>
-        </div>
-      </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
+      <button class="btn" id="download" disabled>Download uat-dynamic.json</button>
+      <span id="sheetsUsed" class="chip">Sheets used: –</span>
     </div>
   </div>
 
-  <script>
-    // ---------------- SheetJS loader with local-first fallback ----------------
-    (function loadXLSX(){
-      const statusEl = document.querySelector('[data-id="status"]');
-      function ok(msg){ statusEl.textContent = msg; statusEl.parentElement.classList.add('ok'); }
-      function bad(msg){ statusEl.textContent = msg; statusEl.parentElement.classList.add('error'); }
+  <!-- 2) Preview -->
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <span class="chip"><strong>progressDaily</strong></span>
+      <span class="chip"><strong>defectsDaily</strong></span>
+      <span class="chip"><strong>issues</strong></span>
+      <span style="margin-left:auto" class="chip">Preview (read-only)</span>
+    </div>
+    <pre id="preview">// load a workbook to see the JSON here</pre>
+    <div id="err" class="error"></div>
+  </div>
 
-      function load(src){
-        return new Promise((res, rej)=>{
-          const s = document.createElement('script');
-          s.src = src; s.defer = true;
-          s.onload = ()=> res(true);
-          s.onerror = ()=> rej(new Error('failed '+src));
-          document.head.appendChild(s);
-        });
-      }
+  <!-- Formats -->
+  <div class="card">
+    <h3 style="margin:0 0 10px">Sheet formats</h3>
+    <ul>
+      <li><b>progressDaily</b>: columns <code>date, inScope, executedPct, passPct</code> (date as Excel date or YYYY-MM-DD; percents 0–100)</li>
+      <li><b>defectsDaily</b>: columns <code>date, openDefects</code></li>
+      <li><b>issues</b>: columns <code>key, priority, summary, reporter, team, platform, status, link</code></li>
+    </ul>
+  </div>
+</div>
 
-      (async ()=>{
-        try{
-          // 1) try local copy (recommended)
-          await load('./lib/xlsx.full.min.js');
-          if(window.XLSX){ ok('local'); return; }
-          throw new Error('local not present');
-        }catch(e1){
-          try{
-            // 2) jsDelivr
-            await load('https://cdn.jsdelivr.net/npm/xlsx@0.20.1/dist/xlsx.full.min.js');
-            if(window.XLSX){ ok('jsDelivr'); return; }
-            throw new Error('jsDelivr blocked');
-          }catch(e2){
-            try{
-              // 3) unpkg
-              await load('https://unpkg.com/xlsx@0.20.1/dist/xlsx.full.min.js');
-              if(window.XLSX){ ok('unpkg'); return; }
-              throw new Error('unpkg blocked');
-            }catch(e3){
-              bad('FAILED (use local lib/xlsx.full.min.js)');
-            }
-          }
-        }
-      })();
-    })();
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const libStatus = $('#libStatus');
+  const preview = $('#preview');
+  const errBox = $('#err');
+  const dlBtn = $('#download');
+  const sheetsUsed = $('#sheetsUsed');
 
-    // ---------------- helpers ----------------
-    const $ = sel => document.querySelector(sel);
-    const asOfEl = $('#asOf');
-    asOfEl.value = new Date().toISOString().slice(0,16);
+  // Init “asOf” default
+  $('#asOf').value = new Date().toISOString().slice(0,16);
 
-    function excelDateToISO(v){
-      if (typeof v === 'string') return v.slice(0,10);
-      // Excel serials -> JS Date
-      const date = new Date(Math.round((v - 25569) * 86400 * 1000));
-      return date.toISOString().slice(0,10);
+  // Report SheetJS status
+  if (window.XLSX && XLSX.version) {
+    libStatus.textContent = `SheetJS: loaded v${XLSX.version}`;
+    libStatus.style.color = '#22c55e';
+  } else {
+    libStatus.textContent = 'SheetJS failed to load';
+    libStatus.style.color = '#fca5a5';
+  }
+
+  // Helpers
+  function excelDateToISO(v){
+    if (v === undefined || v === null || v === '') return '';
+    // If it's string already (e.g., 2025-10-13), pass through
+    if (typeof v === 'string') {
+      const t = v.trim();
+      if (/^\d{4}-\d{2}-\d{2}/.test(t)) return t.slice(0,10);
+    }
+    // If SheetJS gave a JS Date:
+    if (v instanceof Date) return v.toISOString().slice(0,10);
+    // Excel serial
+    const d = XLSX.SSF ? XLSX.SSF.parse_date_code(v) : null;
+    if (d) {
+      const js = new Date(Date.UTC(d.y, d.m - 1, d.d));
+      return js.toISOString().slice(0,10);
+    }
+    // Last resort: string
+    return String(v).slice(0,10);
+  }
+
+  function number(v){ const n = Number(v); return Number.isFinite(n)? n : 0; }
+
+  function readSheet(ws){
+    // SheetJS -> array of objects (header row)
+    return XLSX.utils.sheet_to_json(ws, {defval:'', raw:true});
+  }
+
+  function parseWorkbook(wb){
+    const ws = name => wb.Sheets[name];
+
+    const used = [];
+    const out = {
+      asOf: new Date($('#asOf').value || Date.now()).toISOString().slice(0,16).replace('T',' '),
+      infoUrl: $('#infoUrl').value.trim() || './about-uat.md',
+      statusUrl: $('#statusUrl').value.trim() || './daily-status.md',
+      health: { status: $('#health').value }
+    };
+    if (out.health.status !== 'auto' && out.health.status !== 'green'){
+      const c = ($('#comment').value||'').trim();
+      if (c) out.health.comment = c;
     }
 
-    // Parse a sheet to array of objects
-    function sheetToJSON(wb, name){
-      const ws = wb.Sheets[name];
-      if (!ws) return [];
-      return XLSX.utils.sheet_to_json(ws, {raw:true, defval:null});
+    // progressDaily
+    if (ws('progressDaily')) {
+      const rows = readSheet(ws('progressDaily')).map(r=>({
+        date: excelDateToISO(r.date),
+        inScope: number(r.inScope),
+        executedPct: number(r.executedPct),
+        passPct: number(r.passPct)
+      })).filter(r=>r.date);
+      out.progressDaily = rows;
+      used.push('progressDaily');
+    } else {
+      out.progressDaily = [];
     }
 
-    function buildDynamicJSON({asOf, infoUrl, statusUrl, health, comment, wb}){
-      const used = [];
+    // defectsDaily
+    if (ws('defectsDaily')) {
+      const rows = readSheet(ws('defectsDaily')).map(r=>({
+        date: excelDateToISO(r.date),
+        openDefects: number(r.openDefects)
+      })).filter(r=>r.date);
+      out.defectsDaily = rows;
+      used.push('defectsDaily');
+    } else {
+      out.defectsDaily = [];
+    }
 
-      const progress = sheetToJSON(wb, 'progressDaily').map(r=>{
-        used.includes('progressDaily') || used.push('progressDaily');
-        return {
-          date: excelDateToISO(r.date),
-          inScope: Number(r.inScope || 0),
-          executedPct: Number(r.executedPct || 0),
-          passPct: Number(r.passPct || 0)
-        };
-      });
+    // issues
+    if (ws('issues')) {
+      const rows = readSheet(ws('issues')).map(r=>({
+        key: String(r.key||'').trim(),
+        priority: String(r.priority||'').trim(),
+        summary: String(r.summary||'').trim(),
+        reporter: String(r.reporter||'').trim(),
+        team: String(r.team||'').trim(),
+        platform: String(r.platform||'').trim(),
+        status: String(r.status||'').trim(),
+        link: String(r.link||'').trim()
+      })).filter(r=>r.key || r.summary);
+      out.issues = rows;
+      used.push('issues');
+    } else {
+      out.issues = [];
+    }
 
-      const defects = sheetToJSON(wb, 'defectsDaily').map(r=>{
-        used.includes('defectsDaily') || used.push('defectsDaily');
-        return {
-          date: excelDateToISO(r.date),
-          openDefects: Number(r.openDefects || 0)
-        };
-      });
+    sheetsUsed.textContent = `Sheets used: ${used.length ? used.join(', ') : '–'}`;
+    return out;
+  }
 
-      const issues = sheetToJSON(wb, 'issues').map(r=>{
-        used.includes('issues') || used.push('issues');
-        return {
-          key: String(r.key||'').trim(),
-          priority: String(r.priority||'').trim(),
-          summary: String(r.summary||'').trim(),
-          reporter: String(r.reporter||'').trim(),
-          team: String(r.team||'').trim(),
-          platform: String(r.platform||'').trim(),
-          status: String(r.status||'').trim(),
-          link: String(r.link||'').trim()
-        };
-      });
+  async function handleFile(file){
+    errBox.textContent = '';
+    preview.textContent = '// parsing…';
+    dlBtn.disabled = true;
 
-      const dyn = {
-        asOf,
-        infoUrl,
-        statusUrl,
-        health: { status: health, ...(health!=='auto' && health!=='green' ? {comment: (comment||'').trim()} : {}) },
-        progressDaily: progress,
-        defectsDaily: defects,
-        issues
+    if (!window.XLSX) {
+      preview.textContent = '';
+      errBox.textContent = 'SheetJS (XLSX) is not available. The CDN may be blocked.';
+      return;
+    }
+
+    try{
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, {type:'array', cellDates:true, cellNF:false, cellText:false});
+      const json = parseWorkbook(wb);
+      preview.textContent = JSON.stringify(json, null, 2);
+      dlBtn.disabled = false;
+
+      dlBtn.onclick = () => {
+        const blob = new Blob([JSON.stringify(json, null, 2)], {type:'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'uat-dynamic.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
       };
-
-      return {json: dyn, used};
+    }catch(e){
+      preview.textContent = '';
+      errBox.textContent = 'Workbook parse failed: ' + (e && e.message ? e.message : e);
     }
+  }
 
-    // ---------------- UI handlers ----------------
-    let workbook = null;
-
-    $('#file').addEventListener('change', async (e)=>{
-      const f = e.target.files?.[0];
-      workbook = null;
-      $('#download').disabled = true;
-      $('#sheetsUsed').textContent = 'Sheets used: –';
-      $('#preview').textContent = '// reading workbook…';
-
-      if (!f){
-        $('#preview').textContent = '// no file selected';
-        return;
-      }
-      if (!window.XLSX){
-        $('#preview').textContent = '// Error: SheetJS (XLSX) not loaded';
-        return;
-      }
-      try{
-        const buf = await f.arrayBuffer();
-        workbook = XLSX.read(buf, {type:'array'});
-        $('#preview').textContent = '// workbook loaded. Choose download when ready.';
-        $('#download').disabled = false;
-
-        // also show a live preview
-        renderPreview();
-      }catch(err){
-        $('#preview').textContent = `// Error reading workbook:\n${err}`;
-      }
-    });
-
-    function renderPreview(){
-      if(!workbook){
-        $('#preview').textContent = '// load a workbook to see the JSON here';
-        return;
-      }
-      const asOf = new Date($('#asOf').value || Date.now()).toISOString().slice(0,16).replace('T',' ');
-      const {json, used} = buildDynamicJSON({
-        asOf,
-        infoUrl: $('#infoUrl').value.trim() || './about-uat.md',
-        statusUrl: $('#statusUrl').value.trim() || './daily-status.md',
-        health: $('#health').value,
-        comment: $('#comment').value,
-        wb: workbook
-      });
-      $('#sheetsUsed').textContent = `Sheets used: ${used.length? used.join(', '): '–'}`;
-      $('#preview').textContent = JSON.stringify(json, null, 2);
-    }
-
-    ['asOf','infoUrl','statusUrl','health','comment'].forEach(id=>{
-      $('#'+id).addEventListener('input', renderPreview);
-      $('#'+id).addEventListener('change', renderPreview);
-    });
-
-    $('#download').addEventListener('click', ()=>{
-      if(!workbook) return;
-      const asOf = new Date($('#asOf').value || Date.now()).toISOString().slice(0,16).replace('T',' ');
-      const {json} = buildDynamicJSON({
-        asOf,
-        infoUrl: $('#infoUrl').value.trim() || './about-uat.md',
-        statusUrl: $('#statusUrl').value.trim() || './daily-status.md',
-        health: $('#health').value,
-        comment: $('#comment').value,
-        wb: workbook
-      });
-      const blob = new Blob([JSON.stringify(json, null, 2)], {type:'application/json'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'uat-dynamic.json';
-      a.click();
-      URL.revokeObjectURL(a.href);
-    });
-  </script>
+  $('#file').addEventListener('change', e=>{
+    const f = e.target.files && e.target.files[0];
+    if (f) handleFile(f);
+  });
+})();
+</script>
 </body>
 </html>
