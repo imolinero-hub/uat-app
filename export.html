@@ -171,20 +171,8 @@
 
     sheetsUsedEl.textContent = used.length ? `Sheets used: ${used.join(', ')}` : 'Sheets used: –';
 
-    // assemble JSON
-    const out = {
-      asOf: toYmdHmLocal(asofEl.value) || toYmd(new Date()),
-      health: { status: (healthEl.value || 'auto') }
-    };
-    if (out.health.status !== 'auto' && out.health.status !== 'green') {
-      const c = (commentEl.value || '').trim();
-      if (c) out.health.comment = c;
-    }
-    if (pd.length) out.progressDaily = pd;
-    if (dd.length) out.defectsDaily = dd;
-    if (issues.length) out.issues = issues;
-
-    return out;
+    // assemble JSON rows (header values are applied later via rebuildPreview)
+    return { progressDaily: pd, defectsDaily: dd, issues };
   }
 
   // Pretty print entire JSON, but compact each object inside the specified arrays
@@ -217,6 +205,39 @@
     return pretty;
   }
 
+  // ======== NEW: cache + rebuild so header edits reflect in preview/download ==
+  let lastRows = null; // { progressDaily:[], defectsDaily:[], issues:[] }
+
+  function rebuildPreview(){
+    if(!lastRows) return;
+
+    const out = {
+      asOf: toYmdHmLocal(asofEl.value) || toYmd(new Date()),
+      health: { status: (healthEl.value || 'auto') }
+    };
+    if (out.health.status !== 'auto' && out.health.status !== 'green') {
+      const c = (commentEl.value || '').trim();
+      if (c) out.health.comment = c;
+    }
+    if (lastRows.progressDaily?.length) out.progressDaily = lastRows.progressDaily;
+    if (lastRows.defectsDaily?.length)  out.defectsDaily  = lastRows.defectsDaily;
+    if (lastRows.issues?.length)        out.issues       = lastRows.issues;
+
+    const pretty = stringifyWithCompactArrays(out, ['progressDaily','defectsDaily']);
+    preview.textContent = pretty;
+    statusEl.textContent = 'Ready ✓';
+    dlBtn.disabled = false;
+
+    dlBtn.onclick = () => {
+      const blob = new Blob([pretty], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'uat-dynamic.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    };
+  }
+
   // ======== handlers ========================================================
   fileEl.addEventListener('change', async (ev)=>{
     const file = ev.target.files && ev.target.files[0];
@@ -236,27 +257,26 @@
       const buf = await file.arrayBuffer();
       const wb  = XLSX.read(buf, { type:'array', cellDates:true, cellNF:false, cellText:false });
 
-      const json = parseWorkbook(wb);
-      const pretty = stringifyWithCompactArrays(json, ['progressDaily','defectsDaily']);
-
-      preview.textContent = pretty;
-      statusEl.textContent = 'Ready ✓';
-      dlBtn.disabled = false;
-
-      dlBtn.onclick = () => {
-        const blob = new Blob([pretty], {type:'application/json'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'uat-dynamic.json';
-        a.click();
-        URL.revokeObjectURL(a.href);
+      // Parse rows and cache them; header fields applied in rebuildPreview()
+      const rows = parseWorkbook(wb);
+      lastRows = {
+        progressDaily: rows.progressDaily || [],
+        defectsDaily:  rows.defectsDaily  || [],
+        issues:        rows.issues        || []
       };
+
+      rebuildPreview(); // build preview/download using current header values
     }catch(e){
       preview.textContent = '// Error reading workbook:\n' + (e && e.message ? e.message : e);
       statusEl.textContent = 'Error';
       dlBtn.disabled = true;
     }
   });
+
+  // Rebuild preview whenever header fields change (even after file upload)
+  asofEl.addEventListener('input',  rebuildPreview);
+  healthEl.addEventListener('change', rebuildPreview);
+  commentEl.addEventListener('input', rebuildPreview);
 
   // initial lib state
   if (window.XLSX) {
