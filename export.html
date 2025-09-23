@@ -3,248 +3,268 @@
 <head>
   <meta charset="utf-8" />
   <title>UAT JSON Export (dynamic only)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- SheetJS v0.20.3 -->
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     :root{
-      --fg:#0f172a; --muted:#64748b; --line:#e5e7eb; --bg:#ffffff; --pill:#f3f4f6; --accent:#2563eb;
+      --bg:#ffffff; --fg:#0f172a; --muted:#475569; --soft:#e2e8f0; --ring:#2563eb;
+      --badge:#eef2ff; --good:#16a34a; --warn:#d97706; --bad:#dc2626;
     }
     *{box-sizing:border-box}
-    body{margin:0; font:14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji"; color:var(--fg); background:var(--bg)}
-    header{padding:20px 16px; border-bottom:1px solid var(--line)}
-    h1{margin:0; font-size:20px}
-    main{max-width:980px; margin:24px auto; padding:0 16px}
-
-    .card{border:1px solid var(--line); border-radius:12px; background:#fff}
-    .row{display:grid; gap:12px}
-    @media(min-width:760px){ .row{grid-template-columns:1fr 1fr} }
-    label{display:block; font-weight:600; margin:10px 0 6px}
-    input[type="text"], input[type="datetime-local"], select{
-      width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:10px; outline:none;
+    body{margin:0; background:var(--bg); color:var(--fg); font:14px/1.4 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    .wrap{max-width:1100px; margin:32px auto; padding:0 16px}
+    h1{font-weight:700; margin:0 0 18px}
+    .card{border:1px solid var(--soft); border-radius:12px; background:#fff; margin:14px 0}
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+    @media (max-width: 900px){ .row{grid-template-columns:1fr} }
+    .sec{padding:16px 18px}
+    label{display:block; font-size:12px; color:var(--muted); margin:0 0 6px}
+    input[type="text"], input[type="datetime-local"], select, textarea{
+      width:100%; padding:10px 12px; border:1px solid var(--soft); border-radius:10px; outline:0;
+      background:#fff; color:var(--fg)
     }
-    input[type="file"]{padding:8px 0}
-    .hint{color:var(--muted); font-size:12px; margin-top:6px}
-    .btn{display:inline-flex; gap:8px; align-items:center; padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:#fff; cursor:pointer}
-    .btn.primary{background:linear-gradient(135deg, #3b82f6, #22c55e); color:#fff; border:none}
-    .btn[disabled]{opacity:.5; cursor:not-allowed}
-    .toolbar{display:flex; gap:10px; flex-wrap:wrap}
-    .pill{display:inline-flex; align-items:center; gap:6px; background:var(--pill); padding:6px 10px; border-radius:999px; font-size:12px}
-    .error{color:#b91c1c; white-space:pre-wrap; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace}
-    .ok{color:#16a34a}
-    .preview{white-space:pre; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; background:#0b1220; color:#e5e7eb; padding:16px; border-radius:12px; overflow:auto; border:1px solid var(--line)}
-    .section{padding:16px}
-    .formats ul{margin:8px 0 0 16px; color:var(--muted)}
+    input:focus, select:focus, textarea:focus{border-color:var(--ring); box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+    .btn{
+      display:inline-flex; align-items:center; gap:.5rem; padding:10px 14px; border-radius:999px; border:0;
+      background:linear-gradient(135deg,#6366f1,#22c55e); color:#fff; cursor:pointer; font-weight:600
+    }
+    .btn:disabled{opacity:.5; cursor:not-allowed}
+    .subtle{color:var(--muted); font-size:12px}
+    .pill{display:inline-flex; align-items:center; gap:.4rem; padding:.25rem .55rem; border-radius:999px; font-size:12px; background:var(--badge)}
+    pre{
+      margin:0; padding:14px; border-top:1px solid var(--soft); border-radius:0 0 12px 12px;
+      font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; background:#0b1220; color:#dbeafe; overflow:auto
+    }
+    .error{color:#fff; background:#111827; border-top:1px solid #374151}
+    .hint{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px}
+    .hint .tag{background:#f8fafc; border:1px solid var(--soft); border-radius:999px; padding:.25rem .5rem; font-size:12px}
+    .topbar{display:flex; align-items:center; justify-content:space-between; gap:12px}
   </style>
+  <!-- SheetJS (XLSX) – version allowed by your laptop policy -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
-  <header>
-    <h1>UAT JSON Export <span class="pill">XLSX (dynamic only)</span></h1>
-  </header>
+  <div class="wrap">
+    <h1>UAT JSON Export <span class="pill">dynamic only</span></h1>
 
-  <main>
-    <div class="card section">
-      <div class="row">
-        <div>
-          <label for="file">Choose workbook (.xlsx)</label>
-          <input id="file" type="file" accept=".xlsx" />
-          <div id="sheetjsState" class="hint">SheetJS: <span id="sheetjsLoaded">checking…</span></div>
+    <!-- Controls -->
+    <div class="card">
+      <div class="sec">
+        <div class="topbar">
+          <div class="subtle">Sheets expected: <strong>progressDaily</strong>, <strong>defectsDaily</strong>, <strong>issues</strong></div>
+          <div id="libState" class="pill">SheetJS: loading…</div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <div>
+            <label>Choose workbook (.xlsx)</label>
+            <input id="file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+            <div class="hint"><span id="sheetsUsed" class="tag">Sheets used: –</span></div>
+          </div>
+          <div>
+            <label>As of</label>
+            <!-- user friendly input; we’ll serialize to YYYY-MM-DD HH:mm -->
+            <input id="asof" type="datetime-local">
+            <div class="subtle">Will be serialized as YYYY-MM-DD HH:mm.</div>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div>
+            <label>Health</label>
+            <select id="health">
+              <option value="auto" selected>auto (let app compute)</option>
+              <option value="green">green</option>
+              <option value="amber">amber</option>
+              <option value="red">red</option>
+            </select>
+          </div>
+          <div>
+            <label>Comment (optional, used when Health ≠ auto/green)</label>
+            <input id="comment" type="text" placeholder="e.g., too many open defects">
+          </div>
         </div>
 
-        <div>
-          <label for="asof">As of</label>
-          <input id="asof" type="datetime-local" />
-          <div class="hint">Will be serialized as <code>YYYY-MM-DD HH:mm</code>.</div>
+        <div style="margin-top:14px; display:flex; gap:10px;">
+          <button id="dl" class="btn" disabled>Download <strong>uat-dynamic.json</strong></button>
+          <div id="status" class="subtle">Load a workbook to generate JSON…</div>
         </div>
       </div>
-
-      <div class="row" style="margin-top:8px">
-        <div>
-          <label for="health">Health</label>
-          <select id="health">
-            <option value="auto">auto (let app compute)</option>
-            <option value="green">green</option>
-            <option value="amber">amber</option>
-            <option value="red">red</option>
-          </select>
-          <div class="hint">If not <em>auto</em>, a comment is recommended.</div>
-        </div>
-
-        <div>
-          <label for="healthComment">Comment (optional; used when Health ≠ auto/green)</label>
-          <input id="healthComment" type="text" placeholder="e.g., too many open defects" />
-        </div>
-      </div>
-
-      <div style="margin-top:16px" class="toolbar">
-        <button id="downloadBtn" class="btn primary" disabled>Download <strong>uat-dynamic.json</strong></button>
-        <span class="pill">Sheets expected: <code>progressDaily</code>, <code>defectsDaily</code>, <code>issues</code></span>
-        <span id="sheetsUsed" class="pill">Sheets used: –</span>
-      </div>
-      <div id="err" class="error" style="margin-top:10px"></div>
+      <pre id="preview" class="error">// Error/preview will appear here</pre>
     </div>
 
-    <div class="card section" style="margin-top:16px">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
-        <strong>Preview (read-only)</strong>
-        <span id="status" class="ok"></span>
+    <!-- Sheet format cheatsheet -->
+    <div class="card">
+      <div class="sec">
+        <div class="subtle">Sheet formats</div>
+        <ul>
+          <li><strong>progressDaily</strong>: columns <code>date</code>, <code>inScope</code>, <code>executedPct</code>, <code>passPct</code> (date = Excel date or YYYY-MM-DD; percents 0–100).</li>
+          <li><strong>defectsDaily</strong>: columns <code>date</code>, <code>openDefects</code>.</li>
+          <li><strong>issues</strong>: columns <code>key</code>, <code>priority</code>, <code>summary</code>, <code>reporter</code>, <code>team</code>, <code>platform</code>, <code>status</code>, <code>link</code>.</li>
+        </ul>
       </div>
-      <div id="preview" class="preview">// load a workbook to see the JSON here</div>
     </div>
-
-    <div class="card section formats" style="margin-top:16px">
-      <strong>Sheet formats</strong>
-      <ul>
-        <li><code>progressDaily</code>: columns <code>date</code>, <code>inScope</code>, <code>executedPct</code>, <code>passPct</code> (date = Excel date or YYYY-MM-DD; percents 0–100).</li>
-        <li><code>defectsDaily</code>: columns <code>date</code>, <code>openDefects</code>.</li>
-        <li><code>issues</code>: columns <code>key</code>, <code>priority</code>, <code>summary</code>, <code>reporter</code>, <code>team</code>, <code>platform</code>, <code>status</code>, <code>link</code>.</li>
-      </ul>
-    </div>
-  </main>
+  </div>
 
 <script>
-  // ===== utilities =====
-  const $ = sel => document.querySelector(sel);
-  const preview = $('#preview');
-  const errBox  = $('#err');
-  const statusEl= $('#status');
-  const dlBtn   = $('#downloadBtn');
-  const fileInp = $('#file');
-  const sheetsUsed = $('#sheetsUsed');
+  // ======== helpers =========================================================
+  const $ = id => document.getElementById(id);
+  const fileEl = $('file');
+  const asofEl = $('asof');
+  const healthEl = $('health');
+  const commentEl = $('comment');
+  const dlBtn = $('dl');
+  const preview = $('preview');
+  const statusEl = $('status');
+  const sheetsUsedEl = $('sheetsUsed');
+  const libStateEl = $('libState');
 
-  // Detect SheetJS availability
-  $('#sheetjsLoaded').textContent = (window.XLSX ? 'loaded v' + XLSX.version : 'not loaded');
+  function toYmd(date){
+    // accepts Date | string | number; returns 'YYYY-MM-DD'
+    const d = (date instanceof Date) ? date : new Date(date);
+    const pad = n => String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  }
+  function toYmdHmLocal(dtValue){
+    if(!dtValue) return '';
+    const d = new Date(dtValue);
+    const pad = n => String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+  const asNumber = v => (v==null || v==='') ? 0 : Number(v);
 
-  fileInp.addEventListener('change', async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    await handleFile(file);
-  });
+  // Read a sheet into array of objects, given expected columns
+  function readSheet(wb, name){
+    const ws = wb.Sheets[name];
+    if(!ws) return [];
+    const rows = XLSX.utils.sheet_to_json(ws, {defval:null, raw:true});
+    return rows;
+  }
 
-  async function handleFile(file){
-    errBox.textContent = '';
-    statusEl.textContent = '';
+  function parseWorkbook(wb){
+    const used = [];
+    // progressDaily
+    const pd = readSheet(wb,'progressDaily').map(r => ({
+      date: r.date ? toYmd(XLSX.SSF.parse_date_code ? (isFinite(r.date) ? XLSX.SSF.parse_date_code(r.date) : r.date) : r.date) : toYmd(r.date),
+      inScope: asNumber(r.inScope),
+      executedPct: asNumber(r.executedPct),
+      passPct: asNumber(r.passPct)
+    })).filter(r => r.date);
+    if (pd.length) used.push('progressDaily');
+
+    // defectsDaily
+    const dd = readSheet(wb,'defectsDaily').map(r => ({
+      date: r.date ? toYmd(r.date) : '',
+      openDefects: asNumber(r.openDefects)
+    })).filter(r => r.date);
+    if (dd.length) used.push('defectsDaily');
+
+    // issues
+    const issues = readSheet(wb,'issues').map(r => ({
+      key: r.key ?? '',
+      priority: r.priority ?? '',
+      summary: r.summary ?? '',
+      reporter: r.reporter ?? '',
+      team: r.team ?? '',
+      platform: r.platform ?? '',
+      status: r.status ?? '',
+      link: r.link ?? ''
+    })).filter(r => r.key || r.summary);
+    if (issues.length) used.push('issues');
+
+    sheetsUsedEl.textContent = used.length ? `Sheets used: ${used.join(', ')}` : 'Sheets used: –';
+
+    // assemble JSON
+    const out = {
+      asOf: toYmdHmLocal(asofEl.value) || toYmd(new Date()),
+      health: { status: (healthEl.value || 'auto') }
+    };
+    if (out.health.status !== 'auto' && out.health.status !== 'green') {
+      const c = (commentEl.value || '').trim();
+      if (c) out.health.comment = c;
+    }
+    if (pd.length) out.progressDaily = pd;
+    if (dd.length) out.defectsDaily = dd;
+    if (issues.length) out.issues = issues;
+
+    return out;
+  }
+
+  // Pretty print entire JSON, but compact each object inside the specified arrays
+  function stringifyWithCompactArrays(obj, arrayKeys=['progressDaily','defectsDaily']){
+    // first: pretty for everything
+    let pretty = JSON.stringify(obj, null, 2);
+
+    // then: for each array key, collapse inner objects to single lines
+    for(const key of arrayKeys){
+      // matches: "key": [ ...the array content... ]
+      const reBlock = new RegExp(`("${key}"\\s*:\\s*\\[)([\\s\\S]*?)(\\])`, 'm');
+      const m = pretty.match(reBlock);
+      if(!m) continue;
+
+      // collapse each object within the array block
+      const block = m[2];
+      // find objects { ... } possibly with trailing commas
+      const collapsed = block.replace(/\{\s*[\s\S]*?\s*\}(,?)/g, s => {
+        const oneLine = s
+          .replace(/\n/g,' ')     // newlines -> spaces
+          .replace(/\s{2,}/g,' ') // multiple spaces -> single
+          .replace(/\s,\s/g,', ') // tidy commas
+          .replace(/\{\s/g,'{ ')
+          .replace(/\s\}/g,' }');
+        return oneLine;
+      });
+
+      pretty = pretty.replace(reBlock, `$1${collapsed}$3`);
+    }
+    return pretty;
+  }
+
+  // ======== handlers ========================================================
+  fileEl.addEventListener('change', async (ev)=>{
+    const file = ev.target.files && ev.target.files[0];
+    if(!file){ return; }
+
+    preview.textContent = '// parsing workbook…';
+    statusEl.textContent = 'Reading…';
     dlBtn.disabled = true;
-    preview.textContent = '// parsing…';
 
-    if (!window.XLSX){
-      preview.textContent = '';
-      errBox.textContent = 'SheetJS (XLSX) is not available. The CDN may be blocked.';
+    if (!window.XLSX) {
+      preview.textContent = '// Error: SheetJS (XLSX) is not available.';
+      statusEl.textContent = 'SheetJS not loaded.';
       return;
     }
 
-    try {
-      // Read workbook
+    try{
       const buf = await file.arrayBuffer();
-      const wb  = XLSX.read(buf, { type: 'array', cellDates: true, cellNF: false, cellText: false });
-    
-      // Build JSON from workbook
-      const json   = parseWorkbook(wb);
-    
-      // ---- PRETTY PRINT (multi-line, indented) ----
-      const pretty = JSON.stringify(json, null, 2); // << 2 = add line breaks + indentation
+      const wb  = XLSX.read(buf, { type:'array', cellDates:true, cellNF:false, cellText:false });
+
+      const json = parseWorkbook(wb);
+      const pretty = stringifyWithCompactArrays(json, ['progressDaily','defectsDaily']);
+
       preview.textContent = pretty;
       statusEl.textContent = 'Ready ✓';
       dlBtn.disabled = false;
-    
-      // Download handler
+
       dlBtn.onclick = () => {
-        const blob = new Blob([pretty + '\n'], { type: 'application/json' });
+        const blob = new Blob([pretty], {type:'application/json'});
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = 'uat-dynamic.json';
         a.click();
         URL.revokeObjectURL(a.href);
       };
-    
-    } catch (e) {
-      preview.textContent = '';
-      errBox.textContent = 'Workbook parse failed: ' + (e && e.message ? e.message : e);
+    }catch(e){
+      preview.textContent = '// Error reading workbook:\n' + (e && e.message ? e.message : e);
+      statusEl.textContent = 'Error';
+      dlBtn.disabled = true;
     }
-  }
-  
-  // ===== workbook -> JSON (dynamic only) =====
-  function parseWorkbook(wb){
-    const used = [];
-    const getSheet = name => {
-      const ok = wb.SheetNames.includes(name) ? wb.Sheets[name] : null;
-      if (ok) used.push(name);
-      return ok;
-    };
-    const rows = sh => sh ? XLSX.utils.sheet_to_json(sh, {defval:'', raw:true}) : [];
+  });
 
-    // Inputs
-    const asOfRaw = $('#asof')?.value?.trim() || '';
-    const healthSel = $('#health')?.value || 'auto';
-    const healthComment = $('#healthComment')?.value?.trim() || '';
-
-    // Normalize "asOf"
-    let asOf = asOfRaw;
-    if (asOfRaw) {
-      const d = new Date(asOfRaw);
-      if (!Number.isNaN(+d)) {
-        const pad = n => String(n).padStart(2,'0');
-        asOf = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-      }
-    }
-
-    // Sheets
-    const pd = rows(getSheet('progressDaily')).map(r => ({
-      date: dateString(r.date),
-      inScope: Number(r.inScope) || 0,
-      executedPct: Number(r.executedPct) || 0,
-      passPct: Number(r.passPct) || 0
-    }));
-
-    const dd = rows(getSheet('defectsDaily')).map(r => ({
-      date: dateString(r.date),
-      openDefects: Number(r.openDefects) || 0
-    }));
-
-    const iss = rows(getSheet('issues')).map(r => ({
-      key: String(r.key || '').trim(),
-      priority: String(r.priority || '').trim(),
-      summary: String(r.summary || '').trim(),
-      reporter: String(r.reporter || '').trim(),
-      team: String(r.team || '').trim(),
-      platform: String(r.platform || '').trim(),
-      status: String(r.status || '').trim(),
-      link: String(r.link || '').trim()
-    })).filter(i => i.key || i.summary);
-
-    // Health object
-    const health = (healthSel === 'auto')
-      ? { status:'auto' }
-      : (healthSel === 'green'
-          ? { status:'green' }
-          : { status:healthSel, comment: healthComment });
-
-    // Build dynamic JSON
-    const out = { asOf, health, progressDaily: pd, defectsDaily: dd, issues: iss };
-
-    sheetsUsed.textContent = 'Sheets used: ' + (used.length ? used.join(', ') : 'none');
-    return out;
-
-    function dateString(v){
-      if (!v) return '';
-      // Excel serial date
-      if (typeof v === 'number') {
-        try { return XLSX.SSF.format('yyyy-mm-dd', v); } catch(_) {}
-      }
-      const d = new Date(v);
-      if (!Number.isNaN(+d)) {
-        const p = n => String(n).padStart(2,'0');
-        return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
-      }
-      // dd/mm/yyyy → yyyy-mm-dd
-      const m = String(v).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-      if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
-      return String(v);
-    }
+  // initial lib state
+  if (window.XLSX) {
+    libStateEl.textContent = 'SheetJS: loaded v' + (XLSX.version || '0.20.x');
+  } else {
+    libStateEl.textContent = 'SheetJS: loading failed';
+    libStateEl.style.background = '#fee2e2';
   }
 </script>
 </body>
 </html>
-
-
