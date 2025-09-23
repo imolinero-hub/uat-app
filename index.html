@@ -104,33 +104,39 @@
     <div class="card p-4"><div class="kpi-label">Blocker / Critical</div><div class="kpi-value mt-1" :class="kpis.critical>5 ? 'text-rose-400' : (kpis.critical>=3 ? 'text-amber-300' : '')" x-text="kpis.critical"></div></div>
   </section>
   
-  <!-- ============================== AI Status (panel) ============================== -->
-  <section class="panel overflow-hidden mb-6" x-show="aiOpen" x-transition>
+  <!-- ================= Daily Status Panel ================= -->
+  <section class="panel overflow-hidden mb-6" x-show="dailyOpen" x-transition>
     <div class="px-5 py-4 flex items-center justify-between"
          style="background: linear-gradient(180deg, rgba(99,102,241,.12), transparent);">
       <div class="flex items-center gap-2">
         <span class="badge"><span class="badge-dot" style="background:#22c55e"></span> Daily</span>
-        <div class="font-semibold">Daily Status (AI-generated)</div>
+        <div class="font-semibold">Daily Status</div>
       </div>
       <div class="flex items-center gap-3">
-        <div class="text-xs text-slate-400">For leadership • concise & action-oriented</div>
-        <button class="btn icon-btn" aria-label="Close" @click="aiOpen=false" title="Hide">✕</button>
+        <div class="text-xs text-slate-400">For leadership • concise &amp; action-oriented</div>
+        <button class="btn icon-btn" aria-label="Close" @click="dailyOpen=false" title="Hide">✕</button>
       </div>
     </div>
+  
     <div class="h-px bg-white/10 theme-light:bg-black/10"></div>
-
+  
     <div class="p-5">
-      <div class="prose prose-invert max-w-none text-[15px] leading-6 theme-light:prose">
-        <div x-show="!aiStatus" class="text-slate-400">Click <strong>AI Daily Status</strong> to generate today’s summary.</div>
-        <div x-show="aiStatus" x-html="aiStatus"></div>
+      <!-- When no status is generated -->
+      <div x-show="!dailyHtml" class="text-slate-400 text-center">
+        Click <strong>Daily Status</strong> to generate today’s summary.
       </div>
-      <div class="mt-4 flex flex-wrap gap-2">
-        <button class="btn" @click="copyAI()">Copy</button>
-        <button class="btn" @click="downloadAI()">Download .md</button>
+  
+      <!-- Rendered status (from app.js) -->
+      <div x-show="dailyHtml" x-html="dailyHtml"></div>
+  
+      <div class="mt-4 flex flex-wrap gap-2" x-show="dailyHtml">
+        <button class="btn" @click="copyDaily()">Copy</button>
+        <button class="btn" @click="downloadDaily()">Download .md</button>
       </div>
     </div>
   </section>
 
+  
   <!-- ============================== CHARTS ============================== -->
   <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
     <div class="card p-4">
