@@ -38,37 +38,33 @@
 <div class="max-w-6xl mx-auto px-4 py-5">
 
   <!-- ============================== HEADER ============================== -->
-  <header class="mb-3">
-    <!-- Row 1: Title + sub on the left, RAG on the right -->
-    <div class="flex items-start justify-between gap-3">
+  <header class="header-v2 mb-3">
+    <!-- Row 1: title/sub + RAG -->
+    <div class="hdr-row">
       <div>
-        <div class="text-[18px] font-bold tracking-tight leading-5">UAT Dashboard</div>
-        <div class="text-[12px] text-slate-500 dark:text-slate-400">
+        <div class="title">UAT Dashboard</div>
+        <div class="sub">
           <span class="font-medium" x-text="raw.overview?.release || 'RI-4'"></span>
           <span class="mx-1">•</span>
           Data as of <span x-text="asOf || '-'"></span>
         </div>
       </div>
   
-      <!-- RAG Health (pastel, rounded) -->
-      <span class="inline-flex items-center rounded-full border px-3 py-1 text-sm font-semibold shadow-sm
-                   border-rose-200 bg-rose-50 text-rose-500"
+      <!-- Pastel RAG badge (independent of Tailwind utilities) -->
+      <span class="rag"
             :class="{
-              'border-emerald-200 bg-emerald-50 text-emerald-600': healthBadge.class==='rag-green',
-              'border-amber-200  bg-amber-50  text-amber-600' : healthBadge.class==='rag-amber',
-              'border-rose-200   bg-rose-50   text-rose-500'  : healthBadge.class==='rag-red'
+              'is-green': (healthBadge.class||'').includes('rag-green'),
+              'is-amber': (healthBadge.class||'').includes('rag-amber'),
+              'is-red'  : (healthBadge.class||'').includes('rag-red')
             }"
             :title="healthBadge.tooltip"
             x-text="healthBadge.label">
       </span>
     </div>
   
-    <!-- Row 2: Calendar pill, Info pill, primary CTA -->
-    <div class="mt-2 flex items-center gap-2">
-      <!-- Calendar pill -->
-      <button class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-2 text-[13px] shadow-sm
-                     dark:bg-slate-800/70 dark:border-slate-700"
-              :title="countdown.tooltip">
+    <!-- Row 2: pills + primary CTA -->
+    <div class="hdr-row" style="margin-top:8px;">
+      <button class="pill" :title="countdown.tooltip">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="opacity-80">
           <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
           <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -76,10 +72,7 @@
         <span class="font-medium" x-text="countdown.compact"></span>
       </button>
   
-      <!-- Info pill -->
-      <button class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-2 text-[13px] shadow-sm
-                     dark:bg-slate-800/70 dark:border-slate-700"
-              @click="openInfo()">
+      <button class="pill" @click="openInfo()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="opacity-80">
           <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
           <path d="M12 8h.01M11 11h2v5h-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -87,16 +80,11 @@
         <span class="font-medium">Info</span>
       </button>
   
-      <!-- Primary CTA -->
-      <button class="ml-auto inline-flex items-center justify-center rounded-2xl px-4 py-2 text-[14px] font-semibold text-white shadow-sm"
-              style="background:linear-gradient(90deg,#6366f1,#22c55e)"
-              @click="openDaily()">
-        Daily Status
-      </button>
+      <button class="cta" style="margin-left:auto" @click="openDaily()">Daily Status</button>
     </div>
   
-    <!-- Subtle divider line (like the mockup) -->
-    <div class="mt-3 h-px bg-slate-200/70 dark:bg-slate-700/60"></div>
+    <!-- Subtle divider -->
+    <div class="divider"></div>
   </header>
 
   <!-- ============================== KPIs ============================== -->
