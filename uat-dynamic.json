@@ -63,27 +63,28 @@
       "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-22058"
     },
     {
-      "key": "UAT-501",
+      "key": "NGEUIT-22059",
       "priority": "Blocker",
       "summary": "Payment service outage blocks checkout on Web",
       "reporter": "Helena",
       "team": "eCommerce",
       "platform": "Web",
       "status": "Open",
-      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-22058"
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-22059"
     },
     {
-      "key": "UAT-162",
+      "key": "NGEUIT-22060",
       "priority": "Critical",
       "summary": "Translation missing for 'Add to Cart' button (IT)",
       "reporter": "Juan",
       "team": "Localization",
       "platform": "BOSS",
       "status": "Open",
-      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-22058"
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-22060"
     }
   ]
 }
+
 
 
 
