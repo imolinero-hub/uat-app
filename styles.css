@@ -158,3 +158,50 @@ html.modal-open, body.modal-open { overflow: hidden !important; }
 .theme-dark .header-subtle { color: #9ca3af; }
 .header-dot { width: .28rem; height: .28rem; border-radius: 9999px; background: rgba(148,163,184,.6); }
 .theme-dark .header-dot { background: rgba(156,163,175,.6); }
+
+/* ====== Mobile card polish ====== */
+
+/* Increase card radius, deeper shadow on mobile */
+@media (max-width: 640px) {
+  .card {
+    border-radius: 20px;                /* more rounded corners on mobile */
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08); /* slightly deeper shadow */
+  }
+  .hdr {
+    backdrop-filter: saturate(140%) blur(12px);
+  }
+}
+
+/* Increase tap target of small buttons on mobile */
+@media (max-width: 640px) {
+  .btn, .rag-badge, .pill-lg {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+}
+
+/* Soft accent border on KPI cards (optional) */
+@media (max-width: 640px) {
+  .card.kpi {
+    border-left-width: 4px;
+    border-left-color: #3b82f6; /* fallback accent color */
+  }
+}
+
+/* Softer section heading margins on mobile */
+@media (max-width: 640px) {
+  .section h3 {
+    margin-top: 12px;
+    margin-bottom: 6px;
+  }
+}
+
+/* Table row cards spacing polish */
+@media (max-width: 640px) {
+  .row {
+    margin-left: 4px;
+    margin-right: 4px;
+  }
+}
+
+
