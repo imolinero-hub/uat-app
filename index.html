@@ -95,16 +95,8 @@
     </div>
   </header>
 
-  <!-- ============================== KPIs ============================== 
-  <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
-    <div class="card p-4"><div class="kpi-label">In Scope</div><div class="kpi-value mt-1" x-text="kpis.inScope"></div></div>
-    <div class="card p-4"><div class="kpi-label">Executed %</div><div class="kpi-value mt-1 font-bold" :class="(kpis.execColorClass||kpiColor(kpis.executedPct))" x-text="fmtPct(kpis.executedPct)"></div><div class="text-xs text-slate-400 mt-1 flex items-center gap-2">Planned today:<span class="kpi-planned" x-text="fmtPct(kpis.plannedExecutedPct||0)"></span><span class="kpi-delta" x-text="kpis.execDelta>=0 ? ('▲ '+kpis.execDelta+'pp') : ('▼ '+Math.abs(kpis.execDelta)+'pp')"></span></div></div>
-    <div class="card p-4"><div class="kpi-label">Pass %</div><div class="kpi-value mt-1 font-bold" :class="(kpis.passColorClass||kpiColor(kpis.passPct))" x-text="fmtPct(kpis.passPct)"></div><div class="text-xs text-slate-400 mt-1 flex items-center gap-2">Planned today:<span class="kpi-planned" x-text="fmtPct(kpis.plannedPassPct||0)"></span><span class="kpi-delta" x-text="kpis.passDelta>=0 ? ('▲ '+kpis.passDelta+'pp') : ('▼ '+Math.abs(kpis.passDelta)+'pp')"></span></div></div>
-    <div class="card p-4"><div class="kpi-label">Open Defects</div><div class="kpi-value mt-1" x-text="kpis.openDefects"></div></div>
-    <div class="card p-4"><div class="kpi-label">Blocker / Critical</div><div class="kpi-value mt-1" :class="kpis.critical>5 ? 'text-rose-400' : (kpis.critical>=3 ? 'text-amber-300' : '')" x-text="kpis.critical"></div></div>
-  </section> -->
-
   <!-- ============================== KPIs ============================== -->
+  <!-- (unchanged desktop; mobile is already 2-up and compact) -->
   <section class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-6">
     <div class="card p-4"><div class="kpi-label">In Scope</div><div class="kpi-value mt-1" x-text="kpis.inScope"></div></div>
     <div class="card p-4"><div class="kpi-label">Executed %</div><div class="kpi-value mt-1 font-bold" :class="(kpis.execColorClass||kpiColor(kpis.executedPct))" x-text="fmtPct(kpis.executedPct)"></div><div class="text-xs text-slate-400 mt-1 flex items-center gap-2">Planned today:<span class="kpi-planned" x-text="fmtPct(kpis.plannedExecutedPct||0)"></span><span class="kpi-delta" x-text="kpis.execDelta>=0 ? ('▲ '+kpis.execDelta+'pp') : ('▼ '+Math.abs(kpis.execDelta)+'pp')"></span></div></div>
@@ -164,58 +156,102 @@
     </div>
   </section>
 
-  <!-- ============================== ISSUES TABLE ============================== -->
-  <section class="card p-4 mb-6">
-    <div class="flex items-center justify-between mb-2">
+  <!-- ============================== ISSUES ============================== -->
+  <section class="mb-6">
+    <div class="flex items-center justify-between mb-2 px-1">
       <div class="font-medium">Blocker / Critical Defects</div>
       <div class="text-xs text-slate-400" x-text="`Showing ${issues.length}`"></div>
     </div>
-    <div class="overflow-x-auto">
-      <table class="table w-full text-sm">
-        <thead>
-          <tr><th>Key</th><th>Priority</th><th>Summary</th><th>Reporter</th><th>Team</th><th>Platform</th></tr>
-        </thead>
-        <tbody>
-          <template x-for="i in issues" :key="i.key">
-            <tr>
-              <td><a class="link hover:underline" :href="i.link" target="_blank" x-text="i.key"></a></td>
-              <td>
-                <span class="badge">
-                  <span class="badge-dot" :style="sevDot(i.priority)"></span>
-                  <span x-text="i.priority"></span>
-                </span>
-              </td>
-              <td x-text="i.summary"></td>
-              <td x-text="i.reporter || i.owner || '—'"></td>
-              <td x-text="i.team || '—'"></td>
-              <td x-text="i.platform || '—'"></td>
-            </tr>
-          </template>
-        </tbody>
-      </table>
+
+    <!-- Mobile cards (NEW) -->
+    <div class="md:hidden space-y-3">
+      <template x-for="i in issues" :key="i.key">
+        <article class="card p-4">
+          <div class="flex items-start justify-between gap-3">
+            <a class="font-semibold text-indigo-500 hover:underline" :href="i.link" target="_blank" x-text="i.key"></a>
+            <span class="badge"><span class="badge-dot" :style="sevDot(i.priority)"></span><span x-text="i.priority"></span></span>
+          </div>
+          <div class="mt-1 font-medium" x-text="i.summary"></div>
+          <dl class="mt-2 text-xs text-slate-400 grid grid-cols-2 gap-x-4 gap-y-1">
+            <div><dt class="sr-only">Reporter</dt><dd x-text="`Reporter: ${i.reporter || i.owner || '—'}`"></dd></div>
+            <div><dt class="sr-only">Team</dt><dd x-text="`Team: ${i.team || '—'}`"></dd></div>
+            <div><dt class="sr-only">Platform</dt><dd x-text="`Platform: ${i.platform || '—'}`"></dd></div>
+          </dl>
+        </article>
+      </template>
     </div>
+
+    <!-- Desktop table (existing) -->
+    <section class="card p-4 hidden md:block">
+      <div class="overflow-x-auto">
+        <table class="table w-full text-sm">
+          <thead>
+            <tr><th>Key</th><th>Priority</th><th>Summary</th><th>Reporter</th><th>Team</th><th>Platform</th></tr>
+          </thead>
+          <tbody>
+            <template x-for="i in issues" :key="i.key">
+              <tr>
+                <td><a class="link hover:underline" :href="i.link" target="_blank" x-text="i.key"></a></td>
+                <td>
+                  <span class="badge">
+                    <span class="badge-dot" :style="sevDot(i.priority)"></span>
+                    <span x-text="i.priority"></span>
+                  </span>
+                </td>
+                <td x-text="i.summary"></td>
+                <td x-text="i.reporter || i.owner || '—'"></td>
+                <td x-text="i.team || '—'"></td>
+                <td x-text="i.platform || '—'"></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </section>
   </section>
 
   <!-- ============================== KEY DATES ============================== -->
   <section class="card p-4 mb-16">
     <div class="font-medium mb-3">Key Dates</div>
-    <template x-if="raw.keyDates && raw.keyDates.length">
-      <ul class="space-y-3">
-        <template x-for="d in raw.keyDates" :key="d.label">
-          <li class="flex items-start gap-3">
-            <div class="timeline-dot mt-1.5"></div>
-            <div class="flex-1">
+
+    <!-- Mobile cards -->
+    <div class="md:hidden space-y-3">
+      <template x-for="d in raw.keyDates" :key="d.label">
+        <div class="card p-4">
+          <div class="flex items-start justify-between gap-3">
+            <div>
               <div class="font-medium" x-text="d.label"></div>
               <div class="text-xs text-slate-400" x-text="d.notes || ''"></div>
             </div>
-            <div class="text-sm text-slate-300" x-text="d.date || d.dateRange || ''"></div>
-          </li>
-        </template>
-      </ul>
-    </template>
-    <template x-if="!raw.keyDates || !raw.keyDates.length">
-      <div class="text-sm text-slate-400">No key dates loaded.</div>
-    </template>
+            <span class="pill" x-text="d.date || d.dateRange || ''"></span>
+          </div>
+        </div>
+      </template>
+      <template x-if="!raw.keyDates || !raw.keyDates.length">
+        <div class="text-sm text-slate-400">No key dates loaded.</div>
+      </template>
+    </div>
+
+    <!-- Desktop timeline (existing) -->
+    <div class="hidden md:block">
+      <template x-if="raw.keyDates && raw.keyDates.length">
+        <ul class="space-y-3">
+          <template x-for="d in raw.keyDates" :key="d.label">
+            <li class="flex items-start gap-3">
+              <div class="timeline-dot mt-1.5"></div>
+              <div class="flex-1">
+                <div class="font-medium" x-text="d.label"></div>
+                <div class="text-xs text-slate-400" x-text="d.notes || ''"></div>
+              </div>
+              <div class="text-sm text-slate-300" x-text="d.date || d.dateRange || ''"></div>
+            </li>
+          </template>
+        </ul>
+      </template>
+      <template x-if="!raw.keyDates || !raw.keyDates.length">
+        <div class="text-sm text-slate-400">No key dates loaded.</div>
+      </template>
+    </div>
   </section>
 
   <!-- ============================== INFO MODAL ============================== -->
