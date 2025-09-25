@@ -146,14 +146,14 @@
     </div>
   </section>
 
-  <!-- ============================== ISSUES ============================== -->
+  <!-- ============================== ISSUES ============================== 
   <section class="mb-6">
     <div class="flex items-center justify-between mb-2 px-1">
       <div class="font-medium">Blocker / Critical Defects</div>
       <div class="text-xs text-slate-400" x-text="`Showing ${issues.length}`"></div>
     </div>
 
-    <!-- Mobile cards (NEW) -->
+
     <div class="md:hidden space-y-3">
       <template x-for="i in issues" :key="i.key">
         <article class="card p-4">
@@ -171,7 +171,7 @@
       </template>
     </div>
 
-    <!-- Desktop table (existing) -->
+
     <section class="card p-4 hidden md:block">
       <div class="overflow-x-auto">
         <table class="table w-full text-sm">
@@ -198,8 +198,70 @@
         </table>
       </div>
     </section>
+  </section>-->
+
+  <!-- ====================== Blocker / Critical Defects ====================== -->
+  <section class="mt-6">
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="section-title">Blocker / Critical Defects</h2>
+      <div class="text-xs text-slate-400 dark:text-slate-500">
+        Showing <span x-text="issues.length"></span>
+      </div>
+    </div>
+  
+    <!-- Empty state -->
+    <template x-if="!issues.length">
+      <div class="card p-4 text-sm text-slate-500 dark:text-slate-400">
+        No blocker/critical defects.
+      </div>
+    </template>
+  
+    <!-- Cards -->
+    <div class="grid gap-3">
+      <template x-for="it in issues" :key="it.key">
+        <a class="card p-4 flex gap-3 items-start hover:shadow-md transition-shadow"
+           :href="it.link" target="_blank" rel="noopener">
+          <!-- Left column: Key + Priority chip -->
+          <div class="w-24 shrink-0">
+            <div class="font-semibold text-indigo-600 underline decoration-indigo-300 underline-offset-2">
+              <span x-text="it.key"></span>
+            </div>
+  
+            <!-- Priority chip -->
+            <span class="inline-flex items-center gap-1 text-xs mt-2 px-2 py-1 rounded-full"
+                  :style="it.priority==='Critical'
+                    ? 'background:#fef2f2;color:#e11d48;border:1px solid #fee2e2'
+                    : 'background:#fffbeb;color:#b45309;border:1px solid #fef3c7'">
+              <span class="inline-block w-2 h-2 rounded-full"
+                    :style="it.priority==='Critical' ? 'background:#fb7185' : 'background:#f59e0b'"></span>
+              <span x-text="it.priority"></span>
+            </span>
+          </div>
+  
+          <!-- Main column -->
+          <div class="flex-1 min-w-0">
+            <div class="font-semibold leading-snug text-slate-800 dark:text-slate-100"
+                 x-text="it.summary"></div>
+  
+            <!-- Meta (reporter removed by request) -->
+            <div class="mt-2 text-xs text-slate-500 dark:text-slate-400 flex flex-wrap gap-x-4 gap-y-1">
+              <div><span class="text-slate-400">Team:</span> <span x-text="it.team || '—'"></span></div>
+              <div><span class="text-slate-400">Platform:</span> <span x-text="it.platform || '—'"></span></div>
+              <div><span class="text-slate-400">Status:</span> <span x-text="it.status || '—'"></span></div>
+            </div>
+          </div>
+  
+          <!-- Chevon hint -->
+          <svg width="16" height="16" viewBox="0 0 24 24" class="opacity-40">
+            <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      </template>
+    </div>
   </section>
 
+  
   <!-- ============================== KEY DATES ============================== -->
   <section class="card p-4 mb-16">
     <div class="font-medium mb-3">Key Dates</div>
