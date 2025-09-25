@@ -53,7 +53,7 @@
 
   "issues": [
     {
-      "key": "NGEUIT-22058",
+      "key": "22058",
       "priority": "Critical",
       "summary": "iOS app crashes on product detail page",
       "reporter": "Jakub",
@@ -63,7 +63,7 @@
       "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-22058"
     },
     {
-      "key": "NGEUIT-22059",
+      "key": "22059",
       "priority": "Blocker",
       "summary": "Payment service outage blocks checkout on Web",
       "reporter": "Helena",
@@ -73,7 +73,7 @@
       "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-22059"
     },
     {
-      "key": "NGEUIT-22060",
+      "key": "22060",
       "priority": "Critical",
       "summary": "Translation missing for 'Add to Cart' button (IT)",
       "reporter": "Juan",
@@ -84,6 +84,7 @@
     }
   ]
 }
+
 
 
 
