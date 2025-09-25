@@ -294,14 +294,14 @@ html.modal-open, body.modal-open { overflow: hidden !important; }
 }
 
 
-/* Issues: left rail width + alignment */
-.issue-rail{ width:88px }            /* consistent rail so ID and chip share the same left edge */
-.issue-chip{ margin-top:.5rem }      /* small gap below the ID */
-
-/* Hide Status on small screens; show from ≥768px (md) */
-@media (max-width: 767.98px){
-  .issue-status{ display:none; }
+/* === Issues block alignment fix === */
+.issue-rail {
+  width: 88px;                /* fixed rail */
+  display: flex;              /* stack content in a column */
+  flex-direction: column;
+  align-items: flex-start;    /* align ID + chip on the same left edge */
 }
-@media (min-width: 768px){
-  .issue-status{ display:inline; }
+
+.issue-chip {
+  margin-top: .25rem;         /* smaller gap */
 }
