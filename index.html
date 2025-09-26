@@ -238,9 +238,7 @@
 
   
   <!-- ============================== KEY DATES ============================== -->
-  <section class="card p-4 mb-16"
-           x-data="keyDatesAccordion()"
-           x-init="init(raw.keyDates)">
+  <section class="card p-4 mb-16" x-data="keyDatesAccordion()" x-init="init(raw.keyDates)" x-effect="init(raw.keyDates)">
     <div class="font-medium mb-3">Key Dates</div>
   
     <!-- Mobile: preview (collapsed by default) -->
