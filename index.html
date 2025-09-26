@@ -123,8 +123,7 @@
   </section>-->
 
   <!-- ============================== KPIs ============================== -->
-  <section class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-    <!-- Executed % -->
+  <section class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-6">
     <div class="card p-4">
       <div class="kpi-label">Executed %</div>
       <div class="kpi-value mt-1 font-bold"
@@ -133,12 +132,10 @@
       <div class="text-xs text-slate-400 mt-1 flex items-center gap-2">
         Planned today:
         <span class="kpi-planned" x-text="fmtPct(kpis.plannedExecutedPct||0)"></span>
-        <span class="kpi-delta"
-              x-text="kpis.execDelta>=0 ? ('▲ '+kpis.execDelta+'pp') : ('▼ '+Math.abs(kpis.execDelta)+'pp')"></span>
+        <span class="kpi-delta" x-text="kpis.execDelta>=0 ? ('▲ '+kpis.execDelta+'pp') : ('▼ '+Math.abs(kpis.execDelta)+'pp')"></span>
       </div>
     </div>
   
-    <!-- Pass % -->
     <div class="card p-4">
       <div class="kpi-label">Pass %</div>
       <div class="kpi-value mt-1 font-bold"
@@ -147,18 +144,15 @@
       <div class="text-xs text-slate-400 mt-1 flex items-center gap-2">
         Planned today:
         <span class="kpi-planned" x-text="fmtPct(kpis.plannedPassPct||0)"></span>
-        <span class="kpi-delta"
-              x-text="kpis.passDelta>=0 ? ('▲ '+kpis.passDelta+'pp') : ('▼ '+Math.abs(kpis.passDelta)+'pp')"></span>
+        <span class="kpi-delta" x-text="kpis.passDelta>=0 ? ('▲ '+kpis.passDelta+'pp') : ('▼ '+Math.abs(kpis.passDelta)+'pp')"></span>
       </div>
     </div>
   
-    <!-- Open Defects -->
     <div class="card p-4">
       <div class="kpi-label">Open Defects</div>
       <div class="kpi-value mt-1" x-text="kpis.openDefects"></div>
     </div>
   
-    <!-- Blocker / Critical -->
     <div class="card p-4">
       <div class="kpi-label">Blocker / Critical</div>
       <div class="kpi-value mt-1"
@@ -166,8 +160,8 @@
            x-text="kpis.critical"></div>
     </div>
   
-    <!-- Test Scenarios (muted, compact) -->
-    <div class="card p-4 text-slate-500">
+    <!-- Support KPI (muted) — full width on mobile, normal on md+ -->
+    <div class="card p-4 text-slate-500 col-span-2 md:col-span-1">
       <div class="kpi-label">Test Scenarios</div>
       <div class="text-lg font-medium text-slate-600" x-text="kpis.inScope"></div>
     </div>
