@@ -399,4 +399,14 @@ html.modal-open, body.modal-open { overflow: hidden !important; }
 .kpi-muted .kpi-value { line-height: 1.1; }
 .kpi-muted .kpi-label { font-weight: 600; }
 
+/* Slim, pill-like info row for mobile */
+.pill-slim{
+  display:inline-flex; align-items:center; gap:.5rem;
+  padding:.5rem .75rem; border-radius:9999px;
+  background:var(--card); border:1px solid var(--border);
+  box-shadow:var(--shadow); font-size:14px; color:var(--muted);
+}
+.pill-slim b{ color:var(--ink); font-weight:600; }
+
+
 
