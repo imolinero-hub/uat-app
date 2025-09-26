@@ -135,12 +135,16 @@
     <div class="card p-4"><div class="kpi-label">Blocker / Critical</div><div class="kpi-value mt-1" :class="kpis.critical>5 ? 'text-rose-400' : (kpis.critical>=3 ? 'text-amber-300' : '')" x-text="kpis.critical"></div></div>
   </section>
 
-  <!-- Current scope (mobile) -->
-  <section class="md:hidden">
-    <div class="card scope-card"><span class="scope-label">Current scope:</span><span class="scope-value" x-text="kpis.inScope"></span><span class="scope-tail">test scenarios</span></div>
-  </section>
-  <!-- Current scope (desktop, subtle) -->
-  <div class="hidden md:flex justify-end -mt-2 mb-6"><div class="text-xs text-slate-400 dark:text-slate-500">Scope: <span class="font-medium text-slate-600 dark:text-slate-300" x-text="kpis.inScope"></span> test scenarios</div></div>
+  <!-- ============================== Scope ============================== -->
+  <!-- Mobile: centered pill -->
+  <div class="md:hidden">
+    <div class="scope-banner mt-2 mb-4"><span class="scope-label">Current scope:</span><span class="scope-value" x-text="kpis.inScope"></span><span class="scope-suffix">test scenarios</span></div>
+  </div>
+  
+  <!-- Desktop: small right-aligned caption under the KPI row -->
+  <div class="hidden md:flex items-center justify-end pr-2 mb-2">
+    <div class="scope-inline"><span>Scope:</span><strong x-text="kpis.inScope"></strong><span>test scenarios</span></div>
+  </div>
 
   
   <!-- ================= Daily Status Panel ================= -->
