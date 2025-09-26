@@ -305,3 +305,37 @@ html.modal-open, body.modal-open { overflow: hidden !important; }
 .issue-chip {
   margin-top: .25rem;         /* smaller gap */
 }
+
+/* === Key Dates (mobile-first polish) ============================= */
+.kd-card{
+  display:flex; align-items:center; justify-content:space-between; gap:14px;
+  padding:14px 16px; border-radius:16px;
+  background:var(--card); border:1px solid var(--border);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(2,6,23,.05));
+  transition: box-shadow .15s ease, transform .15s ease;
+}
+.kd-card + .kd-card{ margin-top:12px; }
+.kd-card:hover{ box-shadow: var(--shadow, 0 6px 18px rgba(2,6,23,.08)); }
+
+.kd-left{ min-width:0; }
+.kd-title{ font-weight:700; line-height:1.2; }
+.kd-sub{ margin-top:4px; font-size:12px; color:var(--muted); white-space:normal; }
+
+.kd-right{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.kd-pill{
+  padding:6px 12px; border-radius:999px; font-size:12px;
+  background:#f1f5f9; border:1px solid #e2e8f0; color:#0f172a;
+}
+.kd-pill.kd-accent{ background:#eef2ff; border-color:#e0e7ff; color:#4338ca; }
+
+/* Desktop timeline pills look consistent */
+.kd-pill--ghost{
+  padding:4px 10px; border-radius:999px; font-size:12px;
+  background:transparent; border:1px solid var(--border); color:inherit;
+}
+
+/* a touch more “card” on phones */
+@media (max-width: 768px){
+  .kd-card{ padding:16px; border-radius:18px; }
+  .kd-title{ font-size:16px; }
+}
