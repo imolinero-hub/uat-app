@@ -133,6 +133,10 @@
     </div>
     <div class="card p-4"><div class="kpi-label">Open Defects</div><div class="kpi-value mt-1" x-text="kpis.openDefects"></div></div>
     <div class="card p-4"><div class="kpi-label">Blocker / Critical</div><div class="kpi-value mt-1" :class="kpis.critical>5 ? 'text-rose-400' : (kpis.critical>=3 ? 'text-amber-300' : '')" x-text="kpis.critical"></div></div>
+    <div class="card p-4 kpi-muted col-span-2 md:col-span-1">
+      <div class="kpi-label text-slate-400 dark:text-slate-500">Test Scenarios</div>
+      <div class="kpi-value mt-1 text-2xl font-semibold text-slate-700 dark:text-slate-100" x-text="kpis.inScope"></div>
+    </div>
   </section>
 
   <!-- ============================== Scope ============================== -->
