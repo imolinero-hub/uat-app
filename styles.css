@@ -339,3 +339,31 @@ html.modal-open, body.modal-open { overflow: hidden !important; }
   .kd-card{ padding:16px; border-radius:18px; }
   .kd-title{ font-size:16px; }
 }
+
+
+/* Scope strip (mobile) */
+.scope-card{
+  display:flex; align-items:center; gap:.5rem;
+  padding:14px 16px; border-radius:14px;
+  background: var(--card, #fff);
+  border: 1px solid rgba(15,23,42,.08);
+  box-shadow: 0 6px 18px rgba(2,6,23,.06);
+}
+
+.scope-label{
+  color:#64748b;            /* slate-400 */
+  font-size:.95rem;         /* ~15px */
+}
+
+.scope-value{
+  font-weight:700;
+  font-size:1.05rem;        /* ~17px */
+  color:#0f172a;            /* slate-900 */
+}
+
+.dark .scope-value{ color:#e2e8f0; } /* light-on-dark */
+
+.scope-tail{
+  color:#64748b;            /* slate-400 */
+  font-size:.95rem;
+}
