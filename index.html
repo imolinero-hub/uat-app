@@ -364,18 +364,49 @@
 <!-- Our app script (extracted) -->
 <script src="./app.js"></script>
 
-<!-- Optional PWA registration (still commented)
 <script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    try {
-      const reg = await navigator.serviceWorker.register('./service-worker.js');
-      setInterval(() => reg.update(), 30 * 60 * 1000);
-    } catch (e) { console.warn('SW failed', e); }
-  });
-}
+  function keyDatesAccordion() {
+    return {
+      open: false,
+      items: [],
+      next: null,
+      init(list) {
+        this.items = Array.isArray(list) ? list : [];
+        this.next = this.computeNext(this.items);
+      },
+      computeNext(list) {
+        if (!list || !list.length) return null;
+        const todayMs = new Date(); todayMs.setHours(0,0,0,0);
+
+        const parseStart = (d) => {
+          if (d.date) return new Date(d.date);
+          if (!d.dateRange) return null;
+          const parts = d.dateRange.split(/to|→/i).map(s => s.trim());
+          if (!parts[0]) return null;
+          return new Date(parts[0]);
+        };
+
+        let best = null;
+        for (const d of list) {
+          const start = parseStart(d);
+          if (!start || isNaN(+start)) continue;
+          const startMs = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+          if (startMs >= todayMs && (!best || startMs < best.startMs)) {
+            best = {
+              label: d.label,
+              when: d.date || d.dateRange || '',
+              startMs
+            };
+          }
+        }
+        if (!best) return null;
+
+        const daysUntil = Math.ceil((best.startMs - todayMs) / 86400000);
+        return { ...best, daysUntil };
+      }
+    }
+  }
 </script>
--->
 
 <!-- Footer -->
 <footer class="mt-10 pb-6 text-center text-xs text-slate-400 opacity-70 select-none">
