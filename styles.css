@@ -367,3 +367,29 @@ html.modal-open, body.modal-open { overflow: hidden !important; }
   color:#64748b;            /* slate-400 */
   font-size:.95rem;
 }
+
+/* --- Scope banner (mobile) --- */
+.scope-banner{
+  display:flex; align-items:center; justify-content:center; gap:.5rem;
+  padding:.8rem 1rem; border-radius:14px;
+  background: var(--card); border:1px solid var(--border); box-shadow: var(--shadow);
+}
+
+.scope-label{ color: var(--muted); font-size:.9rem }
+.scope-value{ font-weight:700; font-size:1rem }
+.scope-suffix{ color: var(--muted); font-size:.9rem }
+
+/* push it away from the chart below a bit more on narrow screens */
+@media (max-width: 767px){
+  .scope-banner{ margin-top:.25rem; margin-bottom:1rem; }
+}
+
+/* --- Scope inline (desktop) --- */
+.scope-inline{
+  color: var(--muted);
+  font-size:.9rem;
+}
+.scope-inline strong{
+  color: var(--text);
+  font-weight:700; margin:0 .25rem;
+}
