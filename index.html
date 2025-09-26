@@ -123,19 +123,54 @@
   </section>-->
 
   <!-- ============================== KPIs ============================== -->
-  <!-- 2-up on mobile, 4-up on desktop -->
-  <section class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3 mb-6">
-    <div class="card p-4"><div class="kpi-label">Executed %</div><div class="kpi-value mt-1 font-bold" :class="(kpis.execColorClass||kpiColor(kpis.executedPct))" x-text="fmtPct(kpis.executedPct)"></div>
-      <div class="text-xs text-slate-400 mt-1 flex items-center gap-2">Planned today: <span class="kpi-planned" x-text="fmtPct(kpis.plannedExecutedPct||0)"></span><span class="kpi-delta" x-text="kpis.execDelta>=0 ? ('▲ '+kpis.execDelta+'pp') : ('▼ '+Math.abs(kpis.execDelta)+'pp')"></span></div>
+  <section class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+    <!-- Executed % -->
+    <div class="card p-4">
+      <div class="kpi-label">Executed %</div>
+      <div class="kpi-value mt-1 font-bold"
+           :class="(kpis.execColorClass||kpiColor(kpis.executedPct))"
+           x-text="fmtPct(kpis.executedPct)"></div>
+      <div class="text-xs text-slate-400 mt-1 flex items-center gap-2">
+        Planned today:
+        <span class="kpi-planned" x-text="fmtPct(kpis.plannedExecutedPct||0)"></span>
+        <span class="kpi-delta"
+              x-text="kpis.execDelta>=0 ? ('▲ '+kpis.execDelta+'pp') : ('▼ '+Math.abs(kpis.execDelta)+'pp')"></span>
+      </div>
     </div>
-    <div class="card p-4"><div class="kpi-label">Pass %</div><div class="kpi-value mt-1 font-bold" :class="(kpis.passColorClass||kpiColor(kpis.passPct))" x-text="fmtPct(kpis.passPct)"></div>
-      <div class="text-xs text-slate-400 mt-1 flex items-center gap-2">Planned today: <span class="kpi-planned" x-text="fmtPct(kpis.plannedPassPct||0)"></span><span class="kpi-delta" x-text="kpis.passDelta>=0 ? ('▲ '+kpis.passDelta+'pp') : ('▼ '+Math.abs(kpis.passDelta)+'pp')"></span></div>
+  
+    <!-- Pass % -->
+    <div class="card p-4">
+      <div class="kpi-label">Pass %</div>
+      <div class="kpi-value mt-1 font-bold"
+           :class="(kpis.passColorClass||kpiColor(kpis.passPct))"
+           x-text="fmtPct(kpis.passPct)"></div>
+      <div class="text-xs text-slate-400 mt-1 flex items-center gap-2">
+        Planned today:
+        <span class="kpi-planned" x-text="fmtPct(kpis.plannedPassPct||0)"></span>
+        <span class="kpi-delta"
+              x-text="kpis.passDelta>=0 ? ('▲ '+kpis.passDelta+'pp') : ('▼ '+Math.abs(kpis.passDelta)+'pp')"></span>
+      </div>
     </div>
-    <div class="card p-4"><div class="kpi-label">Open Defects</div><div class="kpi-value mt-1" x-text="kpis.openDefects"></div></div>
-    <div class="card p-4"><div class="kpi-label">Blocker / Critical</div><div class="kpi-value mt-1" :class="kpis.critical>5 ? 'text-rose-400' : (kpis.critical>=3 ? 'text-amber-300' : '')" x-text="kpis.critical"></div></div>
+  
+    <!-- Open Defects -->
+    <div class="card p-4">
+      <div class="kpi-label">Open Defects</div>
+      <div class="kpi-value mt-1" x-text="kpis.openDefects"></div>
+    </div>
+  
+    <!-- Blocker / Critical -->
+    <div class="card p-4">
+      <div class="kpi-label">Blocker / Critical</div>
+      <div class="kpi-value mt-1"
+           :class="kpis.critical>5 ? 'text-rose-400' : (kpis.critical>=3 ? 'text-amber-300' : '')"
+           x-text="kpis.critical"></div>
+    </div>
+  
+    <!-- Test Scenarios (muted, compact) -->
     <div class="card p-4 kpi-muted col-span-2 md:col-span-1">
       <div class="kpi-label text-slate-400 dark:text-slate-500">Test Scenarios</div>
-      <div class="kpi-value mt-1 text-2xl font-semibold text-slate-700 dark:text-slate-100" x-text="kpis.inScope"></div>
+      <div class="kpi-value mt-1 text-2xl font-semibold text-slate-700 dark:text-slate-100"
+           x-text="kpis.inScope"></div>
     </div>
   </section>
 
