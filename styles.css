@@ -408,7 +408,24 @@ html.modal-open, body.modal-open { overflow: hidden !important; }
 /* keep spacing consistent inside the toolbar row */
 .header-v2 .hdr-row .scope-inline { margin-left: .25rem; }
 
-
+/* --- Header v2: mobile stability & wrapping fixes --- */
+.header-v2 .hdr-row {
+  flex-wrap: wrap;
+}
+.header-v2 .pill {
+  white-space: nowrap;
+  line-height: 1;
+  height: auto;
+}
+.header-v2 .pill svg {
+  flex-shrink: 0;
+  margin-right: 6px;
+}
+.header-v2 .cta { margin-left: auto; }
+@media (max-width: 480px) {
+  .header-v2 .hdr-row { gap: 6px; }
+  .header-v2 .pill { padding: 6px 10px; font-size: .8rem; }
+  
 /* Lighter emphasis for the “Test Scenarios” KPI */
 .kpi-muted .kpi-value { line-height: 1.1; }
 .kpi-muted .kpi-label { font-weight: 600; }
