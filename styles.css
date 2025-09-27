@@ -449,7 +449,7 @@ html.modal-open, body.modal-open { overflow: hidden !important; }
 .header-v2 .cta { margin-left: auto; }
 @media (max-width: 480px) {
   .header-v2 .hdr-row { gap: 6px; }
-  .header-v2 .pill { padding: 6px 10px; font-size: .8rem; }
+  .header-v2 .pill { padding: 7px 11px; font-size: .8rem; }
 
 /* Scope chip: desktop-only, tiny type */
 .header-v2 .scope-inline { display: none; }
