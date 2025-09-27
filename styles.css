@@ -228,6 +228,31 @@ html.modal-open, body.modal-open { overflow: hidden !important; }
 .header-v2 .divider{height:1px;background:rgba(148,163,184,.35); margin-top:.75rem}
 .dark .header-v2 .divider{background:rgba(71,85,105,.6)}                /* slate-700-ish */
 
+/* --- Mobile-only sizing polish for header (≤480px) --- */
+@media (max-width: 480px) {
+  /* Daily Status button: slightly smaller than desktop */
+  .header-v2 .cta {
+    padding: 8px 12px;        /* was 10px 14px */
+    font-size: 0.92rem;       /* aligns with pill text */
+    border-radius: 12px;      /* a touch tighter */
+    box-shadow: 0 2px 6px rgba(0,0,0,.06);
+  }
+
+  /* RAG badge: nudge down to match the button/pills */
+  .header-v2 .rag {
+    padding: 5px 9px;         /* was 6px 10px */
+    font-size: 0.84rem;
+  }
+
+  /* Countdown / Info pills: small nudge so nothing feels oversized */
+  .header-v2 .pill {
+    padding: 7px 10px;        /* was 8px 12px */
+  }
+
+  /* Keep header row compact */
+  .header-v2 .hdr-row { gap: 6px; }
+}
+
 
 /* ===== Issues list polish (mobile-first, works in light/dark) ===== */
 .issue-card{
