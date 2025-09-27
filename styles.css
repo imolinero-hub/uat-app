@@ -425,6 +425,10 @@ html.modal-open, body.modal-open { overflow: hidden !important; }
 @media (max-width: 480px) {
   .header-v2 .hdr-row { gap: 6px; }
   .header-v2 .pill { padding: 6px 10px; font-size: .8rem; }
+
+/* Scope chip: desktop-only, tiny type */
+.header-v2 .scope-inline { display: none; }
+@media (min-width: 768px){.header-v2 .scope-inline {display: inline-flex; align-items: center; font-size: 12px; line-height: 1;}}
   
 /* Lighter emphasis for the “Test Scenarios” KPI */
 .kpi-muted .kpi-value { line-height: 1.1; }
