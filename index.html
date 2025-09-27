@@ -81,7 +81,7 @@
                      dark:text-slate-300 dark:bg-slate-800/50 dark:border-slate-700/60"
               aria-label="Scope (test scenarios)"
               title="Total test scenarios in scope">
-              Scope: <b class="ml-1" x-text="kpis.inScope"></b>
+              Scope: <b class="ml-1" x-text="kpis.inScope"></b><span class="ml-1 opacity-70">scenarios</span>
             </span>
             
           </div>
@@ -117,7 +117,19 @@
         </svg>
         <span class="font-medium">Info</span>
       </button>
-  
+
+      <!-- NEW: desktop-only scope chip -->
+      <span class="mx-1 hidden md:inline">•</span>
+      <span
+        class="hidden md:inline-flex items-center gap-1 px-2 py-[2px] rounded-full text-[12px] leading-none
+               text-slate-500 bg-slate-100/70 border border-slate-200/70 
+               dark:text-slate-300 dark:bg-slate-800/50 dark:border-slate-700/60"
+        aria-label="Scope (test scenarios)"
+        title="Total test scenarios in scope">
+        Scope: <b class="ml-1" x-text="kpis.inScope"></b><span class="ml-1 opacity-70">scenarios</span>
+      </span>
+
+      
       <button class="cta" style="margin-left:auto" @click="openDaily()">Daily Status</button>
     </div>
   
