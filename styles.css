@@ -387,12 +387,26 @@ html.modal-open, body.modal-open { overflow: hidden !important; }
 /* --- Scope inline (desktop) --- */
 .scope-inline{
   color: var(--muted);
-  font-size:.9rem;
+  font-size: .85rem;          /* was .9rem */
+  line-height: 1;             /* keeps it tight like the buttons */
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
 }
 .scope-inline strong{
   color: var(--text);
-  font-weight:700; margin:0 .25rem;
+  font-weight: 600;           /* lighter than 700 to reduce visual weight */
+  font-size: .85rem;          /* inherit the same size, no jump */
 }
+.scope-inline .suffix{
+  color: var(--muted);
+  font-weight: 400;
+  font-size: .82rem;          /* a hair smaller for 'scenarios' */
+  letter-spacing: .1px;
+}
+
+/* keep spacing consistent inside the toolbar row */
+.header-v2 .hdr-row .scope-inline { margin-left: .25rem; }
 
 
 /* Lighter emphasis for the “Test Scenarios” KPI */
