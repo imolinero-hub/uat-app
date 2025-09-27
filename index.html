@@ -107,11 +107,12 @@
       </button>
 
       <!-- desktop-only Scope chip -->
-      <span class="mx-1 hidden md:inline">•</span>
-      <span class="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full
-               text-[12px] font-normal leading-tight
-               text-slate-500 bg-slate-100 border border-slate-200
-               dark:text-slate-300 dark:bg-slate-800 dark:border-slate-700">Scope: <span class="font-medium" x-text="kpis.inScope"></span> scenarios</span>
+<-!!      <span class="mx-1 hidden md:inline">•</span>-->
+      <span class="mx-1 hidden md:inline">*</span>
+      <span class="hidden md:inline-flex scope-inline">
+        Scope: <strong x-text="kpis.inScope"></strong>
+        <span class="suffix">scenarios</span>
+      </span>
       
       <button class="cta" style="margin-left:auto" @click="openDaily()">Daily Status</button>
     </div>
