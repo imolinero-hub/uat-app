@@ -6,19 +6,19 @@ This testing also verifies the integration with critical back-office systems (e.
 
 ---
 
-## 🌍 Scope includes
+**Scope includes**  
 - **Countries:** Spain, Portugal, Netherlands, Belgium, Greece, Denmark, Norway, Finland, Sweden, UK, Ireland  
 - **Platforms:** Web, App, BOSS, Partner Systems  
 - **Functional areas:** Sales, eCommerce, Marketing, Contact Center, Transaction Center, Final Mile, Finance, Translation & Localization, Analytics, Data Governance, Legal, Security (ISR), Technology  
 
 ---
 
-## 📊 Cadence & Reporting
+**Cadence & Reporting**  
 - Daily stand-ups at **15:00 CET**  
 - Executive status report in Confluence ~**17:00 CET**  
 - Ongoing defect triage with cross-functional teams  
 
 ---
 
-## 👥 Effort
+**Effort**  
 This coordinated effort involves **100+ testers** from multiple departments, validating **2,000+ scenarios** to ensure a high-quality, stable rollout.  
