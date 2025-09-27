@@ -159,6 +159,68 @@ html.modal-open, body.modal-open { overflow: hidden !important; }
 .header-dot { width: .28rem; height: .28rem; border-radius: 9999px; background: rgba(148,163,184,.6); }
 .theme-dark .header-dot { background: rgba(156,163,175,.6); }
 
+/* ===== Info / Daily modal — spacing & rhythm polish ===== */
+
+/* Headings: clearer hierarchy and breathing room */
+.modal-body h1 { 
+  font-size: 1.65rem;        /* ≈ text-2xl */
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0 0 .85rem 0;
+}
+.modal-body h2 { 
+  font-size: 1.15rem;        /* ≈ text-lg */
+  font-weight: 700;
+  margin: 1.25rem 0 .65rem 0;
+  padding-bottom: .35rem;
+  border-bottom: 1px solid rgba(148,163,184,.25); /* subtle divider */
+}
+.modal-body h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 1rem 0 .5rem 0;
+}
+
+/* Paragraphs and lists: more legible line-height & spacing */
+.modal-body p {
+  line-height: 1.65;
+  margin: .5rem 0 .9rem 0;
+}
+
+.modal-body ul { 
+  margin: .35rem 0 1.1rem 0; 
+  padding-left: 1.25rem;     /* keeps bullets off the text */
+}
+.modal-body li { 
+  margin: .35rem 0; 
+  line-height: 1.55;
+}
+
+/* “label: value” lines look tidy even when they wrap */
+.modal-body strong { 
+  font-weight: 700;
+}
+
+/* Tiny bump for emoji bullets so they align with text */
+.modal-body li::marker { 
+  font-size: 1.05em;
+}
+
+/* Horizontal rule helper (if you add any in MD later) */
+.modal-body hr {
+  border: 0;
+  height: 1px;
+  background: rgba(148,163,184,.25);
+  margin: 1rem 0;
+}
+
+/* Keep a little more inner padding so borders don't feel cramped */
+.modal-body {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+
 /* ====== Mobile card polish ====== */
 
 /* Increase card radius, deeper shadow on mobile */
