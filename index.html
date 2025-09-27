@@ -72,6 +72,18 @@
             <span class="font-medium" x-text="raw.overview?.release || 'RI-4'"></span>
             <span class="mx-1">•</span>
             Data as of <span x-text="asOf || '-'"></span>
+
+            <!-- NEW: desktop-only scope chip -->
+            <span class="mx-1 hidden md:inline">•</span>
+            <span
+              class="hidden md:inline-flex items-center gap-1 px-2 py-[2px] rounded-full text-[12px] leading-none
+                     text-slate-500 bg-slate-100/70 border border-slate-200/70 
+                     dark:text-slate-300 dark:bg-slate-800/50 dark:border-slate-700/60"
+              aria-label="Scope (test scenarios)"
+              title="Total test scenarios in scope">
+              Scope: <b class="ml-1" x-text="kpis.inScope"></b>
+            </span>
+            
           </div>
         </div>
       </div>
