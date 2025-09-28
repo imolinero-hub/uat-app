@@ -277,6 +277,16 @@ html.modal-open, body.modal-open { overflow: hidden !important; }
   box-shadow:0 1px 0 rgba(0,0,0,.03)}
 .dark .header-v2 .pill{background:rgba(15,23,42,.7); border-color:rgba(51,65,85,.8)} /* dark */
 
+/* Dark mode – make "pill" button text/icons readable */
+.theme-dark .header-v2 .pill{
+  color: rgba(248,250,252,.92);        /* text + SVG stroke (currentColor) */
+  background: rgba(15,23,42,.70);      /* keep the subtle dark pill */
+  border-color: rgba(71,85,105,.75);   /* slate-600-ish */
+}
+
+/* optional: soften the tiny SVG calendar/info inner stroke in dark */
+.theme-dark .header-v2 .pill svg { opacity: .85; }
+
 .header-v2 .cta{padding:10px 14px;border-radius:14px;color:#fff;border:0;font-weight:600;
   box-shadow:0 1px 0 rgba(0,0,0,.05); background:linear-gradient(90deg,#6366f1,#22c55e)}
 
