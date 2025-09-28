@@ -155,7 +155,7 @@ html.modal-open, body.modal-open { overflow: hidden !important; }
 .modal-body li { margin: .2rem 0; }
 
 .header-subtle { font-size: .8125rem; color: #94a3b8; }
-.theme-dark .header-subtle { color: #9ca3af; }
+.theme-dark .header-subtle { color: #e5e7eb; }
 .header-dot { width: .28rem; height: .28rem; border-radius: 9999px; background: rgba(148,163,184,.6); }
 .theme-dark .header-dot { background: rgba(156,163,175,.6); }
 
