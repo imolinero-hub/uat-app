@@ -348,6 +348,18 @@ html.modal-open, body.modal-open { overflow: hidden !important; }
 .issue-rail{ display:flex; flex-direction:column; align-items:flex-start; gap:8px; }
 .issue-id{ font-weight:700; color:#2563eb; letter-spacing:.2px; }
 
+/* Improve Issue ID legibility in dark mode */
+.theme-dark .issue-id,
+.theme-dark .issue-id a {
+  color: #8bb7ff;              /* high-contrast, accessible blue */
+}
+.theme-dark .issue-id a:hover,
+.theme-dark .issue-id a:focus {
+  color: #a8c8ff;              /* a touch brighter on interaction */
+  text-decoration: underline;  /* clearer affordance on hover/focus */
+}
+
+
 .priority-chip{
   display:inline-flex; align-items:center; gap:6px;
   padding:2px 8px; border-radius:999px; font-size:12px; font-weight:600;
