@@ -170,37 +170,12 @@
            :class="kpis.critical>5 ? 'text-rose-400' : (kpis.critical>=3 ? 'text-amber-300' : '')"
            x-text="kpis.critical"></div>
     </div>
-
-    <!-- ============================== Scope ============================== -->
-    <!-- Test Scenarios (desktop KPI card, muted style) 
-    <div class="card p-4 hidden md:block">
-      <div class="kpi-label text-slate-500">Test Scenarios</div>
-      <div class="mt-1 text-slate-500 text-base"><span x-text="kpis.inScope"></span></div>
-    </div>-->
-
-    <!-- Test Scenarios (desktop KPI card) 
-    <div class="card p-4 hidden md:block">
-      <div class="kpi-label">Test Scenarios</div>
-      <div class="kpi-value mt-1 text-slate-700" x-text="kpis.inScope"></div>
-    </div>-->
-  </section>
+   </section>
   
   <!-- Mobile-only slim pill row, centered and narrower than cards -->
   <div class="md:hidden flex justify-center mb-6">
-    <div class="pill-slim">
-      Current scope: <b x-text="kpis.inScope"></b> test scenarios
-    </div>
+    <div class="pill-slim">Current scope: <b x-text="kpis.inScope"></b> test scenarios</div>
   </div>
-
-  <!-- Mobile: centered pill -->
-  <!--<div class="md:hidden">
-    <div class="scope-banner mt-2 mb-4"><span class="scope-label">Current scope:</span><span class="scope-value" x-text="kpis.inScope"></span><span class="scope-suffix">test scenarios</span></div>
-  </div>-->
-  
-  <!-- Desktop: small right-aligned caption under the KPI row 
-  <div class="hidden md:flex items-center justify-end pr-2 mb-2">
-    <div class="scope-inline"><span>Scope:</span><strong x-text="kpis.inScope"></strong><span>test scenarios</span></div>
-  </div>-->
 
   
   <!-- ================= Daily Status Panel ================= -->
