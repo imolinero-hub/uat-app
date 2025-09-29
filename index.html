@@ -252,11 +252,10 @@
            :href="it.link" target="_blank" rel="noopener">
   
           <!-- Left column: fixed rail so ID and chip align -->
-          <div class="issue-rail shrink-0">
-            <div class="font-semibold text-indigo-600 underline decoration-indigo-300 underline-offset-2">
-              <span x-text="it.key"></span>
-            </div>
-  
+          <div class="issue-id">
+            <a :href="it.link" target="_blank" rel="noopener" x-text="it.key"></a>
+          </div>
+            
             <!-- Priority chip -->
             <span class="issue-chip inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full"
                   :style="it.priority==='Critical'
