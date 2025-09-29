@@ -93,7 +93,7 @@
            @keydown.escape.window="open=false"
            @click.outside="open=false">
       
-        <!-- Use a real button to avoid role/tabindex parsing quirks -->
+        <!-- Badge with simplified tooltip -->
         <button type="button"
                 class="rag rag-btn"
                 :class="{
@@ -101,18 +101,17 @@
                   'is-amber': (healthBadge.class||'').includes('rag-amber'),
                   'is-red'  : (healthBadge.class||'').includes('rag-red')
                 }"
-                :title="healthBadge.tooltip" 
+                :title="(healthBadge.tooltip || '').replace(/^Set manually.*?:\s*/, '')"  
                 @click="open = !open">
           <span x-text="healthBadge.label"></span>
         </button>
-      
-        <!-- Mobile popover (hidden on ≥ md) -->
+        
+        <!-- Mobile popover -->
         <div class="rag-pop md:hidden" x-show="open" x-transition.origin.top.center>
           <div class="rag-pop__arrow"></div>
-          <div class="rag-pop__body" x-text="healthBadge.tooltip"></div>
+          <div class="rag-pop__body" x-text="(healthBadge.tooltip || '').replace(/^Set manually.*?:\s*/, '')"></div>
         </div>
       </div>
-      
     </div>
   
     <!-- Row 2: pills + primary CTA -->
