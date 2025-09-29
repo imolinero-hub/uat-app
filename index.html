@@ -87,31 +87,30 @@
             x-text="healthBadge.label">
       </span> -->
 
-      <!-- Pastel RAG badge (desktop hover via title; mobile tap popover) -->
-      <div class="rag-wrap md:relative"
-           x-data="{ open:false }"
-           @keydown.escape.window="open=false"
-           @click.outside="open=false">
+      <!-- Badge -->
+      <span
+        class="rag"
+        :class="{
+          'is-green': (healthBadge.class||'').includes('rag-green'),
+          'is-amber': (healthBadge.class||'').includes('rag-amber'),
+          'is-red'  : (healthBadge.class||'').includes('rag-red')
+        }"
+        :title="(healthBadge.tooltip || '').split('•').slice(-1)[0].trim()"
+        role="button" tabindex="0"
+        @click="open = !open"
+        @keydown.enter.prevent="open = !open"
+        @keydown.space.prevent="open = !open"
+      >
+        <span x-text="healthBadge.label"></span>
+      </span>
       
-        <!-- Badge with simplified tooltip -->
-        <button type="button"
-                class="rag rag-btn"
-                :class="{
-                  'is-green': (healthBadge.class||'').includes('rag-green'),
-                  'is-amber': (healthBadge.class||'').includes('rag-amber'),
-                  'is-red'  : (healthBadge.class||'').includes('rag-red')
-                }"
-                :title="(healthBadge.tooltip || '').replace(/^Set manually.*?:\s*/, '')"  
-                @click="open = !open">
-          <span x-text="healthBadge.label"></span>
-        </button>
-        
-        <!-- Mobile popover -->
-        <div class="rag-pop md:hidden" x-show="open" x-transition.origin.top.center>
-          <div class="rag-pop__arrow"></div>
-          <div class="rag-pop__body" x-text="(healthBadge.tooltip || '').replace(/^Set manually.*?:\s*/, '')"></div>
-        </div>
+      <!-- Mobile popover -->
+      <div class="rag-pop md:hidden" x-show="open" x-transition.origin.top.center>
+        <div class="rag-pop__arrow"></div>
+        <div class="rag-pop__body"
+             x-text="(healthBadge.tooltip || '').split('•').slice(-1)[0].trim()"></div>
       </div>
+<!--      </div>-->
     </div>
   
     <!-- Row 2: pills + primary CTA -->
