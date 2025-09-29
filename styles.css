@@ -568,16 +568,34 @@ html.modal-open, body.modal-open { overflow: hidden !important; }
   cursor: pointer;
 }
 
-/* container */
+/* prevent initial flash for x-show content */
+[x-cloak] { display: none !important; }
+
+/* the small mobile popover */
 .rag-pop {
   position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
+  top: calc(100% + 6px);
+  right: 0;
   z-index: 40;
-  max-width: 260px;
-  filter: drop-shadow(0 8px 24px rgba(0,0,0,.15));
+  background: var(--card, #fff);
+  border: 1px solid var(--border, rgba(148,163,184,.25));
+  box-shadow: var(--shadow, 0 8px 24px rgba(0,0,0,.08));
+  border-radius: 10px;
+  padding: .5rem .6rem;
+  font-size: .85rem;
+  line-height: 1.2;
+  width: 12rem;
 }
-
+.rag-pop__arrow {
+  position: absolute;
+  top: -6px; right: 14px;
+  width: 12px; height: 12px;
+  background: inherit;
+  border-left: 1px solid var(--border, rgba(148,163,184,.25));
+  border-top: 1px solid var(--border, rgba(148,163,184,.25));
+  transform: rotate(45deg);
+}
+  
 /* bubble */
 .rag-pop__body {
   border-radius: 10px;
@@ -587,17 +605,6 @@ html.modal-open, body.modal-open { overflow: hidden !important; }
   background: #ffffff;
   color: #0f172a;              /* slate-900-ish */
   border: 1px solid rgba(148,163,184,.25); /* slate-300/25 */
-}
-
-/* arrow */
-.rag-pop__arrow {
-  position: absolute;
-  top: -6px; left: 14px;
-  width: 12px; height: 12px;
-  background: #ffffff;
-  border-left: 1px solid rgba(148,163,184,.25);
-  border-top: 1px solid rgba(148,163,184,.25);
-  transform: rotate(45deg);
 }
 
 /* dark theme */
