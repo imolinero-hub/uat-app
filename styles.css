@@ -552,5 +552,54 @@ html.modal-open, body.modal-open { overflow: hidden !important; }
 }
 .pill-slim b{ color:var(--ink); font-weight:600; }
 
+/* ---- RAG mobile popover ---- */
+.rag-wrap { position: relative; display: inline-block; }
+
+/* click target feels button-like on touch */
+.header-v2 .rag { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+
+/* container */
+.rag-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 40;
+  max-width: 260px;
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,.15));
+}
+
+/* bubble */
+.rag-pop__body {
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: .85rem;
+  line-height: 1.25rem;
+  background: #ffffff;
+  color: #0f172a;              /* slate-900-ish */
+  border: 1px solid rgba(148,163,184,.25); /* slate-300/25 */
+}
+
+/* arrow */
+.rag-pop__arrow {
+  position: absolute;
+  top: -6px; left: 14px;
+  width: 12px; height: 12px;
+  background: #ffffff;
+  border-left: 1px solid rgba(148,163,184,.25);
+  border-top: 1px solid rgba(148,163,184,.25);
+  transform: rotate(45deg);
+}
+
+/* dark theme */
+.theme-dark .rag-pop__body {
+  background: rgba(17,24,39,.98);         /* near slate-900 */
+  color: rgba(241,245,249,.92);           /* slate-100/92 */
+  border-color: rgba(71,85,105,.45);      /* slate-600/45 */
+}
+.theme-dark .rag-pop__arrow {
+  background: rgba(17,24,39,.98);
+  border-color: rgba(71,85,105,.45);
+}
+
 
 
