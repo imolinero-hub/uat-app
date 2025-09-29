@@ -99,7 +99,7 @@
                 'is-amber': (healthBadge.class||'').includes('rag-amber'),
                 'is-red'  : (healthBadge.class||'').includes('rag-red')
               }"
-              :title="(healthBadge.tooltip || '').split('•')[0].trim()"
+              :title="(healthBadge.tooltip || '').split('•').slice(-1)[0].trim()"
               role="button" tabindex="0"
               :aria-expanded="isOpen ? 'true' : 'false'"
               @click="isOpen = !isOpen"
