@@ -97,9 +97,9 @@
                 'is-amber': (healthBadge.class||'').includes('rag-amber'),
                 'is-red'  : (healthBadge.class||'').includes('rag-red')
               }"
-              :title="healthBadge.tooltip"           <!-- desktop: keep native title -->
-              role="button" tabindex="0"             <!-- a11y -->
-              @click="open = !open"                  <!-- mobile: toggle popover -->
+              :title="healthBadge.tooltip"     
+              role="button" tabindex="0" 
+              @click="open = !open" 
               @keydown.enter.prevent="open = !open"
               @keydown.space.prevent="open = !open"
         >
