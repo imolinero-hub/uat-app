@@ -556,7 +556,17 @@ html.modal-open, body.modal-open { overflow: hidden !important; }
 .rag-wrap { position: relative; display: inline-block; }
 
 /* click target feels button-like on touch */
-.header-v2 .rag { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.header-v2 .rag { -webkit-tap-highlight-color: transparent; }
+
+/* make the badge button behave like the old chip visually */
+.rag-btn {
+  background: transparent;        /* we use the .rag chip styling */
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
 
 /* container */
 .rag-pop {
