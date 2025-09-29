@@ -88,27 +88,34 @@
       </span> -->
 
       <!-- Badge -->
-      <span
-        class="rag"
-        :class="{
-          'is-green': (healthBadge.class||'').includes('rag-green'),
-          'is-amber': (healthBadge.class||'').includes('rag-amber'),
-          'is-red'  : (healthBadge.class||'').includes('rag-red')
-        }"
-        :title="(healthBadge.tooltip || '').split('•').slice(-1)[0].trim()"
-        role="button" tabindex="0"
-        @click="open = !open"
-        @keydown.enter.prevent="open = !open"
-        @keydown.space.prevent="open = !open"
-      >
-        <span x-text="healthBadge.label"></span>
-      </span>
+      <!-- Pastel RAG badge (desktop hover + mobile tap) -->
+      <div class="rag-wrap md:relative"
+           x-data="{ open:false }"
+           @click.outside="open = false"
+           @keydown.escape.window="open = false">
       
-      <!-- Mobile popover -->
-      <div class="rag-pop md:hidden" x-show="open" x-transition.origin.top.center>
-        <div class="rag-pop__arrow"></div>
-        <div class="rag-pop__body"
-             x-text="(healthBadge.tooltip || '').split('•').slice(-1)[0].trim()"></div>
+        <span class="rag"
+              :class="{
+                'is-green': (healthBadge.class||'').includes('rag-green'),
+                'is-amber': (healthBadge.class||'').includes('rag-amber'),
+                'is-red'  : (healthBadge.class||'').includes('rag-red')
+              }"
+              :title="(healthBadge.tooltip || '').split('•').slice(-1)[0].trim()"  <!-- desktop tooltip: last bullet only -->
+              role="button"
+              tabindex="0"
+              :aria-expanded="open ? 'true' : 'false'"
+              @click="open = !open"
+              @keydown.enter.prevent="open = !open"
+              @keydown.space.prevent="open = !open">
+          <span x-text="healthBadge.label"></span>
+        </span>
+      
+        <!-- Mobile-only popover -->
+        <div class="rag-pop md:hidden" x-cloak x-show="open" x-transition.origin.top.center>
+          <div class="rag-pop__arrow"></div>
+          <div class="rag-pop__body"
+               x-text="(healthBadge.tooltip || '').split('•').slice(-1)[0].trim()"></div>
+        </div>
       </div>
     </div>
   
