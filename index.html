@@ -256,16 +256,14 @@
             <a :href="it.link" target="_blank" rel="noopener" x-text="it.key"></a>
           </div>
             
-            <!-- Priority chip -->
-            <span class="issue-chip inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full"
-                  :style="it.priority==='Critical'
-                    ? 'background:#fef2f2;color:#e11d48;border:1px solid #fee2e2'
-                    : 'background:#fffbeb;color:#b45309;border:1px solid #fef3c7'">
-              <span class="inline-block w-2 h-2 rounded-full"
-                    :style="it.priority==='Critical' ? 'background:#fb7185' : 'background:#f59e0b'"></span>
-              <span x-text="it.priority"></span>
-            </span>
-          </div>
+          <!-- Priority chip -->
+          <span class="issue-chip inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full"
+                :style="it.priority==='Critical'
+                  ? 'background:#fef2f2;color:#e11d48;border:1px solid #fee2e2'
+                  : 'background:#fffbeb;color:#b45309;border:1px solid #fef3c7'">
+            <span class="inline-block w-2 h-2 rounded-full"
+                  :style="it.priority==='Critical' ? 'background:#fb7185' : 'background:#f59e0b'"></span>
+            <span x-text="it.priority"></span>
   
           <!-- Main column -->
           <div class="flex-1 min-w-0">
