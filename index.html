@@ -87,26 +87,26 @@
             x-text="healthBadge.label">
       </span> -->
 
-      <!-- Pastel RAG badge (desktop hover + mobile tap) -->
-      <div class="rag-wrap md:relative" x-data="{ open:false }"
-           @keydown.escape.window="open=false" @click.outside="open=false">
+      <!-- Pastel RAG badge (desktop hover via title; mobile tap popover) -->
+      <div class="rag-wrap md:relative"
+           x-data="{ open:false }"
+           @keydown.escape.window="open=false"
+           @click.outside="open=false">
       
-        <span class="rag"
-              :class="{
-                'is-green': (healthBadge.class||'').includes('rag-green'),
-                'is-amber': (healthBadge.class||'').includes('rag-amber'),
-                'is-red'  : (healthBadge.class||'').includes('rag-red')
-              }"
-              :title="healthBadge.tooltip"     
-              role="button" tabindex="0" 
-              @click="open = !open" 
-              @keydown.enter.prevent="open = !open"
-              @keydown.space.prevent="open = !open"
-        >
+        <!-- Use a real button to avoid role/tabindex parsing quirks -->
+        <button type="button"
+                class="rag rag-btn"
+                :class="{
+                  'is-green': (healthBadge.class||'').includes('rag-green'),
+                  'is-amber': (healthBadge.class||'').includes('rag-amber'),
+                  'is-red'  : (healthBadge.class||'').includes('rag-red')
+                }"
+                :title="healthBadge.tooltip" 
+                @click="open = !open">
           <span x-text="healthBadge.label"></span>
-        </span>
+        </button>
       
-        <!-- Mobile popover (hidden ≥ md) -->
+        <!-- Mobile popover (hidden on ≥ md) -->
         <div class="rag-pop md:hidden" x-show="open" x-transition.origin.top.center>
           <div class="rag-pop__arrow"></div>
           <div class="rag-pop__body" x-text="healthBadge.tooltip"></div>
