@@ -100,7 +100,7 @@
                 'is-amber': (healthBadge.class||'').includes('rag-amber'),
                 'is-red'  : (healthBadge.class||'').includes('rag-red')
               }"
-              :title="(healthBadge.tooltip || '').split('•').slice(-1)[0].trim()"  <!-- desktop tooltip: last bullet only -->
+              :title="(healthBadge.tooltip || '').split('•').slice(-1)[0].trim()" 
               role="button"
               tabindex="0"
               :aria-expanded="open ? 'true' : 'false'"
