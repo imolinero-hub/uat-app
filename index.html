@@ -251,11 +251,10 @@
         <div class="font-medium">Execution Over Time</div>
 <!--        <span class="pill">Executed% · Pass%</span>-->
 
-        <!-- Pair toggles -->
-        <div class="flex gap-2">
-          <button class="pill pill-toggle" :class="{ 'is-active': execPairOn }" @click="toggleExecPair()">Executed%</button>
-          <button class="pill pill-toggle" :class="{ 'is-active': passPairOn }" @click="togglePassPair()">Pass%</button>
-        </div>
+          <div class="flex gap-2">
+            <button class="pill" :class="execPairOn ? 'pill-on' : 'pill-off'" @click="toggleExecPair()">Executed%</button>
+            <button class="pill" :class="passPairOn ? 'pill-on' : 'pill-off'" @click="togglePassPair()">Pass%</button>
+          </div>
      
       </div>
       <div class="chart-wrap"><canvas id="execChart"></canvas></div>
