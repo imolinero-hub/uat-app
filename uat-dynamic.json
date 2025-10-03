@@ -29,26 +29,26 @@
   ],
 
   "defectsDaily": [
-    { "date": "2025-10-13", "openDefects": 300 },
-    { "date": "2025-10-14", "openDefects": 280 },
-    { "date": "2025-10-15", "openDefects": 260 },
-    { "date": "2025-10-16", "openDefects": 240 },
-    { "date": "2025-10-17", "openDefects": 220 },
-    { "date": "2025-10-20", "openDefects": 200 },
-    { "date": "2025-10-21", "openDefects": 180 },
-    { "date": "2025-10-22", "openDefects": 160 },
-    { "date": "2025-10-23", "openDefects": 140 },
-    { "date": "2025-10-24", "openDefects": 130 },
-    { "date": "2025-10-27", "openDefects": 120 },
-    { "date": "2025-10-28", "openDefects": 110 },
-    { "date": "2025-10-29", "openDefects": 90  },
-    { "date": "2025-10-30", "openDefects": 80  },
-    { "date": "2025-10-31", "openDefects": 70  },
-    { "date": "2025-11-01", "openDefects": 60  },
-    { "date": "2025-11-04", "openDefects": 50  },
-    { "date": "2025-11-05", "openDefects": 40  },
-    { "date": "2025-11-06", "openDefects": 35  },
-    { "date": "2025-11-07", "openDefects": 30  }
+    { "date": "2025-10-13", "openDefects": 16 },
+    { "date": "2025-10-14", "openDefects": 52 },
+    { "date": "2025-10-15", "openDefects": 81 },
+    { "date": "2025-10-16", "openDefects": 118 },
+    { "date": "2025-10-17", "openDefects": 175 },
+    { "date": "2025-10-20", "openDefects": 226 },
+    { "date": "2025-10-21", "openDefects": 278 },
+    { "date": "2025-10-22", "openDefects": 298 },
+    { "date": "2025-10-23", "openDefects": 262 },
+    { "date": "2025-10-24", "openDefects": 268 },
+    { "date": "2025-10-27", "openDefects": 263 },
+    { "date": "2025-10-28", "openDefects": 204 },
+    { "date": "2025-10-29", "openDefects": 163  },
+    { "date": "2025-10-30", "openDefects": 145  },
+    { "date": "2025-10-31", "openDefects": 120  },
+    { "date": "2025-11-01", "openDefects": 73  },
+    { "date": "2025-11-04", "openDefects": 51  },
+    { "date": "2025-11-05", "openDefects": 35  },
+    { "date": "2025-11-06", "openDefects": 31  },
+    { "date": "2025-11-07", "openDefects": 32  }
   ],
 
   "issues": [
@@ -84,6 +84,7 @@
     }
   ]
 }
+
 
 
 
