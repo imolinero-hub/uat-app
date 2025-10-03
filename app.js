@@ -102,6 +102,10 @@ function app(){
     // charts
     execChart:null, defectChart:null,
 
+   // visibility of pairs (actual + planned)
+   execPairOn: true,
+   passPairOn: true,
+
     // UI
     theme:'theme-dark',
     countdown:{ title:'UAT Days', label:'—', pct:0, pctShow:false, subtitle:'' },
