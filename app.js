@@ -429,50 +429,83 @@ function app(){
         }
       });  */
 
+      // destroy previous chart if any
       if (this.execChart) this.execChart.destroy();
+      
       const isMobile = window.matchMedia('(max-width: 640px)').matches;
+      
       this.execChart = new Chart(document.getElementById('execChart'), {
-        this.applyPairVisibility();
         type: 'line',
         data: {
           labels,
           datasets: [
             // Actuals
-            { label: 'Executed %',
-              data: exec, borderColor:'#60a5fa', backgroundColor:'#60a5fa',
-              tension:.25, spanGaps:true, pointRadius:0, pointStyle:'line', borderWidth:2.5,
+            {
+              label: 'Executed %',
+              data: exec,
+              borderColor: '#60a5fa',
+              backgroundColor: '#60a5fa',
+              tension: 0.25,
+              spanGaps: true,
+              pointRadius: 0,
+              pointStyle: 'line',
+              borderWidth: 2.5,
               hidden: !this.execPairOn
             },
-            { label: 'Pass %',
-              data: pass, borderColor:'#7a78fa', backgroundColor:'#7a78fa',
-              tension:.25, spanGaps:true, pointRadius:0, pointStyle:'line', borderWidth:2.5,
+            {
+              label: 'Pass %',
+              data: pass,
+              borderColor: '#7a78fa',
+              backgroundColor: '#7a78fa',
+              tension: 0.25,
+              spanGaps: true,
+              pointRadius: 0,
+              pointStyle: 'line',
+              borderWidth: 2.5,
               hidden: !this.passPairOn
             },
-         
-            // Planned (show/hide with the same toggle as their actual)
-            { label: 'Executed % (Planned)',
-              data: plannedExec, borderColor:'#64748b', backgroundColor:'transparent',
-              borderDash:[6,4], tension:.25, spanGaps:true, pointRadius:0, pointStyle:'line', borderWidth:1.5,
+      
+            // Planned (visibility tied to their actuals)
+            {
+              label: 'Executed % (Planned)',
+              data: plannedExec,
+              borderColor: '#64748b',
+              backgroundColor: 'transparent',
+              borderDash: [6, 4],
+              tension: 0.25,
+              spanGaps: true,
+              pointRadius: 0,
+              pointStyle: 'line',
+              borderWidth: 1.5,
               hidden: !this.execPairOn
             },
-            { label: 'Pass % (Planned)',
-              data: plannedPass, borderColor:'#cbd5e1', backgroundColor:'transparent',
-              borderDash:[6,4], tension:.25, spanGaps:true, pointRadius:0, pointStyle:'line', borderWidth:1.5,
+            {
+              label: 'Pass % (Planned)',
+              data: plannedPass,
+              borderColor: '#cbd5e1',
+              backgroundColor: 'transparent',
+              borderDash: [6, 4],
+              tension: 0.25,
+              spanGaps: true,
+              pointRadius: 0,
+              pointStyle: 'line',
+              borderWidth: 1.5,
               hidden: !this.passPairOn
             }
           ]
         },
         options: {
-          ...common,                              // keep your shared options
+          ...common,
           scales: {
-            x: {                                  // keep your time axis
+            x: {
               type: 'time',
               time: { unit: 'day', displayFormats: { day: 'MMM dd' } },
               tooltipFormat: 'MMM dd, yyyy',
               grid: { color: 'rgba(148,163,184,.2)' }
             },
             y: {
-              beginAtZero: true, max: 100,
+              beginAtZero: true,
+              max: 100,
               ticks: { callback: v => v + '%' },
               grid: { color: 'rgba(148,163,184,.2)' }
             }
@@ -487,17 +520,17 @@ function app(){
                 padding: isMobile ? 8 : 12,
                 font: { size: isMobile ? 11 : 12 }
               },
-              onClick: null   // ← disable legend toggling; we use our buttons
+              onClick: null // we toggle via the two header buttons, not the legend
             },
-            tooltip: { /* keep your callbacks as-is */ }
-          },
-      
-            // Keep your date title, add % label
             tooltip: {
               callbacks: {
                 title: (ctx) => {
                   const d = ctx[0].parsed.x;
-                  return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                  return new Date(d).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                  });
                 },
                 label: (ctx) => `${ctx.dataset.label}: ${Math.round(ctx.parsed.y)}%`
               }
@@ -505,6 +538,11 @@ function app(){
           }
         }
       });
+      
+      // AFTER creation: ensure pair visibility and render
+      if (typeof this.applyPairVisibility === 'function') this.applyPairVisibility();
+      this.execChart.update('none');
+
        
        
       // Defect Burndown
