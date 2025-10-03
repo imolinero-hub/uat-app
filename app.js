@@ -436,44 +436,28 @@ function app(){
         data: {
           labels,
           datasets: [
-            // Actuals — keep strong colors, thicker stroke
+            // Actuals
             { label: 'Executed %',
-              data: exec,
-              borderColor: '#60a5fa',             // you had #60a5fa
-              backgroundColor: '#60a5fa',
-              tension: .25, spanGaps: true,
-              pointRadius: 0, pointStyle: 'line',
-              borderWidth: 2.5
+              data: exec, borderColor:'#60a5fa', backgroundColor:'#60a5fa',
+              tension:.25, spanGaps:true, pointRadius:0, pointStyle:'line', borderWidth:2.5,
+              hidden: !this.execPairOn
             },
             { label: 'Pass %',
-              data: pass,
-              borderColor: '#7a78fa',             // your violet
-              backgroundColor: '#7a78fa',
-              tension: .25, spanGaps: true,
-              pointRadius: 0, pointStyle: 'line',
-              borderWidth: 2.5
+              data: pass, borderColor:'#7a78fa', backgroundColor:'#7a78fa',
+              tension:.25, spanGaps:true, pointRadius:0, pointStyle:'line', borderWidth:2.5,
+              hidden: !this.passPairOn
             },
-      
-            // Planned — lighter, dashed, thinner, HIDDEN by default
+         
+            // Planned (show/hide with the same toggle as their actual)
             { label: 'Executed % (Planned)',
-              data: plannedExec,
-              borderColor: '#64748b',             // slate-500-ish
-              backgroundColor: 'transparent',
-              borderDash: [6, 4],
-              tension: .25, spanGaps: true,
-              pointRadius: 0, pointStyle: 'line',
-              borderWidth: 1.5,
-              hidden: true
+              data: plannedExec, borderColor:'#64748b', backgroundColor:'transparent',
+              borderDash:[6,4], tension:.25, spanGaps:true, pointRadius:0, pointStyle:'line', borderWidth:1.5,
+              hidden: !this.execPairOn
             },
             { label: 'Pass % (Planned)',
-              data: plannedPass,
-              borderColor: '#cbd5e1',             // slate-300-ish
-              backgroundColor: 'transparent',
-              borderDash: [6, 4],
-              tension: .25, spanGaps: true,
-              pointRadius: 0, pointStyle: 'line',
-              borderWidth: 1.5,
-              hidden: true
+              data: plannedPass, borderColor:'#cbd5e1', backgroundColor:'transparent',
+              borderDash:[6,4], tension:.25, spanGaps:true, pointRadius:0, pointStyle:'line', borderWidth:1.5,
+              hidden: !this.passPairOn
             }
           ]
         },
@@ -492,53 +476,20 @@ function app(){
               grid: { color: 'rgba(148,163,184,.2)' }
             }
           },
-          plugins: {
-            ...(common.plugins || {}),
-      
-            // CLICKABLE LEGEND (+ Solo with Ctrl/Cmd/Shift)
-            legend: {
-              position: 'top',
-              labels: {
-                usePointStyle: true,
-                boxWidth: isMobile ? 8 : 10,
-                padding: isMobile ? 8 : 12,
-                font: { size: isMobile ? 11 : 12 }
-              },
-              onClick: (e, item, legend) => {
-                const chart = legend.chart;
-                const idx = item.datasetIndex;
-            
-                // Map: dataset index -> its paired planned/actual index
-                // (0: Executed, 1: Pass, 2: Executed Planned, 3: Pass Planned)
-                const pair = { 0: 2, 2: 0, 1: 3, 3: 1 };
-                const pairIdx = pair[idx];
-            
-                const solo = e?.native && (e.native.ctrlKey || e.native.metaKey || e.native.shiftKey);
-            
-                if (solo) {
-                  // Solo the clicked pair: show the pair, hide everything else
-                  chart.data.datasets.forEach((_, i) => {
-                    const inPair = (i === idx || i === pairIdx);
-                    chart.getDatasetMeta(i).hidden = inPair ? null : true;
-                  });
-                  chart.update();
-                  return;
-                }
-            
-                // Normal toggle: mirror visibility to the pair
-                const meta = chart.getDatasetMeta(idx);
-                const willShow = (meta.hidden === true);       // currently hidden -> will show
-                meta.hidden = (meta.hidden === null) ? true : null;
-            
-                if (pairIdx != null) {
-                  const metaPair = chart.getDatasetMeta(pairIdx);
-                  // Mirror the clicked dataset's visibility
-                  metaPair.hidden = willShow ? null : true;
-                }
-            
-                chart.update();
-              }
-            },
+plugins: {
+  ...(common.plugins || {}),
+  legend: {
+    position: 'top',
+    labels: {
+      usePointStyle: true,
+      boxWidth: isMobile ? 8 : 10,
+      padding: isMobile ? 8 : 12,
+      font: { size: isMobile ? 11 : 12 }
+    },
+    onClick: null   // ← disable legend toggling; we use our buttons
+  },
+  tooltip: { /* keep your callbacks as-is */ }
+},
       
             // Keep your date title, add % label
             tooltip: {
