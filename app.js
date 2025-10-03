@@ -931,6 +931,3 @@ function app(){
  * ===================================================== */
 document.addEventListener('alpine:init',()=>{ Alpine.data('app', app) });
 
-this.execPairOn = true; // show Executed pair by default
-this.passPairOn = true; // show Pass pair by default
-
