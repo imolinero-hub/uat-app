@@ -116,6 +116,29 @@ function app(){
     // Daily Status modal
     dailyOpen:false, dailyHtml:'',
 
+   applyPairVisibility(){
+     if (!this.execChart) return;
+     // dataset indices: 0 Executed, 1 Pass, 2 Executed (Planned), 3 Pass (Planned)
+     const pairs = [[0,2], [1,3]];
+     const on = [this.execPairOn, this.passPairOn];
+   
+     pairs.forEach((pair, i) => {
+       pair.forEach(idx => {
+         this.execChart.getDatasetMeta(idx).hidden = on[i] ? null : true;
+       });
+     });
+     this.execChart.update();
+   },
+   toggleExecPair(){
+     this.execPairOn = !this.execPairOn;
+     this.applyPairVisibility();
+   },
+   togglePassPair(){
+     this.passPairOn = !this.passPairOn;
+     this.applyPairVisibility();
+   },
+
+     
     // ---------------- lifecycle ----------------
     async init(){
       let staticData = {};
