@@ -19,7 +19,6 @@ This testing also verifies the integration with critical back-office systems (e.
 **📊 Cadence & Reporting**  
 - Daily stand-ups at **15:00 CET**  
 - Executive status report in Confluence ~**17:00 CET**  
-- Ongoing defect triage with cross-functional teams  
 
 
 ---
