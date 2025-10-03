@@ -220,6 +220,33 @@ html.modal-open, body.modal-open { overflow: hidden !important; }
   padding-right: 1rem;
 }
 
+/* Segmented 2-button toggle (mobile-first) */
+.seg-2 {
+  display:inline-flex;
+  gap:2px;
+  padding:2px;
+  border-radius:9999px;
+  background:rgba(148,163,184,.15);
+}
+.seg-2 button {
+  padding:4px 10px;
+  font-size:.75rem;        /* small for mobile */
+  line-height:1;
+  border-radius:9999px;
+  border:0;
+  background:transparent;
+  cursor:pointer;
+}
+.seg-2 button.active {
+  background:#fff;
+  box-shadow:0 1px 2px rgba(0,0,0,.06);
+}
+.theme-dark .seg-2 { background: rgba(148,163,184,.25); }
+.theme-dark .seg-2 button.active {
+  background: rgba(2,6,23,.6);
+  box-shadow: inset 0 0 0 1px rgba(148,163,184,.2);
+}
+
 
 /* ====== Mobile card polish ====== */
 
