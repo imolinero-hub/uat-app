@@ -598,7 +598,8 @@ function app(){
       ];
       return lines.join('\n');
     },
-    copyDaily(){ if(this.dailyHtml){ navigator.clipboard.writeText(this.htmlToText(this.dailyHtml)); } },
+
+/*    copyDaily(){ if(this.dailyHtml){ navigator.clipboard.writeText(this.htmlToText(this.dailyHtml)); } },
     downloadDaily(){
       const text = this.dailyHtml ? this.htmlToText(this.dailyHtml) : '';
       const blob = new Blob([text], {type:'text/markdown'});
@@ -606,8 +607,84 @@ function app(){
       a.href = URL.createObjectURL(blob);
       a.download = `Daily_Status_${(this.asOf||'').replace(/[: ]/g,'_')}.md`;
       a.click(); URL.revokeObjectURL(a.href);
-    },
+    }, */
 
+   async copyDaily(){
+     const html = this.dailyHtml || '';
+     if (!html) return;
+   
+     const plain = this.htmlToText ? this.htmlToText(html) : (new DOMParser())
+       .parseFromString(html, 'text/html').body.innerText;
+   
+     // Prefer rich clipboard (HTML) with plain-text fallback
+     try{
+       if (window.ClipboardItem){
+         await navigator.clipboard.write([
+           new ClipboardItem({
+             'text/html': new Blob([html], { type: 'text/html' }),
+             'text/plain': new Blob([plain], { type: 'text/plain' })
+           })
+         ]);
+       }else{
+         // Older browsers: fallback to text
+         await navigator.clipboard.writeText(plain);
+       }
+       this.toast?.('Daily Status copied');
+     }catch(e){
+       // Final fallback
+       try{
+         await navigator.clipboard.writeText(plain);
+         this.toast?.('Copied as plain text');
+       }catch{
+         console.error(e);
+         this.toast?.('Copy failed');
+       }
+     }
+   },
+
+   downloadDaily(){
+     const title = `Daily Status ${this.asOf || ''}`.trim();
+     const doc   = this.buildDailyHtmlDoc({ title, bodyHtml: this.dailyHtml || '' });
+     const blob  = new Blob([doc], { type: 'text/html;charset=utf-8' });
+     const a     = document.createElement('a');
+     a.href      = URL.createObjectURL(blob);
+     a.download  = `Daily_Status_${(this.asOf||'').replace(/[: ]/g,'-')}.html`;
+     a.click();
+     URL.revokeObjectURL(a.href);
+   },
+
+     
+   buildDailyHtmlDoc({ title, bodyHtml }){
+     const css = `
+       body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5;color:#111;
+            padding:24px;max-width:760px;margin:0 auto;background:#fff;}
+       h1{font-size:24px;margin:0 0 12px;}
+       h2{font-size:20px;margin:20px 0 8px;}
+       h3{font-size:16px;margin:18px 0 6px;}
+       p{margin:8px 0;}
+       ul{padding-left:22px;margin:8px 0;}
+       li{margin:4px 0;}
+       hr{border:0;border-top:1px solid #e5e7eb;margin:16px 0;}
+       strong{font-weight:600;}
+       .meta{color:#555;margin-bottom:8px}
+     `.trim();
+   
+     // bodyHtml is what you already render from Markdown (this.dailyHtml)
+     return `<!doctype html>
+   <html>
+   <head>
+     <meta charset="utf-8">
+     <title>${title || 'UAT Daily Status'}</title>
+     <meta name="viewport" content="width=device-width, initial-scale=1">
+     <style>${css}</style>
+   </head>
+   <body>
+     <article>${bodyHtml}</article>
+   </body>
+   </html>`;
+   },
+
+       
     /* =====================================================
      * 10) Markdown helpers + utilities
      * ===================================================== */
