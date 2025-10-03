@@ -480,20 +480,35 @@ function app(){
               onClick: (e, item, legend) => {
                 const chart = legend.chart;
                 const idx = item.datasetIndex;
-      
-                // Solo mode if a modifier key is held
+            
+                // Map: dataset index -> its paired planned/actual index
+                // (0: Executed, 1: Pass, 2: Executed Planned, 3: Pass Planned)
+                const pair = { 0: 2, 2: 0, 1: 3, 3: 1 };
+                const pairIdx = pair[idx];
+            
                 const solo = e?.native && (e.native.ctrlKey || e.native.metaKey || e.native.shiftKey);
+            
                 if (solo) {
+                  // Solo the clicked pair: show the pair, hide everything else
                   chart.data.datasets.forEach((_, i) => {
-                    chart.getDatasetMeta(i).hidden = (i === idx) ? null : true;
+                    const inPair = (i === idx || i === pairIdx);
+                    chart.getDatasetMeta(i).hidden = inPair ? null : true;
                   });
                   chart.update();
                   return;
                 }
-      
-                // Normal toggle
+            
+                // Normal toggle: mirror visibility to the pair
                 const meta = chart.getDatasetMeta(idx);
-                meta.hidden = meta.hidden === null ? true : null;
+                const willShow = (meta.hidden === true);       // currently hidden -> will show
+                meta.hidden = (meta.hidden === null) ? true : null;
+            
+                if (pairIdx != null) {
+                  const metaPair = chart.getDatasetMeta(pairIdx);
+                  // Mirror the clicked dataset's visibility
+                  metaPair.hidden = willShow ? null : true;
+                }
+            
                 chart.update();
               }
             },
