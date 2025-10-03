@@ -432,6 +432,7 @@ function app(){
       if (this.execChart) this.execChart.destroy();
       const isMobile = window.matchMedia('(max-width: 640px)').matches;
       this.execChart = new Chart(document.getElementById('execChart'), {
+        this.applyPairVisibility();
         type: 'line',
         data: {
           labels,
@@ -476,20 +477,20 @@ function app(){
               grid: { color: 'rgba(148,163,184,.2)' }
             }
           },
-plugins: {
-  ...(common.plugins || {}),
-  legend: {
-    position: 'top',
-    labels: {
-      usePointStyle: true,
-      boxWidth: isMobile ? 8 : 10,
-      padding: isMobile ? 8 : 12,
-      font: { size: isMobile ? 11 : 12 }
-    },
-    onClick: null   // ← disable legend toggling; we use our buttons
-  },
-  tooltip: { /* keep your callbacks as-is */ }
-},
+          plugins: {
+            ...(common.plugins || {}),
+            legend: {
+              position: 'top',
+              labels: {
+                usePointStyle: true,
+                boxWidth: isMobile ? 8 : 10,
+                padding: isMobile ? 8 : 12,
+                font: { size: isMobile ? 11 : 12 }
+              },
+              onClick: null   // ← disable legend toggling; we use our buttons
+            },
+            tooltip: { /* keep your callbacks as-is */ }
+          },
       
             // Keep your date title, add % label
             tooltip: {
