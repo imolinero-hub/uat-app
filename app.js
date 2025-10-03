@@ -128,7 +128,7 @@ function app(){
      if (ds[3]) ds[3].hidden = !this.passPairOn; // Pass % (Planned)
    
      if (commit) this.execChart.update('none');
-   }
+   },
      
    toggleExecPair(){
      this.execPairOn = !this.execPairOn;
