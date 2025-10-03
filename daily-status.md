@@ -13,15 +13,8 @@
 ### 📊 Status Summary
 - **Executed:** 100% (Planned: 100% · Δ +0pp)  
 - **Pass rate:** 95% (Planned: 95% · Δ +0pp)  
-- **Open defects:** 4  
-- **Blocker/Critical:** 2  
-
----
-
-### 🐞 Defect Overview
-- Open defects: 4  
-- Blocker/Critical: 2  
-- Trend: **Stable compared to yesterday**  
+- **Open defects:** 4 (2 blocker/critical)  
+- **Trend:** **Stable compared to yesterday**
 
 ---
 
@@ -33,3 +26,4 @@
 ### ✅ Next Steps
 - Continue retesting open defects.  
 - Maintain focus on **high-severity defect resolution**.  
+
