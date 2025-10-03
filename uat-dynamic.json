@@ -1,5 +1,5 @@
 {
-  "asOf": "2025-09-29 15:44", 
+  "asOf": "2025-10-03 10:47", 
   "health": {
     "status": "amber", 
     "comment": "too many defects"
@@ -53,37 +53,38 @@
 
   "issues": [
     {
-      "key": "22058",
-      "priority": "Critical",
-      "summary": "iOS app crashes on product detail page",
-      "reporter": "Jakub",
-      "team": "Mobile",
-      "platform": "App",
+      "key": "21896",
+      "priority": "Blocker",
+      "summary": "Cannot register user in Germany",
+      "reporter": "Sowmya",
+      "team": "Technology",
+      "platform": "All",
       "status": "Open",
-      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-22058"
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-21896"
     },
     {
-      "key": "22059",
-      "priority": "Blocker",
-      "summary": "Payment service outage blocks checkout on Web",
-      "reporter": "Helena",
-      "team": "eCommerce",
+      "key": "19223",
+      "priority": "Critical",
+      "summary": "Slovenia: Verification code not received via given e-mail address",
+      "reporter": "Beata Gramatyka",
+      "team": "Customer Service",
       "platform": "Web",
       "status": "Open",
-      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-22059"
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-19223"
     },
     {
-      "key": "22060",
+      "key": "19996",
       "priority": "Critical",
-      "summary": "Translation missing for 'Add to Cart' button (IT)",
-      "reporter": "Juan",
-      "team": "Localization",
-      "platform": "BOSS",
+      "summary": "Mobile registrations - iOS - Romania - Sponsoring Validation doesn't Work",
+      "reporter": "Alexandru Costache",
+      "team": "Technology",
+      "platform": "App",
       "status": "Open",
-      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-22060"
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-19996"
     }
   ]
 }
+
 
 
 
