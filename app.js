@@ -370,7 +370,7 @@ function app(){
         return this.plannedPassPct(day);
       });
 
-      if (this.execChart) this.execChart.destroy();
+ /*     if (this.execChart) this.execChart.destroy();
       this.execChart = new Chart(document.getElementById('execChart'), {
         type: 'line',
         data: {
@@ -400,8 +400,119 @@ function app(){
             }
           }
         }
-      });
+      });  */
 
+      if (this.execChart) this.execChart.destroy();
+      const isMobile = window.matchMedia('(max-width: 640px)').matches;
+      this.execChart = new Chart(document.getElementById('execChart'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            // Actuals — keep strong colors, thicker stroke
+            { label: 'Executed %',
+              data: exec,
+              borderColor: '#60a5fa',             // you had #60a5fa
+              backgroundColor: '#60a5fa',
+              tension: .25, spanGaps: true,
+              pointRadius: 0, pointStyle: 'line',
+              borderWidth: 2.5
+            },
+            { label: 'Pass %',
+              data: pass,
+              borderColor: '#7a78fa',             // your violet
+              backgroundColor: '#7a78fa',
+              tension: .25, spanGaps: true,
+              pointRadius: 0, pointStyle: 'line',
+              borderWidth: 2.5
+            },
+      
+            // Planned — lighter, dashed, thinner, HIDDEN by default
+            { label: 'Executed % (Planned)',
+              data: plannedExec,
+              borderColor: '#64748b',             // slate-500-ish
+              backgroundColor: 'transparent',
+              borderDash: [6, 4],
+              tension: .25, spanGaps: true,
+              pointRadius: 0, pointStyle: 'line',
+              borderWidth: 1.5,
+              hidden: true
+            },
+            { label: 'Pass % (Planned)',
+              data: plannedPass,
+              borderColor: '#cbd5e1',             // slate-300-ish
+              backgroundColor: 'transparent',
+              borderDash: [6, 4],
+              tension: .25, spanGaps: true,
+              pointRadius: 0, pointStyle: 'line',
+              borderWidth: 1.5,
+              hidden: true
+            }
+          ]
+        },
+        options: {
+          ...common,                              // keep your shared options
+          scales: {
+            x: {                                  // keep your time axis
+              type: 'time',
+              time: { unit: 'day', displayFormats: { day: 'MMM dd' } },
+              tooltipFormat: 'MMM dd, yyyy',
+              grid: { color: 'rgba(148,163,184,.2)' }
+            },
+            y: {
+              beginAtZero: true, max: 100,
+              ticks: { callback: v => v + '%' },
+              grid: { color: 'rgba(148,163,184,.2)' }
+            }
+          },
+          plugins: {
+            ...(common.plugins || {}),
+      
+            // CLICKABLE LEGEND (+ Solo with Ctrl/Cmd/Shift)
+            legend: {
+              position: 'top',
+              labels: {
+                usePointStyle: true,
+                boxWidth: isMobile ? 8 : 10,
+                padding: isMobile ? 8 : 12,
+                font: { size: isMobile ? 11 : 12 }
+              },
+              onClick: (e, item, legend) => {
+                const chart = legend.chart;
+                const idx = item.datasetIndex;
+      
+                // Solo mode if a modifier key is held
+                const solo = e?.native && (e.native.ctrlKey || e.native.metaKey || e.native.shiftKey);
+                if (solo) {
+                  chart.data.datasets.forEach((_, i) => {
+                    chart.getDatasetMeta(i).hidden = (i === idx) ? null : true;
+                  });
+                  chart.update();
+                  return;
+                }
+      
+                // Normal toggle
+                const meta = chart.getDatasetMeta(idx);
+                meta.hidden = meta.hidden === null ? true : null;
+                chart.update();
+              }
+            },
+      
+            // Keep your date title, add % label
+            tooltip: {
+              callbacks: {
+                title: (ctx) => {
+                  const d = ctx[0].parsed.x;
+                  return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                },
+                label: (ctx) => `${ctx.dataset.label}: ${Math.round(ctx.parsed.y)}%`
+              }
+            }
+          }
+        }
+      });
+       
+       
       // Defect Burndown
       const dd = this.raw.defectsDaily || [];
       const labelsD = dd.map(r => r.date);
