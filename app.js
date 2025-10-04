@@ -500,7 +500,7 @@ function app(){
                padding:  isMobile ? 8 : 12,
                font:     { size: isMobile ? 11 : 12 }
              },
-             onClick: () => {},   // disable legend toggle safely (no recursion)
+             onClick: () => {}   // disable legend toggle safely (no recursion)
            },
            tooltip: {
              callbacks: {
