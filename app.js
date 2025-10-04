@@ -354,6 +354,7 @@ function app(){
    drawCharts(){
      if (!window.Chart) { console.error('Chart.js not loaded'); return; }
    
+     // NOTE: no `plugins` object here (avoid sharing plugin refs across charts)
      const common = {
        responsive: true,
        maintainAspectRatio: false,
@@ -361,17 +362,14 @@ function app(){
        elements: {
          line:  { borderWidth: 2 },
          point: { radius: 3, hitRadius: 6, hoverRadius: 4 }
-       },
-       plugins: {
-         legend: { position: 'bottom', labels: { color: '#94a3b8', usePointStyle: true } }
        }
      };
    
-     // ---------- Execution Over Time ----------
+     /* ---------- Execution Over Time ---------- */
      const pd = this.raw.progressDaily || [];
      let labels = pd.map(r => r.date);
-     const exec  = pd.map(r => +r.executedPct || 0);
-     const pass  = pd.map(r => +r.passPct     || 0);
+     const exec = pd.map(r => +r.executedPct || 0);
+     const pass = pd.map(r => +r.passPct     || 0);
    
      // Fallback dates when progressDaily is empty
      if (!labels.length) {
@@ -380,19 +378,19 @@ function app(){
        if (biz.length) {
          labels = biz.map(d => new Date(d).toISOString().slice(0,10));
        } else {
-         const N = Math.max(
+         const N  = Math.max(
            this.raw.plannedSeries?.planned_executed_pct?.length || 0,
            this.raw.plannedSeries?.planned_pass_pct?.length     || 0,
            19
          );
          const t0 = new Date();
-         labels = Array.from({length: N}, (_, i) =>
-           new Date(t0.getTime() + i * 86400000).toISOString().slice(0,10)
+         labels   = Array.from({length:N}, (_, i) =>
+           new Date(t0.getTime() + i*86400000).toISOString().slice(0,10)
          );
        }
      }
    
-     // Planned series (use explicit plannedSeries if present; else computed)
+     // Planned series (use provided plannedSeries when present)
      const n = labels.length;
      const plannedExec = Array.from({length:n}, (_, i) => {
        const day = i + 1;
@@ -409,7 +407,6 @@ function app(){
        return this.plannedPassPct(day);
      });
    
-     // Destroy previous instance
      if (this.execChart) this.execChart.destroy();
    
      const isMobile = window.matchMedia('(max-width: 640px)').matches;
@@ -419,17 +416,14 @@ function app(){
        data: {
          labels,
          datasets: [
-           // Actuals (pair #1 and #2)
+           // Actuals
            {
              label: 'Executed %',
              data: exec,
              borderColor: '#60a5fa',
              backgroundColor: '#60a5fa',
-             tension: .25,
-             spanGaps: true,
-             pointRadius: 0,
-             pointStyle: 'line',
-             borderWidth: 2.5,
+             tension: .25, spanGaps: true,
+             pointRadius: 0, pointStyle: 'line', borderWidth: 2.5,
              hidden: !this.execPairOn
            },
            {
@@ -437,11 +431,8 @@ function app(){
              data: pass,
              borderColor: '#7a78fa',
              backgroundColor: '#7a78fa',
-             tension: .25,
-             spanGaps: true,
-             pointRadius: 0,
-             pointStyle: 'line',
-             borderWidth: 2.5,
+             tension: .25, spanGaps: true,
+             pointRadius: 0, pointStyle: 'line', borderWidth: 2.5,
              hidden: !this.passPairOn
            },
    
@@ -451,12 +442,9 @@ function app(){
              data: plannedExec,
              borderColor: '#64748b',
              backgroundColor: 'transparent',
-             borderDash: [6, 4],
-             tension: .25,
-             spanGaps: true,
-             pointRadius: 0,
-             pointStyle: 'line',
-             borderWidth: 1.5,
+             borderDash: [6,4],
+             tension: .25, spanGaps: true,
+             pointRadius: 0, pointStyle: 'line', borderWidth: 1.5,
              hidden: !this.execPairOn
            },
            {
@@ -464,12 +452,9 @@ function app(){
              data: plannedPass,
              borderColor: '#cbd5e1',
              backgroundColor: 'transparent',
-             borderDash: [6, 4],
-             tension: .25,
-             spanGaps: true,
-             pointRadius: 0,
-             pointStyle: 'line',
-             borderWidth: 1.5,
+             borderDash: [6,4],
+             tension: .25, spanGaps: true,
+             pointRadius: 0, pointStyle: 'line', borderWidth: 1.5,
              hidden: !this.passPairOn
            }
          ]
@@ -484,14 +469,13 @@ function app(){
              grid: { color: 'rgba(148,163,184,.2)' }
            },
            y: {
-             beginAtZero: true,
-             max: 100,
+             beginAtZero: true, max: 100,
              ticks: { callback: v => v + '%' },
              grid: { color: 'rgba(148,163,184,.2)' }
            }
          },
+         // Local plugins block (no spread!)
          plugins: {
-           ...(common.plugins || {}),
            legend: {
              position: 'top',
              labels: {
@@ -500,7 +484,7 @@ function app(){
                padding:  isMobile ? 8 : 12,
                font:     { size: isMobile ? 11 : 12 }
              },
-             onClick: () => {}   // disable legend toggle safely (no recursion)
+             onClick: () => {}   // disable legend toggling safely
            },
            tooltip: {
              callbacks: {
@@ -521,7 +505,7 @@ function app(){
      if (typeof this.applyPairVisibility === 'function') this.applyPairVisibility(false);
      this.execChart.update('none');
    
-     // ---------- Defect Burndown ----------
+     /* ---------- Defect Burndown ---------- */
      const dd       = this.raw.defectsDaily || [];
      const labelsD  = dd.map(r => r.date);
      const dataDef  = dd.map(r => Number(r.openDefects ?? 0));
@@ -551,6 +535,20 @@ function app(){
              grid: { color: 'rgba(148,163,184,.2)' }
            },
            y: { beginAtZero: true, grid: { color: 'rgba(148,163,184,.2)' } }
+         },
+         // simple, local plugins; legend off for burndown
+         plugins: {
+           legend: { display: false },
+           tooltip: {
+             callbacks: {
+               title: (ctx) => {
+                 const d = ctx[0].parsed.x;
+                 return new Date(d).toLocaleDateString('en-US', {
+                   year: 'numeric', month: 'short', day: 'numeric'
+                 });
+               }
+             }
+           }
          }
        }
      });
