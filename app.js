@@ -385,7 +385,9 @@ function app(){
              borderColor: '#60a5fa',
              backgroundColor: '#60a5fa',
              tension: .25, spanGaps: true,
-             pointRadius: 0, borderWidth: 2.5,
+             pointStyle: 'line',
+             pointRadius: 0,
+             borderWidth: 3,
              hidden: !this.execPairOn
            },
            // Actual Passed
@@ -395,7 +397,9 @@ function app(){
              borderColor: '#7a78fa',
              backgroundColor: '#7a78fa',
              tension: .25, spanGaps: true,
-             pointRadius: 0, borderWidth: 2.5,
+             pointStyle: 'line',
+             pointRadius: 0,
+             borderWidth: 3,
              hidden: !this.passPairOn
            },
            // Planned Executed
@@ -406,7 +410,9 @@ function app(){
              backgroundColor: 'transparent',
              borderDash: [6,4],
              tension: .25, spanGaps: true,
-             pointRadius: 0, borderWidth: 1.5,
+             pointStyle: 'line',
+             pointRadius: 0,
+             borderWidth: 1.5,
              hidden: !this.execPairOn
            },
            // Planned Passed
@@ -417,7 +423,9 @@ function app(){
              backgroundColor: 'transparent',
              borderDash: [6,4],
              tension: .25, spanGaps: true,
-             pointRadius: 0, borderWidth: 1.5,
+             pointStyle: 'line',
+             pointRadius: 0,
+             borderWidth: 1.5,
              hidden: !this.passPairOn
            }
          ]
