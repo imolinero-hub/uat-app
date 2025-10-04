@@ -394,8 +394,8 @@ function app(){
            {
              label: 'Pass %',
              data: pass,
-             borderColor: '#7a78fa',
-             backgroundColor: '#7a78fa',
+             borderColor: '#34d399',
+             backgroundColor: '#34d399',
              tension: .25, spanGaps: true,
              pointStyle: 'line',
              pointRadius: 0,
