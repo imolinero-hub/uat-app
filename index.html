@@ -249,8 +249,20 @@
     <div class="card p-4">
       <div class="flex items-center justify-between mb-2">
         <div class="font-medium">Execution Over Time</div>
-        <span class="pill">Executed% · Pass%</span>
+        <div class="flex gap-2">
+          <button class="pill"
+                  :class="execPairOn ? 'opacity-100 ring-1 ring-blue-400' : 'opacity-50'"
+                  @click="execPairOn = !execPairOn; drawCharts();">
+            Executed
+          </button>
+          <button class="pill"
+                  :class="passPairOn ? 'opacity-100 ring-1 ring-violet-400' : 'opacity-50'"
+                  @click="passPairOn = !passPairOn; drawCharts();">
+            Passed
+          </button>
+        </div>
       </div>
+      
       <div class="chart-wrap"><canvas id="execChart"></canvas></div>
     </div>
     <div class="card p-4">
