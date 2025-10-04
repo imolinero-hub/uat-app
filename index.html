@@ -249,13 +249,7 @@
     <div class="card p-4">
       <div class="flex items-center justify-between mb-2">
         <div class="font-medium">Execution Over Time</div>
-<!--        <span class="pill">Executed% · Pass%</span>-->
-
-          <div class="flex gap-2">
-            <button class="pill" :class="execPairOn ? 'pill-on' : 'pill-off'" @click="toggleExecPair()">Executed%</button>
-            <button class="pill" :class="passPairOn ? 'pill-on' : 'pill-off'" @click="togglePassPair()">Pass%</button>
-          </div>
-     
+        <span class="pill">Executed% · Pass%</span>
       </div>
       <div class="chart-wrap"><canvas id="execChart"></canvas></div>
     </div>
