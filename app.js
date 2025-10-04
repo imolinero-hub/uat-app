@@ -101,6 +101,8 @@ function app(){
 
     // charts
     execChart:null, defectChart:null,
+    execPairOn: true,
+    passPairOn: true,
 
     // UI
     theme:'theme-dark',
@@ -376,11 +378,50 @@ function app(){
         data: {
           labels,
           datasets: [
-            { label:'Executed %', data:exec, borderColor:'#60a5fa', backgroundColor:'#60a5fa', tension:.25, spanGaps:true },
-            { label:'Pass %',     data:pass, borderColor:'#a78bfa', backgroundColor:'#a78bfa', tension:.25, spanGaps:true },
-            { label:'Executed % (Planned)', data:plannedExec, borderColor:'#64748b', borderDash:[8,6], tension:.25, spanGaps:true, pointRadius:0, pointStyle:'line' },
-            { label:'Pass % (Planned)',     data:plannedPass, borderColor:'#cbd5e1', borderDash:[2,6], tension:.25, spanGaps:true, pointRadius:0, pointStyle:'line' }
-          ]
+            // Actual Executed
+          {
+             label: 'Executed %',
+             data: exec,
+             borderColor: '#60a5fa',
+             backgroundColor: '#60a5fa',
+             tension: .25, spanGaps: true,
+             pointRadius: 0, borderWidth: 2.5,
+             hidden: !this.execPairOn
+           },
+           // Actual Passed
+           {
+             label: 'Pass %',
+             data: pass,
+             borderColor: '#7a78fa',
+             backgroundColor: '#7a78fa',
+             tension: .25, spanGaps: true,
+             pointRadius: 0, borderWidth: 2.5,
+             hidden: !this.passPairOn
+           },
+           // Planned Executed
+           {
+             label: 'Executed % (Planned)',
+             data: plannedExec,
+             borderColor: '#64748b',
+             backgroundColor: 'transparent',
+             borderDash: [6,4],
+             tension: .25, spanGaps: true,
+             pointRadius: 0, borderWidth: 1.5,
+             hidden: !this.execPairOn
+           },
+           // Planned Passed
+           {
+             label: 'Pass % (Planned)',
+             data: plannedPass,
+             borderColor: '#cbd5e1',
+             backgroundColor: 'transparent',
+             borderDash: [6,4],
+             tension: .25, spanGaps: true,
+             pointRadius: 0, borderWidth: 1.5,
+             hidden: !this.passPairOn
+           }
+         ]
+
         },
         options: {
           ...common,
