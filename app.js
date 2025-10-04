@@ -323,99 +323,213 @@ function app(){
     /* =====================================================
      * 5) Charts
      * ===================================================== */
-    drawCharts(){
-      if(!window.Chart){ console.error('Chart.js not loaded'); return; }
+drawCharts(){
+  if (!window.Chart) { console.error('Chart.js not loaded'); return; }
 
-      const common = {
-        responsive:true, maintainAspectRatio:false, animation:false,
-        elements: { line: { borderWidth: 2 }, point: { radius: 3, hitRadius: 6, hoverRadius: 4 } },
-        plugins:{ legend:{ position:'bottom', labels:{ color:'#94a3b8', usePointStyle:true } } }
-      };
+  const common = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+    elements: {
+      line:  { borderWidth: 2 },
+      point: { radius: 3, hitRadius: 6, hoverRadius: 4 }
+    },
+    plugins: {
+      legend: { position: 'bottom', labels: { color: '#94a3b8', usePointStyle: true } }
+    }
+  };
 
-      // Execution Over Time
-      const pd = this.raw.progressDaily || [];
-      let labels = pd.map(r => r.date);
-      const exec = pd.map(r => +r.executedPct || 0);
-      const pass = pd.map(r => +r.passPct || 0);
+  // ---------- Execution Over Time ----------
+  const pd    = this.raw.progressDaily || [];
+  let labels  = pd.map(r => r.date);
+  const exec  = pd.map(r => +r.executedPct || 0);
+  const pass  = pd.map(r => +r.passPct     || 0);
 
-      if (!labels.length) {
-        const cal = BizCal(this.raw.schedule || {});
-        const biz = (cal.start && cal.end) ? cal.businessDays() : [];
-        if (biz.length) {
-          labels = biz.map(d => new Date(d).toISOString().slice(0,10));
-        } else {
-          const N = Math.max(
-            this.raw.plannedSeries?.planned_executed_pct?.length || 0,
-            this.raw.plannedSeries?.planned_pass_pct?.length || 0,
-            19
-          );
-          const t0 = new Date();
-          labels = Array.from({length:N}, (_,i)=> new Date(t0.getTime()+i*86400000).toISOString().slice(0,10));
-        }
-      }
+  // Fallback dates when progressDaily is empty
+  if (!labels.length) {
+    const cal = BizCal(this.raw.schedule || {});
+    const biz = (cal.start && cal.end) ? cal.businessDays() : [];
+    if (biz.length) {
+      labels = biz.map(d => new Date(d).toISOString().slice(0,10));
+    } else {
+      const N  = Math.max(
+        this.raw.plannedSeries?.planned_executed_pct?.length || 0,
+        this.raw.plannedSeries?.planned_pass_pct?.length     || 0,
+        19
+      );
+      const t0 = new Date();
+      labels   = Array.from({ length: N }, (_, i) =>
+        new Date(t0.getTime() + i * 86400000).toISOString().slice(0,10)
+      );
+    }
+  }
 
-      const n = labels.length;
-      const plannedExec = Array.from({length:n}, (_,i)=>{
-        const day = i+1;
-        if (this.raw.plannedSeries?.planned_executed_pct?.length >= day) {
-          return this.raw.plannedSeries.planned_executed_pct[day-1];
-        }
-        return this.plannedExecutedPct(day);
-      });
-      const plannedPass = Array.from({length:n}, (_,i)=>{
-        const day = i+1;
-        if (this.raw.plannedSeries?.planned_pass_pct?.length >= day) {
-          return this.raw.plannedSeries.planned_pass_pct[day-1];
-        }
-        return this.plannedPassPct(day);
-      });
+  // Planned series (use explicit plannedSeries if present; else computed)
+  const n = labels.length;
+  const plannedExec = Array.from({ length: n }, (_, i) => {
+    const day = i + 1;
+    if (this.raw.plannedSeries?.planned_executed_pct?.length >= day) {
+      return this.raw.plannedSeries.planned_executed_pct[day-1];
+    }
+    return this.plannedExecutedPct(day);
+  });
+  const plannedPass = Array.from({ length: n }, (_, i) => {
+    const day = i + 1;
+    if (this.raw.plannedSeries?.planned_pass_pct?.length >= day) {
+      return this.raw.plannedSeries.planned_pass_pct[day-1];
+    }
+    return this.plannedPassPct(day);
+  });
 
-      if (this.execChart) this.execChart.destroy();
-      this.execChart = new Chart(document.getElementById('execChart'), {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [
-            { label:'Executed %', data:exec, borderColor:'#60a5fa', backgroundColor:'#60a5fa', tension:.25, spanGaps:true },
-            { label:'Pass %',     data:pass, borderColor:'#a78bfa', backgroundColor:'#a78bfa', tension:.25, spanGaps:true },
-            { label:'Executed % (Planned)', data:plannedExec, borderColor:'#64748b', borderDash:[8,6], tension:.25, spanGaps:true, pointRadius:0, pointStyle:'line' },
-            { label:'Pass % (Planned)',     data:plannedPass, borderColor:'#cbd5e1', borderDash:[2,6], tension:.25, spanGaps:true, pointRadius:0, pointStyle:'line' }
-          ]
+  // Destroy previous instance
+  if (this.execChart) this.execChart.destroy();
+
+  const isMobile = window.matchMedia('(max-width: 640px)').matches;
+  const showExecPair = (this.execPairOn === false) ? false : true; // default true
+  const showPassPair = (this.passPairOn === false) ? false : true; // default true
+
+  this.execChart = new Chart(document.getElementById('execChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        // NOTE: dataset indices (for future toggles)
+        // 0: Executed %, 1: Pass %, 2: Executed % (Planned), 3: Pass % (Planned)
+
+        // Actuals
+        {
+          label: 'Executed %',
+          data: exec,
+          borderColor: '#60a5fa',
+          backgroundColor: '#60a5fa',
+          tension: .25,
+          spanGaps: true,
+          pointRadius: 0,
+          pointStyle: 'line',
+          borderWidth: 2.5,
+          hidden: !showExecPair
         },
-        options: {
-          ...common,
-          scales: {
-            x: { type:'time', time:{ unit:'day', displayFormats:{ day:'MMM dd' }, tooltipFormat:'MMM dd, yyyy' }, grid:{ color:'rgba(148,163,184,.2)' } },
-            y: { beginAtZero:true, max:100, ticks:{ callback:v=>v+'%' }, grid:{ color:'rgba(148,163,184,.2)' } }
+        {
+          label: 'Pass %',
+          data: pass,
+          borderColor: '#7a78fa',
+          backgroundColor: '#7a78fa',
+          tension: .25,
+          spanGaps: true,
+          pointRadius: 0,
+          pointStyle: 'line',
+          borderWidth: 2.5,
+          hidden: !showPassPair
+        },
+
+        // Planned (lighter, dashed, no points)
+        {
+          label: 'Executed % (Planned)',
+          data: plannedExec,
+          borderColor: '#64748b',
+          backgroundColor: 'transparent',
+          borderDash: [6, 4],
+          tension: .25,
+          spanGaps: true,
+          pointRadius: 0,
+          pointStyle: 'line',
+          borderWidth: 1.5,
+          hidden: !showExecPair
+        },
+        {
+          label: 'Pass % (Planned)',
+          data: plannedPass,
+          borderColor: '#cbd5e1',
+          backgroundColor: 'transparent',
+          borderDash: [6, 4],
+          tension: .25,
+          spanGaps: true,
+          pointRadius: 0,
+          pointStyle: 'line',
+          borderWidth: 1.5,
+          hidden: !showPassPair
+        }
+      ]
+    },
+    options: {
+      ...common,
+      scales: {
+        x: {
+          type: 'time',
+          time: { unit: 'day', displayFormats: { day: 'MMM dd' } },
+          tooltipFormat: 'MMM dd, yyyy',
+          grid: { color: 'rgba(148,163,184,.2)' }
+        },
+        y: {
+          beginAtZero: true,
+          max: 100,
+          ticks: { callback: v => v + '%' },
+          grid: { color: 'rgba(148,163,184,.2)' }
+        }
+      },
+      plugins: {
+        ...(common.plugins || {}),
+        legend: {
+          position: 'top',
+          labels: {
+            usePointStyle: true,
+            boxWidth: isMobile ? 8 : 10,
+            padding:  isMobile ? 8 : 12,
+            font:     { size: isMobile ? 11 : 12 }
           },
-          plugins: {
-            ...(common.plugins || {}),
-            tooltip: {
-              callbacks: {
-                title: (ctx) => {
-                  const d = ctx[0].parsed.x;
-                  return new Date(d).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
-                }
-              }
-            }
+          // Disable legend toggling — we will use header pills instead
+          onClick: () => {}
+        },
+        tooltip: {
+          callbacks: {
+            title: (ctx) => {
+              const d = ctx[0].parsed.x;
+              return new Date(d).toLocaleDateString('en-US', {
+                year: 'numeric', month: 'short', day: 'numeric'
+              });
+            },
+            label: (ctx) => `${ctx.dataset.label}: ${Math.round(ctx.parsed.y)}%`
           }
         }
-      });
+      }
+    }
+  });
 
-      // Defect Burndown
-      const dd = this.raw.defectsDaily || [];
-      const labelsD = dd.map(r => r.date);
-      const dataDef = dd.map(r => Number(r.openDefects ?? 0));
-      const labelsD2 = labelsD.length ? labelsD : [this.asOf || ''];
-      const dataDef2 = dataDef.length ? dataDef : [0];
+  // ---------- Defect Burndown ----------
+  const dd       = this.raw.defectsDaily || [];
+  const labelsD  = dd.map(r => r.date);
+  const dataDef  = dd.map(r => Number(r.openDefects ?? 0));
+  const labelsD2 = labelsD.length ? labelsD : [this.asOf || ''];
+  const dataDef2 = dataDef.length ? dataDef : [0];
 
-      if (this.defectChart) this.defectChart.destroy();
-      this.defectChart = new Chart(document.getElementById('defectChart'), {
-        type:'line',
-        data:{ labels: labelsD2, datasets:[ { label:'Open defects', data:dataDef2, borderColor:'#34d399', backgroundColor:'#34d399', tension:.25, spanGaps:true } ] },
-        options:{ ...common, scales:{ x:{ type:'time', time:{ unit:'day', displayFormats:{ day:'MMM dd' }, tooltipFormat:'MMM dd, yyyy' }, grid:{ color:'rgba(148,163,184,.2)' } }, y:{ beginAtZero:true, grid:{ color:'rgba(148,163,184,.2)' } } } }
-      });
+  if (this.defectChart) this.defectChart.destroy();
+  this.defectChart = new Chart(document.getElementById('defectChart'), {
+    type: 'line',
+    data: {
+      labels: labelsD2,
+      datasets: [{
+        label: 'Open defects',
+        data: dataDef2,
+        borderColor: '#34d399',
+        backgroundColor: '#34d399',
+        tension: .25,
+        spanGaps: true
+      }]
     },
+    options: {
+      ...common,
+      scales: {
+        x: {
+          type: 'time',
+          time: { unit: 'day', displayFormats: { day: 'MMM dd' }, tooltipFormat: 'MMM dd, yyyy' },
+          grid: { color: 'rgba(148,163,184,.2)' }
+        },
+        y: { beginAtZero: true, grid: { color: 'rgba(148,163,184,.2)' } }
+      }
+    }
+  });
+},
+
 
     /* =====================================================
      * 6) Countdown widget
