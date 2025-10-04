@@ -474,30 +474,6 @@ function app(){
              grid: { color: 'rgba(148,163,184,.2)' }
            }
          },
-         // Local plugins block (no spread!)
-         plugins: {
-           legend: {
-             position: 'top',
-             labels: {
-               usePointStyle: true,
-               boxWidth: isMobile ? 8 : 10,
-               padding:  isMobile ? 8 : 12,
-               font:     { size: isMobile ? 11 : 12 }
-             },
-             onClick: () => {}   // disable legend toggling safely
-           },
-           tooltip: {
-             callbacks: {
-               title: (ctx) => {
-                 const d = ctx[0].parsed.x;
-                 return new Date(d).toLocaleDateString('en-US', {
-                   year: 'numeric', month: 'short', day: 'numeric'
-                 });
-               },
-               label: (ctx) => `${ctx.dataset.label}: ${Math.round(ctx.parsed.y)}%`
-             }
-           }
-         }
        }
      });
    
@@ -536,20 +512,6 @@ function app(){
            },
            y: { beginAtZero: true, grid: { color: 'rgba(148,163,184,.2)' } }
          },
-         // simple, local plugins; legend off for burndown
-         plugins: {
-           legend: { display: false },
-           tooltip: {
-             callbacks: {
-               title: (ctx) => {
-                 const d = ctx[0].parsed.x;
-                 return new Date(d).toLocaleDateString('en-US', {
-                   year: 'numeric', month: 'short', day: 'numeric'
-                 });
-               }
-             }
-           }
-         }
        }
      });
    },
