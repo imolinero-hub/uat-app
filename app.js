@@ -378,56 +378,10 @@ function app(){
         data: {
           labels,
           datasets: [
-            // Actual Executed
-            {
-              label: 'Executed %',
-              data: exec,
-              borderColor: '#60a5fa',
-              backgroundColor: '#60a5fa',
-              tension: .25, spanGaps: true,
-              pointStyle: 'line',
-              pointRadius: 3,
-              pointHoverRadius: 4,
-              hidden: !this.execPairOn
-            },
-            // Actual Passed
-            {
-              label: 'Pass %',
-              data: pass,
-              borderColor: '#22c55e',
-              backgroundColor: '#22c55e',
-              tension: .25, spanGaps: true,
-              pointStyle: 'line',
-              pointRadius: 3,
-              pointHoverRadius: 4,
-              borderWidth: 2,
-              hidden: !this.passPairOn
-            },
-            // Planned Executed (clearer but still subtle)
-            {
-              label: 'Executed % (Planned)',
-              data: plannedExec,
-              borderColor: 'rgba(96,165,250,.80)', // was '#60a5fa33'
-              backgroundColor: 'transparent',
-              borderDash: [6,3],                   // was [6,4]
-              tension: .25, spanGaps: true,
-              pointStyle: 'line',
-              pointRadius: 0,
-              hidden: !this.execPairOn
-            },
-            // Planned Passed (clearer but still subtle)
-            {
-              label: 'Pass % (Planned)',
-              data: plannedPass,
-              borderColor: 'rgba(34,197,94,.75)',  // was '#22c55e33'
-              backgroundColor: 'transparent',
-              borderDash: [6,3],                   // was [6,4]
-              tension: .25, spanGaps: true,
-              pointStyle: 'line',
-              pointRadius: 0,
-              borderWidth: 1.5,                      // was 1.5
-              hidden: !this.passPairOn
-            }
+            { label: 'Executed %',           data: exec, borderColor: '#60a5fa', backgroundColor: '#60a5fa', tension: .25, spanGaps: true, pointStyle: 'line', pointRadius: 3, pointHoverRadius: 4, hidden: !this.execPairOn },
+            { label: 'Pass %',               data: pass, borderColor: '#22c55e', backgroundColor: '#22c55e', tension: .25, spanGaps: true, pointStyle: 'line', pointRadius: 3, pointHoverRadius: 4, hidden: !this.passPairOn },
+            { label: 'Executed % (Planned)', data: plannedExec, borderColor: 'rgba(96,165,250,.80)', backgroundColor: 'transparent', borderDash: [6,3], tension: .25, spanGaps: true, pointStyle: 'line', pointRadius: 0, hidden: !this.execPairOn },
+            { label: 'Pass % (Planned)',     data: plannedPass, borderColor: 'rgba(34,197,94,.75)', backgroundColor: 'transparent', borderDash: [6,3], tension: .25, spanGaps: true, pointStyle: 'line', pointRadius: 0, hidden: !this.passPairOn }
           ]
         },
         options: {
