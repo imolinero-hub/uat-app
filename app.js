@@ -469,7 +469,7 @@ function app(){
         data:{ labels: labelsD2, datasets:[ { label:'Open defects', data:dataDef2, borderColor:'#34d399', backgroundColor:'#34d399', pointRadius: 3, pointHoverRadius: 4, tension:.25, spanGaps:true } ] },
         options:{ 
           ...common, 
-          plugins:{ ...(common.plugins || {}), legend:{ position:'bottom', labels:{ usePointStyle:false, color:'rgba(148,163,184,.8)' } } },  
+          plugins:{ ...(common.plugins || {}), legend:{ position:'bottom', labels:{ usePointStyle:false, color:'rgba(148,163,184,.8)', boxWidth: 30, boxHeight: 1.5, padding: 10 } } },  
           scales:{ 
             x:{ type:'time', time:{ unit:'day', displayFormats:{ day:'MMM dd' }, tooltipFormat:'MMM dd, yyyy' }, grid:{ color:'rgba(148,163,184,.2)' } }, 
             y:{ beginAtZero:true, grid:{ color:'rgba(148,163,184,.2)' } } 
