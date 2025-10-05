@@ -461,7 +461,7 @@ function app(){
       if (this.defectChart) this.defectChart.destroy();
       this.defectChart = new Chart(document.getElementById('defectChart'), {
         type:'line',
-        data:{ labels: labelsD2, datasets:[ { label:'Open defects', data:dataDef2, borderColor:'#34d399', backgroundColor:'#34d399', usePointStyle: true, tension:.25, spanGaps:true } ] },
+        data:{ labels: labelsD2, datasets:[ { label:'Open defects', data:dataDef2, borderColor:'#34d399', backgroundColor:'#34d399', usePointStyle: true, pointStyle: 'line', tension:.25, spanGaps:true } ] },
         options:{ ...common, scales:{ x:{ type:'time', time:{ unit:'day', displayFormats:{ day:'MMM dd' }, tooltipFormat:'MMM dd, yyyy' }, grid:{ color:'rgba(148,163,184,.2)' } }, y:{ beginAtZero:true, grid:{ color:'rgba(148,163,184,.2)' } } } }
       });
     },
