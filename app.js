@@ -386,7 +386,8 @@ function app(){
              backgroundColor: '#60a5fa',
              tension: .25, spanGaps: true,
              pointStyle: 'line',
-             pointRadius: 0,
+             pointRadius: 3,
+             pointHoverRadius: 4,
              borderWidth: 3,
              hidden: !this.execPairOn
            },
@@ -394,11 +395,12 @@ function app(){
            {
              label: 'Pass %',
              data: pass,
-             borderColor: '#34d399',
-             backgroundColor: '#34d399',
+             borderColor: '#22c55e',
+             backgroundColor: '#22c55e',
              tension: .25, spanGaps: true,
              pointStyle: 'line',
-             pointRadius: 0,
+             pointRadius: 3,
+             pointHoverRadius: 4, 
              borderWidth: 3,
              hidden: !this.passPairOn
            },
@@ -406,7 +408,7 @@ function app(){
            {
              label: 'Executed % (Planned)',
              data: plannedExec,
-             borderColor: '#64748b',
+             borderColor: '#60a5fa33',
              backgroundColor: 'transparent',
              borderDash: [6,4],
              tension: .25, spanGaps: true,
@@ -419,7 +421,7 @@ function app(){
            {
              label: 'Pass % (Planned)',
              data: plannedPass,
-             borderColor: '#cbd5e1',
+             borderColor: '#22c55e33',
              backgroundColor: 'transparent',
              borderDash: [6,4],
              tension: .25, spanGaps: true,
