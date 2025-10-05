@@ -373,7 +373,7 @@ function app(){
       });
 
       if (this.execChart) this.execChart.destroy();
-      this.execChart = new Chart(document.getElementById('execChart'), {
+/*      this.execChart = new Chart(document.getElementById('execChart'), {
         type: 'line',
         data: {
           labels,
@@ -383,8 +383,22 @@ function app(){
             { label: 'Executed % (Planned)', data: plannedExec, borderColor: 'rgba(96,165,250,.80)', backgroundColor: 'transparent', borderDash: [6,3], tension: .25, spanGaps: true, pointStyle: 'line', pointRadius: 0, hidden: !this.execPairOn },
             { label: 'Pass % (Planned)',     data: plannedPass, borderColor: 'rgba(34,197,94,.75)', backgroundColor: 'transparent', borderDash: [6,3], tension: .25, spanGaps: true, pointStyle: 'line', pointRadius: 0, hidden: !this.passPairOn }
           ]
+        }, */
+      this.execChart = new Chart(document.getElementById('execChart'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Executed %',           data: exec, borderColor: '#60a5fa', backgroundColor: '#60a5fa', tension: .25, spanGaps: true, pointStyle: 'circle', pointRadius: 4, pointHoverRadius: 5, hidden: !this.execPairOn },
+            { label: 'Pass %',               data: pass, borderColor: '#22c55e', backgroundColor: '#22c55e', tension: .25, spanGaps: true, pointStyle: 'circle', pointRadius: 4, pointHoverRadius: 5, hidden: !this.passPairOn },
+            { label: 'Executed % (Planned)', data: plannedExec, borderColor: 'rgba(96,165,250,.80)', backgroundColor: 'transparent', borderDash: [6,3], tension: .25, spanGaps: true, pointStyle: 'line', pointRadius: 0, hidden: !this.execPairOn },
+            { label: 'Pass % (Planned)',     data: plannedPass, borderColor: 'rgba(34,197,94,.75)', backgroundColor: 'transparent', borderDash: [6,3], tension: .25, spanGaps: true, pointStyle: 'line', pointRadius: 0, hidden: !this.passPairOn }
+          ]
         },
-        options: {
+
+         
+         
+         options: {
           ...common,
           scales: {
             x: { type:'time',
