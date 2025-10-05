@@ -379,65 +379,68 @@ function app(){
           labels,
           datasets: [
             // Actual Executed
-          {
-             label: 'Executed %',
-             data: exec,
-             borderColor: '#60a5fa',
-             backgroundColor: '#60a5fa',
-             tension: .25, spanGaps: true,
-             pointStyle: 'line',
-             pointRadius: 3,
-             pointHoverRadius: 4,
-             borderWidth: 3,
-             hidden: !this.execPairOn
-           },
-           // Actual Passed
-           {
-             label: 'Pass %',
-             data: pass,
-             borderColor: '#22c55e',
-             backgroundColor: '#22c55e',
-             tension: .25, spanGaps: true,
-             pointStyle: 'line',
-             pointRadius: 3,
-             pointHoverRadius: 4, 
-             borderWidth: 3,
-             hidden: !this.passPairOn
-           },
-           // Planned Executed
-           {
-             label: 'Executed % (Planned)',
-             data: plannedExec,
-             borderColor: '#60a5fa33',
-             backgroundColor: 'transparent',
-             borderDash: [6,4],
-             tension: .25, spanGaps: true,
-             pointStyle: 'line',
-             pointRadius: 0,
-             borderWidth: 1.5,
-             hidden: !this.execPairOn
-           },
-           // Planned Passed
-           {
-             label: 'Pass % (Planned)',
-             data: plannedPass,
-             borderColor: '#22c55e33',
-             backgroundColor: 'transparent',
-             borderDash: [6,4],
-             tension: .25, spanGaps: true,
-             pointStyle: 'line',
-             pointRadius: 0,
-             borderWidth: 1.5,
-             hidden: !this.passPairOn
-           }
-         ]
-
+            {
+              label: 'Executed %',
+              data: exec,
+              borderColor: '#60a5fa',
+              backgroundColor: '#60a5fa',
+              tension: .25, spanGaps: true,
+              pointStyle: 'line',
+              pointRadius: 3,
+              pointHoverRadius: 4,
+              borderWidth: 3,
+              hidden: !this.execPairOn
+            },
+            // Actual Passed
+            {
+              label: 'Pass %',
+              data: pass,
+              borderColor: '#22c55e',
+              backgroundColor: '#22c55e',
+              tension: .25, spanGaps: true,
+              pointStyle: 'line',
+              pointRadius: 3,
+              pointHoverRadius: 4,
+              borderWidth: 3,
+              hidden: !this.passPairOn
+            },
+            // Planned Executed (clearer but still subtle)
+            {
+              label: 'Executed % (Planned)',
+              data: plannedExec,
+              borderColor: 'rgba(96,165,250,.80)', // was '#60a5fa33'
+              backgroundColor: 'transparent',
+              borderDash: [6,3],                   // was [6,4]
+              tension: .25, spanGaps: true,
+              pointStyle: 'line',
+              pointRadius: 0,
+              borderWidth: 2,                      // was 1.5
+              hidden: !this.execPairOn
+            },
+            // Planned Passed (clearer but still subtle)
+            {
+              label: 'Pass % (Planned)',
+              data: plannedPass,
+              borderColor: 'rgba(34,197,94,.75)',  // was '#22c55e33'
+              backgroundColor: 'transparent',
+              borderDash: [6,3],                   // was [6,4]
+              tension: .25, spanGaps: true,
+              pointStyle: 'line',
+              pointRadius: 0,
+              borderWidth: 2,                      // was 1.5
+              hidden: !this.passPairOn
+            }
+          ]
         },
         options: {
           ...common,
           scales: {
-            x: { type:'time', time:{ unit:'day', displayFormats:{ day:'MMM dd' }, tooltipFormat:'MMM dd, yyyy' }, grid:{ color:'rgba(148,163,184,.2)' } },
-            y: { beginAtZero:true, max:100, ticks:{ callback:v=>v+'%' }, grid:{ color:'rgba(148,163,184,.2)' } }
+            x: { type:'time',
+                 time:{ unit:'day', displayFormats:{ day:'MMM dd' }, tooltipFormat:'MMM dd, yyyy' },
+                 grid:{ color:'rgba(148,163,184,.2)' } },
+            y: { beginAtZero:true, max:100,
+                 ticks:{ callback:v=>v+'%' },
+                 grid:{ color:'rgba(148,163,184,.2)' } }
           },
           plugins: {
             ...(common.plugins || {}),
