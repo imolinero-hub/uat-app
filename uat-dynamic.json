@@ -1,8 +1,8 @@
 {
-  "asOf": "2025-10-05 18:38", 
+  "asOf": "2025-10-05 18:45", 
   "health": {
-    "status": "amber", 
-    "comment": "there is a delay in test execution"
+    "status": "red", 
+    "comment": "test execution behind plan and >5 blocker defects"
   },
 
   "progressDaily": [
@@ -84,6 +84,7 @@
     }
   ]
 }
+
 
 
 
