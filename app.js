@@ -388,7 +388,7 @@ function app(){
               pointStyle: 'line',
               pointRadius: 3,
               pointHoverRadius: 4,
-              borderWidth: 3,
+              borderWidth: 2,
               hidden: !this.execPairOn
             },
             // Actual Passed
@@ -401,7 +401,7 @@ function app(){
               pointStyle: 'line',
               pointRadius: 3,
               pointHoverRadius: 4,
-              borderWidth: 3,
+              borderWidth: 2,
               hidden: !this.passPairOn
             },
             // Planned Executed (clearer but still subtle)
@@ -414,7 +414,7 @@ function app(){
               tension: .25, spanGaps: true,
               pointStyle: 'line',
               pointRadius: 0,
-              borderWidth: 2,                      // was 1.5
+              borderWidth: 1.5,                      // was 1.5
               hidden: !this.execPairOn
             },
             // Planned Passed (clearer but still subtle)
@@ -427,7 +427,7 @@ function app(){
               tension: .25, spanGaps: true,
               pointStyle: 'line',
               pointRadius: 0,
-              borderWidth: 2,                      // was 1.5
+              borderWidth: 1.5,                      // was 1.5
               hidden: !this.passPairOn
             }
           ]
