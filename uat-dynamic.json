@@ -9,24 +9,14 @@
     { "date": "2025-10-13", "inScope": 3249, "executedPct": 4,  "passPct": 3  },
     { "date": "2025-10-14", "inScope": 3230, "executedPct": 14, "passPct": 12 },
     { "date": "2025-10-15", "inScope": 3225, "executedPct": 24, "passPct": 20 },
-    { "date": "2025-10-16", "inScope": 3220, "executedPct": 33, "passPct": 28 },
-    { "date": "2025-10-17", "inScope": 3220, "executedPct": 39, "passPct": 33 },
-    { "date": "2025-10-20", "inScope": 3204, "executedPct": 52, "passPct": 45 },
-    { "date": "2025-10-21", "inScope": 3211, "executedPct": 63, "passPct": 61 },
-    { "date": "2025-10-22", "inScope": 3124, "executedPct": 78, "passPct": 71 },
-    { "date": "2025-10-23", "inScope": 3120, "executedPct": 85, "passPct": 77 }
-  ],
+    { "date": "2025-10-16", "inScope": 3220, "executedPct": 33, "passPct": 28 }
+   ],
 
   "defectsDaily": [
     { "date": "2025-10-13", "openDefects": 16 },
     { "date": "2025-10-14", "openDefects": 52 },
     { "date": "2025-10-15", "openDefects": 81 },
-    { "date": "2025-10-16", "openDefects": 118 },
-    { "date": "2025-10-17", "openDefects": 175 },
-    { "date": "2025-10-20", "openDefects": 226 },
-    { "date": "2025-10-21", "openDefects": 278 },
-    { "date": "2025-10-22", "openDefects": 298 },
-    { "date": "2025-10-23", "openDefects": 262 }
+    { "date": "2025-10-16", "openDefects": 118 }
   ],
 
   "issues": [
@@ -62,6 +52,7 @@
     }
   ]
 }
+
 
 
 
