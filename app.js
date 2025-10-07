@@ -467,22 +467,30 @@ function app(){
 
       // Defect Burndown
       const dd = this.raw.defectsDaily || [];
-      const labelsD = dd.map(r => r.date);
-      const dataDef = dd.map(r => Number(r.openDefects ?? 0));
-      const labelsD2 = labelsD.length ? labelsD : [this.asOf || ''];
-      const dataDef2 = dataDef.length ? dataDef : [0];
-
+      const cal      = BizCal(this.raw.schedule || {});
+      const bizDays  = (cal.start && cal.end) ? cal.businessDays() : [];
+      const labelsD2 = (bizDays.length
+        ? bizDays
+        : Array.from({ length: 19 }, (_, i) => { const t0 = new Date(); return new Date(t0.getTime() + i * 86400000); })
+      ).map(d => new Date(d).toISOString().slice(0,10));
+      
+      // Map actuals by date and align to the full calendar (nulls keep gaps)
+      const ddByDate = Object.fromEntries(dd.map(r => [r.date, r]));
+      const dataDef2 = labelsD2.map(d => {
+        const v = ddByDate[d]?.openDefects;
+        return (v === 0 || v) ? Number(v) : null;
+      });
+      
       if (this.defectChart) this.defectChart.destroy();
       this.defectChart = new Chart(document.getElementById('defectChart'), {
-        type:'line',
-        data:{ labels: labelsD2, datasets:[ { label:'Open defects', data:dataDef2, borderColor:'#34d399', backgroundColor:'#34d399', pointRadius: 3, pointHoverRadius: 4, tension:.25, spanGaps:true } ] },
-        options:{ 
-          ...common, 
-          plugins:{ ...(common.plugins || {}), legend:{ position:'bottom', labels:{ usePointStyle:false, color:'rgba(148,163,184,.8)', boxWidth: 30, boxHeight: 1.5, padding: 10 } } },  
-          scales:{ 
-            x:{ type:'time', time:{ unit:'day', displayFormats:{ day:'MMM dd' }, tooltipFormat:'MMM dd, yyyy' }, grid:{ color:'rgba(148,163,184,.2)' } }, 
-            y:{ beginAtZero:true, grid:{ color:'rgba(148,163,184,.2)' } } 
-          } 
+        type: 'line',
+        data: { labels: labelsD2, datasets: [
+          { label:'Open defects', data:dataDef2, borderColor:'#34d399', backgroundColor:'#34d399', pointRadius:3, pointHoverRadius:4, tension:.25, spanGaps:true }
+        ]},
+        options: {
+          ...common,
+          plugins:{ ...(common.plugins||{}), legend:{ position:'bottom', labels:{ usePointStyle:false, color:'rgba(148,163,184,.8)', boxWidth:30, boxHeight:1.5, padding:10 } } },
+          scales:{ x:{ type:'time', time:{ unit:'day', displayFormats:{ day:'MMM dd' }, tooltipFormat:'MMM dd, yyyy' }, grid:{ color:'rgba(148,163,184,.2)' } }, y:{ beginAtZero:true, grid:{ color:'rgba(148,163,184,.2)' } } }
         }
       });
     },
