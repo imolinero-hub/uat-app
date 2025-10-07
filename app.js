@@ -340,37 +340,45 @@ function app(){
       const exec = pd.map(r => +r.executedPct || 0);
       const pass = pd.map(r => +r.passPct || 0);
 
-      if (!labels.length) {
-        const cal = BizCal(this.raw.schedule || {});
-        const biz = (cal.start && cal.end) ? cal.businessDays() : [];
-        if (biz.length) {
-          labels = biz.map(d => new Date(d).toISOString().slice(0,10));
-        } else {
-          const N = Math.max(
-            this.raw.plannedSeries?.planned_executed_pct?.length || 0,
-            this.raw.plannedSeries?.planned_pass_pct?.length || 0,
-            19
-          );
-          const t0 = new Date();
-          labels = Array.from({length:N}, (_,i)=> new Date(t0.getTime()+i*86400000).toISOString().slice(0,10));
+      // Always build the full UAT calendar for the X-axis
+      const cal = BizCal(this.raw.schedule || {});
+      const bizDays = (cal.start && cal.end) ? cal.businessDays() : [];
+      
+      // Use schedule days if available; otherwise fall back to a minimal range
+      labels = (bizDays.length
+        ? bizDays
+        : Array.from({ length: 19 }, (_, i) => {
+            const t0 = new Date(); return new Date(t0.getTime() + i * 86400000);
+          })
+      ).map(d => new Date(d).toISOString().slice(0, 10));
+      
+      // Pad actuals to that calendar (null keeps the axis, and your spanGaps handles drawing)
+      const pdByDate = Object.fromEntries((this.raw.progressDaily || [])
+        .map(r => [r.date, r]));
+      
+      exec = labels.map(d => {
+        const v = pdByDate[d]?.executedPct;
+        return (v === 0 || v) ? +v : null;
+      });
+      pass = labels.map(d => {
+        const v = pdByDate[d]?.passPct;
+        return (v === 0 || v) ? +v : null;
+      });
+      
+      // Planned series aligned to the full labels
+      const plannedExec = labels.map((_, i) => {
+        if (this.raw.plannedSeries?.planned_executed_pct?.[i] !== undefined) {
+          return this.raw.plannedSeries.planned_executed_pct[i];
         }
-      }
+        return this.plannedExecutedPct(i + 1);
+      });
+      const plannedPass = labels.map((_, i) => {
+        if (this.raw.plannedSeries?.planned_pass_pct?.[i] !== undefined) {
+          return this.raw.plannedSeries.planned_pass_pct[i];
+        }
+        return this.plannedPassPct(i + 1);
+      });
 
-      const n = labels.length;
-      const plannedExec = Array.from({length:n}, (_,i)=>{
-        const day = i+1;
-        if (this.raw.plannedSeries?.planned_executed_pct?.length >= day) {
-          return this.raw.plannedSeries.planned_executed_pct[day-1];
-        }
-        return this.plannedExecutedPct(day);
-      });
-      const plannedPass = Array.from({length:n}, (_,i)=>{
-        const day = i+1;
-        if (this.raw.plannedSeries?.planned_pass_pct?.length >= day) {
-          return this.raw.plannedSeries.planned_pass_pct[day-1];
-        }
-        return this.plannedPassPct(day);
-      });
 
       if (this.execChart) this.execChart.destroy();
       this.execChart = new Chart(document.getElementById('execChart'), {
