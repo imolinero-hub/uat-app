@@ -337,8 +337,8 @@ function app(){
       // Execution Over Time
       const pd = this.raw.progressDaily || [];
       let labels = pd.map(r => r.date);
-      const exec = pd.map(r => +r.executedPct || 0);
-      const pass = pd.map(r => +r.passPct || 0);
+      let exec  = pd.map(r => +r.executedPct || 0);
+      let pass  = pd.map(r => +r.passPct     || 0);
 
       // Always build the full UAT calendar for the X-axis
       const cal = BizCal(this.raw.schedule || {});
@@ -353,18 +353,19 @@ function app(){
       ).map(d => new Date(d).toISOString().slice(0, 10));
       
       // Pad actuals to that calendar (null keeps the axis, and your spanGaps handles drawing)
-      const pdByDate = Object.fromEntries((this.raw.progressDaily || [])
-        .map(r => [r.date, r]));
+      const pdByDate = Object.fromEntries((this.raw.progressDaily || []).map(r => [r.date, r]));
       
       exec = labels.map(d => {
         const v = pdByDate[d]?.executedPct;
         return (v === 0 || v) ? +v : null;
       });
+      
       pass = labels.map(d => {
         const v = pdByDate[d]?.passPct;
         return (v === 0 || v) ? +v : null;
       });
-      
+
+       
       // Planned series aligned to the full labels
       const plannedExec = labels.map((_, i) => {
         if (this.raw.plannedSeries?.planned_executed_pct?.[i] !== undefined) {
