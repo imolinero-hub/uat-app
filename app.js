@@ -465,16 +465,21 @@ function app(){
         }
       });
 
-      // Defect Burndown
+      // == Defect Burndown ==
       const dd = this.raw.defectsDaily || [];
-      const cal      = BizCal(this.raw.schedule || {});
-      const bizDays  = (cal.start && cal.end) ? cal.businessDays() : [];
-      const labelsD2 = (bizDays.length
-        ? bizDays
-        : Array.from({ length: 19 }, (_, i) => { const t0 = new Date(); return new Date(t0.getTime() + i * 86400000); })
-      ).map(d => new Date(d).toISOString().slice(0,10));
       
-      // Map actuals by date and align to the full calendar (nulls keep gaps)
+      // Reuse the full UAT calendar we already built for Execution.
+      // Fallback: rebuild if 'labels' isn't available for any reason.
+      const labelsD2 = (labels && labels.length) ? labels : (() => {
+        const cal2 = BizCal(this.raw.schedule || {});
+        const biz2 = (cal2.start && cal2.end) ? cal2.businessDays() : [];
+        const base = biz2.length
+          ? biz2
+          : Array.from({ length: 19 }, (_, i) => { const t0 = new Date(); return new Date(t0.getTime() + i*86400000); });
+        return base.map(d => new Date(d).toISOString().slice(0,10));
+      })();
+      
+      // Align data to the full calendar; nulls keep the axis (spanGaps:true draws it nicely)
       const ddByDate = Object.fromEntries(dd.map(r => [r.date, r]));
       const dataDef2 = labelsD2.map(d => {
         const v = ddByDate[d]?.openDefects;
@@ -487,11 +492,7 @@ function app(){
         data: { labels: labelsD2, datasets: [
           { label:'Open defects', data:dataDef2, borderColor:'#34d399', backgroundColor:'#34d399', pointRadius:3, pointHoverRadius:4, tension:.25, spanGaps:true }
         ]},
-        options: {
-          ...common,
-          plugins:{ ...(common.plugins||{}), legend:{ position:'bottom', labels:{ usePointStyle:false, color:'rgba(148,163,184,.8)', boxWidth:30, boxHeight:1.5, padding:10 } } },
-          scales:{ x:{ type:'time', time:{ unit:'day', displayFormats:{ day:'MMM dd' }, tooltipFormat:'MMM dd, yyyy' }, grid:{ color:'rgba(148,163,184,.2)' } }, y:{ beginAtZero:true, grid:{ color:'rgba(148,163,184,.2)' } } }
-        }
+        options: { ...common, plugins:{ ...(common.plugins||{}), legend:{ position:'bottom', labels:{ usePointStyle:false, color:'rgba(148,163,184,.8)', boxWidth:30, boxHeight:1.5, padding:10 } } }, scales:{ x:{ type:'time', time:{ unit:'day', displayFormats:{ day:'MMM dd' }, tooltipFormat:'MMM dd, yyyy' }, grid:{ color:'rgba(148,163,184,.2)' } }, y:{ beginAtZero:true, grid:{ color:'rgba(148,163,184,.2)' } } } }
       });
     },
 
