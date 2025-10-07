@@ -3,8 +3,8 @@
   "statusUrl": "./daily-status.md",
   "overview": { "release": "RI-4" },
   "schedule": {
-    "start": "2025-09-29",
-    "end": "2025-10-23",
+    "start": "2025-10-13",
+    "end": "2025-11-06",
     "timezone": "Europe/Berlin"
   },
   "plan": { "exec_days": 10, "pass_days": 15, "pass_target": 95 },
@@ -22,6 +22,7 @@
     { "label": "Go Live",      "date": "2025-12-10",                       "notes": "Go Live of the RI-4" }
   ]
 }
+
 
 
 
