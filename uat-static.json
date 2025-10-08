@@ -17,11 +17,12 @@
     { "label": "Kick-off",     "date": "2025-10-09",                       "notes": "All testers are onboarded" },
     { "label": "UAT period",   "date": "2025-10-13 to 2025-11-06",         "notes": "Testing period for the UAT" },
     { "label": "Alpha Demo",   "date": "2025-11-04 to 2025-11-05",         "notes": "First testing with the ABOs" },
-    { "label": "Beta Go Live", "date": "2025-11-13",                       "notes": "First ABOs working on production" },
+    { "label": "Beta Go Live", "date": "2025-11-18",                       "notes": "First ABOs working on production" },
     { "label": "Go / No-Go",   "date": "2025-12-08",                       "notes": "Final leadership decision" },
     { "label": "Go Live",      "date": "2025-12-10",                       "notes": "Go Live of the RI-4" }
   ]
 }
+
 
 
 
