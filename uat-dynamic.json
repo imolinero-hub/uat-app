@@ -6,16 +6,17 @@
   },
 
   "progressDaily": [
-    { "date": "2025-10-13", "inScope": 3249, "executedPct": 4,  "passPct": 3  }
+    { "date": "2025-10-13", "inScope": 3145, "executedPct": 0,  "passPct": 0  }
   ],
 
   "defectsDaily": [
-    { "date": "2025-10-13", "openDefects": 16 }
+    { "date": "2025-10-13", "openDefects": 0 }
   ],
 
   "issues": [
   ]
 }
+
 
 
 
