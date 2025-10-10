@@ -275,7 +275,7 @@
   </section>
 
   <!-- ====================== Blocker / Critical Defects ====================== -->
-  <section class="mt-6">
+  <section class="mt-6" :class="!issues.length ? 'mb-6' : 'mb-2'">
     <div class="flex items-center justify-between mb-2">
       <h2 class="section-title"><b>Blocker / Critical Defects</b></h2>
       <div class="text-xs text-slate-400 dark:text-slate-500">
