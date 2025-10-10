@@ -24,4 +24,4 @@ This testing also verifies the integration with critical back-office systems (e.
 ---
 
 **👥 Effort**  
-This coordinated effort involves **100+ testers** from multiple departments, validating **3,000+ scenarios** to ensure a high-quality, stable rollout.  
+This coordinated effort involves **110+ testers** from multiple departments, validating **3,100+ scenarios** to ensure a high-quality, stable rollout.  
