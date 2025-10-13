@@ -11,8 +11,8 @@
 ---
 
 ### 📊 Status Summary
-- **Executed:** 3% (Planned: 10% · Δ –7pp)  
-- **Pass rate:** 2% (Planned: 6% · Δ –4pp)  
+- **Executed:** 3% (Planned: 10% · 🔻–7pp)  
+- **Pass rate:** 2% (Planned: 6% · 🔻–4pp)  
 - **Open defects:** 21 total (1 Critical)  
 - **Trend:** 🟡 Slow start – stable setup, lower than expected execution  
 
@@ -29,3 +29,4 @@
 - Continue **daily monitoring** to close the initial execution gap.  
 
 ---
+
