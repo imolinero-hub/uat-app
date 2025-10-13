@@ -14,8 +14,19 @@
   ],
 
   "issues": [
+    {
+      "key": "23710",
+      "priority": "Critical",
+      "summary": "Greece Web - Unable to validate Verification code getting this error message 500 internal server error",
+      "reporter": "Nathan Arockiaswamy",
+      "team": "Technology",
+      "platform": "Web",
+      "status": "Not Reproducible",
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23710"
+    }
   ]
 }
+
 
 
 
