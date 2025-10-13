@@ -6,7 +6,7 @@
   },
 
   "progressDaily": [
-    { "date": "2025-10-13", "inScope": 3143, "executedPct": 86, "passPct": 76 }
+    { "date": "2025-10-13", "inScope": 3143, "executedPct": 3, "passPct": 2 }
   ],
 
   "defectsDaily": [
@@ -26,6 +26,7 @@
     }
   ]
 }
+
 
 
 
