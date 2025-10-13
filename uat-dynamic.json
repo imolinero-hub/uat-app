@@ -1,19 +1,22 @@
 {
-  "asOf": "2025-10-10 21:30", 
+  "asOf": "2025-10-13 19:00", 
   "health": {
-    "status": "green", 
-    "comment": "Everything is ready to start testing on Monday"
+    "status": "amber", 
+    "comment": "Slow start in test execution"
   },
 
   "progressDaily": [
+    { "date": "2025-10-13", "inScope": 3143, "executedPct": 86, "passPct": 76 }
   ],
 
   "defectsDaily": [
+    { "date": "2025-10-13", "openDefects": 21  }
   ],
 
   "issues": [
   ]
 }
+
 
 
 
