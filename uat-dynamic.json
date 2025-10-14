@@ -1,16 +1,18 @@
 {
-  "asOf": "2025-10-13 19:00", 
+  "asOf": "2025-10-14 17:40", 
   "health": {
     "status": "amber", 
     "comment": "Execution is below plan as some teams have delayed start, increasing the risk of schedule compression in the coming days"
   },
 
   "progressDaily": [
-    { "date": "2025-10-13", "inScope": 3143, "executedPct": 3, "passPct": 2 }
+    { "date": "2025-10-13", "inScope": 3143, "executedPct": 3, "passPct": 2 },
+    { "date": "2025-10-13", "inScope": 3136, "executedPct": 10, "passPct": 9 }
   ],
 
   "defectsDaily": [
-    { "date": "2025-10-13", "openDefects": 21  }
+    { "date": "2025-10-13", "openDefects": 21  },
+    { "date": "2025-10-14", "openDefects": 63  }
   ],
 
   "issues": [
@@ -23,9 +25,40 @@
       "platform": "Web",
       "status": "Not Reproducible",
       "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23710"
+    },
+    {
+      "key": "23773",
+      "priority": "Critical",
+      "summary": "Not able to login in the APP for iOS",
+      "reporter": "Valeria Mannarini",
+      "team": "Marketing",
+      "platform": "App",
+      "status": "Not a Defect",
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23773"
+    },
+    {
+      "key": "23781",
+      "priority": "Critical",
+      "summary": "phone number can be updated in Personal details but it is not possible in shipping address",
+      "reporter": "Elena Vaccaro",
+      "team": "Marketing",
+      "platform": "Web",
+      "status": "Not a Defect",
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23781"
+    },
+    {
+      "key": "23794",
+      "priority": "Critical",
+      "summary": "BE./UK/IE: International Sponsor not visible in BOSS but visible on the contract",
+      "reporter": "Paulina Swierczyna",
+      "team": "Customer Service",
+      "platform": "BOSS",
+      "status": "Open",
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23794"
     }
   ]
 }
+
 
 
 
