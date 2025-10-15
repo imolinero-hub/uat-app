@@ -29,24 +29,14 @@
       "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23710"
     },
     {
-      "key": "23773",
+      "key": "23881",
       "priority": "Critical",
-      "summary": "Not able to login in the APP for iOS",
-      "reporter": "Valeria Mannarini",
-      "team": "Marketing",
-      "platform": "App",
-      "status": "Not a Defect",
-      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23773"
-    },
-    {
-      "key": "23781",
-      "priority": "Critical",
-      "summary": "phone number can be updated in Personal details but it is not possible in shipping address",
-      "reporter": "Elena Vaccaro",
+      "summary": "Delivery fee not included in EBS invoice",
+      "reporter": "Daria Musial",
       "team": "Marketing",
       "platform": "Web",
-      "status": "Not a Defect",
-      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23781"
+      "status": "Open",
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23881"
     },
     {
       "key": "23794",
@@ -57,9 +47,40 @@
       "platform": "BOSS",
       "status": "Open",
       "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23794"
-    }
+    },
+    {
+      "key": "23873",
+      "priority": "Critical",
+      "summary": "Spain credentials not working in IOS",
+      "reporter": "Pelin Unlusoy",
+      "team": "Sales",
+      "platform": "App",
+      "status": "Not a Defect",
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23873"
+    },
+    {
+      "key": "23874",
+      "priority": "Critical",
+      "summary": "Spain credentials not working in IOS",
+      "reporter": "Pelin Unlusoy",
+      "team": "Sales",
+      "platform": "App",
+      "status": "Duplicate",
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23874"
+    },
+    {
+      "key": "23875",
+      "priority": "Critical",
+      "summary": "Spain credentials not working in IOS",
+      "reporter": "Pelin Unlusoy",
+      "team": "Sales",
+      "platform": "App",
+      "status": "Duplicate",
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23875"
+    },
   ]
 }
+
 
 
 
