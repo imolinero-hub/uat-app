@@ -1,147 +1,71 @@
 {
-  "asOf": "2025-10-15 18:30", 
+  "asOf": "2025-10-16 17:30",
   "health": {
-    "status": "amber", 
-    "comment": "Momentum is improving and results are trending upward, but overall progress remains slightly below plan"
+    "status": "amber",
+    "comment": "Execution and quality are improving, but overall progress remains slightly below plan as broader coverage ramps up"
   },
-
   "progressDaily": [
-    { "date": "2025-10-13", "inScope": 3143, "executedPct": 3, "passPct": 2 },
-    { "date": "2025-10-14", "inScope": 3136, "executedPct": 10, "passPct": 9 },
-    { "date": "2025-10-15", "inScope": 3152, "executedPct": 23, "passPct": 21 }
+    { "date": "1970-01-01", "inScope": 3143, "executedPct": 3, "passPct": 2 },
+    { "date": "1970-01-01", "inScope": 3136, "executedPct": 10, "passPct": 9 },
+    { "date": "1970-01-01", "inScope": 3152, "executedPct": 23, "passPct": 21 },
+    { "date": "1970-01-01", "inScope": 3146, "executedPct": 34, "passPct": 30 }
   ],
-
   "defectsDaily": [
-    { "date": "2025-10-13", "openDefects": 21  },
-    { "date": "2025-10-14", "openDefects": 63  },
-    { "date": "2025-10-15", "openDefects": 92  }
+    { "date": "2025-10-13", "openDefects": 21 },
+    { "date": "2025-10-14", "openDefects": 63 },
+    { "date": "2025-10-15", "openDefects": 92 },
+    { "date": "2025-10-16", "openDefects": 118 }
   ],
-
   "issues": [
     {
-      "key": "23710",
+      "key": "NGEUIT-24016",
       "priority": "Critical",
-      "summary": "Greece Web - Unable to validate Verification code getting this error message 500 internal server error",
-      "reporter": "Nathan Arockiaswamy",
+      "summary": "[App]  iOS Spain Registration - Italy Terms & Conditions are dispplayed",
+      "reporter": "Cristiana Mazzone",
       "team": "Technology",
-      "platform": "Web",
-      "status": "Not Reproducible",
-      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23710"
+      "platform": "App",
+      "status": "In Analysis",
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-24016"
     },
     {
-      "key": "23881",
+      "key": "NGEUIT-23986",
+      "priority": "Critical",
+      "summary": "DK & FI/ UK & IE Website: Registration with MB is blocked; email address is not recognised as valid.",
+      "reporter": "Angelina Kaczowka",
+      "team": "Customer Service",
+      "platform": "Web",
+      "status": "Missing Information",
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23986"
+    },
+    {
+      "key": "NGEUIT-23881",
       "priority": "Critical",
       "summary": "Delivery fee not included in EBS invoice",
       "reporter": "Daria Musial",
-      "team": "Marketing",
+      "team": "Finance",
       "platform": "Web",
-      "status": "Open",
+      "status": "Not a Defect",
       "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23881"
     },
     {
-      "key": "23794",
+      "key": "NGEUIT-23794",
       "priority": "Critical",
-      "summary": "BE./UK/IE: International Sponsor not visible in BOSS but visible on the contract",
+      "summary": "BE./UK/IE: International Sponsor not visible in BOSS but visible on the contract ",
       "reporter": "Paulina Swierczyna",
       "team": "Customer Service",
-      "platform": "BOSS",
+      "platform": "Boss",
       "status": "Open",
       "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23794"
     },
     {
-      "key": "23873",
+      "key": "NGEUIT-23765",
       "priority": "Critical",
-      "summary": "Spain credentials not working in IOS",
-      "reporter": "Pelin Unlusoy",
+      "summary": "Specific error notification does not appear when entering postal code with no existing ABOs.",
+      "reporter": "Laura Szablan",
       "team": "Sales",
-      "platform": "App",
-      "status": "Not a Defect",
-      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23873"
-    },
-    {
-      "key": "23874",
-      "priority": "Critical",
-      "summary": "Spain credentials not working in IOS",
-      "reporter": "Pelin Unlusoy",
-      "team": "Sales",
-      "platform": "App",
-      "status": "Duplicate",
-      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23874"
-    },
-    {
-      "key": "23875",
-      "priority": "Critical",
-      "summary": "Spain credentials not working in IOS",
-      "reporter": "Pelin Unlusoy",
-      "team": "Sales",
-      "platform": "App",
-      "status": "Duplicate",
-      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23875"
+      "platform": "Web",
+      "status": "Re-Opened",
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23765"
     }
   ]
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
