@@ -1,5 +1,5 @@
 {
-  "asOf": "2025-10-16 17:30",
+  "asOf": "2025-10-16 20:50",
   "health": {
     "status": "amber",
     "comment": "Execution and quality are improving, but overall progress remains slightly below plan as broader coverage ramps up"
@@ -8,15 +8,25 @@
     { "date": "2025-10-13", "inScope": 3143, "executedPct": 3, "passPct": 2 },
     { "date": "2025-10-14", "inScope": 3136, "executedPct": 10, "passPct": 9 },
     { "date": "2025-10-15", "inScope": 3152, "executedPct": 23, "passPct": 21 },
-    { "date": "2025-10-16", "inScope": 3146, "executedPct": 34, "passPct": 30 }
+    { "date": "2025-10-16", "inScope": 3146, "executedPct": 34, "passPct": 31 }
   ],
   "defectsDaily": [
     { "date": "2025-10-13", "openDefects": 21 },
     { "date": "2025-10-14", "openDefects": 63 },
     { "date": "2025-10-15", "openDefects": 92 },
-    { "date": "2025-10-16", "openDefects": 118 }
+    { "date": "2025-10-16", "openDefects": 120 }
   ],
   "issues": [
+    {
+      "key": "NGEUIT-24035",
+      "priority": "Critical",
+      "summary": "PT invoice - Get order event not processed",
+      "reporter": "Jose Luis Garcia",
+      "team": "Technology",
+      "platform": "Web",
+      "status": "Open",
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-24035"
+    },
     {
       "key": "NGEUIT-24016",
       "priority": "Critical",
