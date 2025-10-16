@@ -14,7 +14,7 @@
   "defectsDaily": [
     { "date": "2025-10-13", "openDefects": 21  },
     { "date": "2025-10-14", "openDefects": 63  },
-    { "date": "2025-10-15", "openDefects": 90  }
+    { "date": "2025-10-15", "openDefects": 92  }
   ],
 
   "issues": [
@@ -80,6 +80,7 @@
     }
   ]
 }
+
 
 
 
