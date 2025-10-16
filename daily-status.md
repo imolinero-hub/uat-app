@@ -11,8 +11,8 @@
 ---
 
 ### 📊 Status Summary
-- **Executed:** 34 % (Planned: 40 % · 🔻–6 pp)  
-- **Approved:** 31 % (Planned: 25 % · 🟢▲ +6 pp)  
+- **Executed:** 34 % (Planned: 40 % · 🟠🔻–6 pp)  
+- **Approved:** 31 % (Planned: 25 % · 🟢 ▲ +6 pp)  
 - **Open defects:** 120 → 6 Critical / 12 High / 92 Medium / 10 Low  
 - **Trend:** 🟠 Steady improvement – progress and quality strong, overall still slightly behind plan  
 
@@ -27,6 +27,7 @@
 ### ✅ Next Steps
 - Maintain **execution momentum** and continue cross-team support.  
 - Prepare and validate **first deployment with fixes** scheduled for tomorrow.  
+
 
 
 
