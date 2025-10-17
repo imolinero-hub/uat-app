@@ -1,7 +1,8 @@
 {
   "asOf": "2025-10-17 17:15",
   "health": {
-    "status": "green"
+    "status": "amber",
+    "comment": "Performance is strong and nearly on track — momentum continues to improve across all teams"
   },
   "progressDaily": [
     { "date": "2025-10-13", "inScope": 3143, "executedPct": 3, "passPct": 2 },
