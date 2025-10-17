@@ -1,33 +1,33 @@
 # UAT Daily Status – RI-4  
-**Date:** 2025-10-16  - 20:50
+**Date:** 2025-10-17  - 17:00
 
 ---
 
 ### 🔹 Key Highlights
-- **Solid progress today** — 11 % of tests executed, exceeding the daily target of 10 %.  
-- **Approval rate remains above plan**, confirming good test quality and focus.  
-- **Sales team** far ahead of plan (64 % executed) and **Marketing** slightly above target (43 % executed).  
+- **Approval rate remains above plan**, confirming strong test quality and focus.  
+- **Sales (66 %)** and **Marketing (54 %)** continue to perform ahead of schedule.  
+- **Analytics** team achieved very good progress today.  
+- Overall execution trend remains positive across all teams.  
 
 ---
 
 ### 📊 Status Summary
-- **Executed:** 34 % (Planned: 40 % · 🟠🔻–6 pp)  
-- **Approved:** 31 % (Planned: 25 % · 🟢 ▲ +6 pp)  
-- **Open defects:** 120 → 6 Critical / 12 High / 92 Medium / 10 Low  
-- **Trend:** 🟠 Steady improvement – progress and quality strong, overall still slightly behind plan  
+- **Executed:** 43 % (Planned: 50 % · Δ 🟠🔻–7 pp)  
+- **Approved:** 39 % (Planned: 32 % · Δ 🟢 ▲ +7 pp)  
+- **Open defects:** 123 → 4 Critical / 12 High / 96 Medium / 11 Low  
+- **Trend:** 🟠 Continued improvement – strong quality, slightly behind cumulative plan  
 
 ---
 
 ### ⚠️ Challenges / Risks
-- **Cumulative progress** remains below plan despite daily improvements.  
-- **Customer Service** scope significantly larger than other functions; support options under review to accelerate testing.  
+- **Overall progress** still below plan despite steady daily gains.  
+- **Customer Service** scope significantly larger than others, requiring additional support.  
+- **Technology** team behind in execution due to focus on tester support and Collaboration Week; recovery expected next week.  
 
 ---
 
 ### ✅ Next Steps
-- Maintain **execution momentum** and continue cross-team support.  
-- Prepare and validate **first deployment with fixes** scheduled for tomorrow.  
-
-
-
-
+- Maintain **execution momentum** and continue supporting slower functions.  
+- Prepare for the **next acceleration phase** as all areas stabilize.  
+- **Onsite testing in Krakow next week** will enhance collaboration and accelerate execution through direct teamwork.
+- 
