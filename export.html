@@ -142,7 +142,7 @@
     const used = [];
     // progressDaily
     const pd = readSheet(wb,'progressDaily').map(r => ({
-      date: r.date ? toYmd(XLSX.SSF.parse_date_code ? (isFinite(r.date) ? XLSX.SSF.parse_date_code(r.date) : r.date) : r.date) : toYmd(r.date),
+      date: r.date ? toYmd(r.date) : '',
       inScope: asNumber(r.inScope),
       executedPct: asNumber(r.executedPct),
       passPct: asNumber(r.passPct)
@@ -299,4 +299,5 @@
 </script>
 </body>
 </html>
+
 
