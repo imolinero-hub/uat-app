@@ -181,7 +181,7 @@ function app(){
     },
     healthText(statusClass){
       if(statusClass==='rag-green') return 'On Track';
-      if(statusClass==='rag-amber') return 'At Risk';
+      if(statusClass==='rag-amber') return 'Needs Attention';
       return 'Off Track';
     },
 
