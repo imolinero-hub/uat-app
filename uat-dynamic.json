@@ -1,5 +1,5 @@
 {
-  "asOf": "2025-10-17 17:15",
+  "asOf": "2025-10-17 21:00",
   "health": {
     "status": "amber",
     "comment": "Performance is strong and nearly on track — momentum continues to improve across all teams"
@@ -9,14 +9,14 @@
     { "date": "2025-10-14", "inScope": 3136, "executedPct": 10, "passPct": 9 },
     { "date": "2025-10-15", "inScope": 3152, "executedPct": 23, "passPct": 21 },
     { "date": "2025-10-16", "inScope": 3146, "executedPct": 34, "passPct": 31 },
-    { "date": "2025-10-17", "inScope": 3142, "executedPct": 43, "passPct": 39 }
+    { "date": "2025-10-17", "inScope": 3142, "executedPct": 43, "passPct": 40 }
   ],
   "defectsDaily": [
     { "date": "2025-10-13", "openDefects": 21 },
     { "date": "2025-10-14", "openDefects": 63 },
     { "date": "2025-10-15", "openDefects": 92 },
     { "date": "2025-10-16", "openDefects": 120 },
-    { "date": "2025-10-17", "openDefects": 123 }
+    { "date": "2025-10-17", "openDefects": 124 }
   ],
   "issues": [
     {
