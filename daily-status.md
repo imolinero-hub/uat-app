@@ -1,5 +1,5 @@
 # UAT Daily Status – RI-4  
-**Date:** 2025-10-17  - 17:00
+**Date:** 2025-10-17  - 21:00
 
 ---
 
@@ -13,8 +13,8 @@
 
 ### 📊 Status Summary
 - **Executed:** 43 % (Planned: 50 % · Δ 🟠🔻–7 pp)  
-- **Approved:** 39 % (Planned: 32 % · Δ 🟢 ▲ +7 pp)  
-- **Open defects:** 123 → 4 Critical / 12 High / 96 Medium / 11 Low  
+- **Approved:** 40 % (Planned: 32 % · Δ 🟢 ▲ +8 pp)  
+- **Open defects:** 124 → 4 Critical / 12 High / 97 Medium / 11 Low  
 - **Trend:** 🟠 Continued improvement – strong quality, slightly behind cumulative plan  
 
 ---
@@ -30,4 +30,5 @@
 - Maintain **execution momentum** and continue supporting slower functions.  
 - Prepare for the **next acceleration phase** as all areas stabilize.  
 - **Onsite testing in Krakow next week** will enhance collaboration and accelerate execution through direct teamwork.
+
 
