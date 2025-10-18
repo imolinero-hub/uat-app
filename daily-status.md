@@ -12,8 +12,8 @@
 ---
 
 ### 📊 Status Summary
-- **Executed:** 43 % (Planned: 50 % · Δ 🟠🔻–7 pp)  
-- **Approved:** 40 % (Planned: 32 % · Δ 🟢 ▲ +8 pp)  
+- **Executed:** 43 % (Planned: 50 % · 🟠🔻–7 pp)  
+- **Approved:** 40 % (Planned: 32 % · 🟢 ▲ +8 pp)  
 - **Open defects:** 124 → 4 Critical / 12 High / 97 Medium / 11 Low  
 - **Trend:** 🟠 Continued improvement – strong quality, slightly behind cumulative plan  
 
