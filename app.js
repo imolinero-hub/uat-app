@@ -155,7 +155,7 @@ function app(){
      * ===================================================== */
     initTheme(){
       const saved = localStorage.getItem('uat-theme');
-      this.theme = saved || 'theme-dark';
+      this.theme = saved || 'theme-light';
       document.documentElement.classList.toggle('theme-light', this.theme==='theme-light');
     },
     toggleTheme(){
