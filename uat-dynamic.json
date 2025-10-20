@@ -1,33 +1,45 @@
 {
-  "asOf": "2025-10-17 21:00",
+  "asOf": "2025-10-20 19:43",
   "health": {
     "status": "amber",
-    "comment": "Performance is strong and nearly on track — momentum continues to improve across all teams"
+    "comment": "Quality and collaboration remain strong, with stable progress and continued recovery toward plan after today’s brief outage"
   },
   "progressDaily": [
     { "date": "2025-10-13", "inScope": 3143, "executedPct": 3, "passPct": 2 },
     { "date": "2025-10-14", "inScope": 3136, "executedPct": 10, "passPct": 9 },
     { "date": "2025-10-15", "inScope": 3152, "executedPct": 23, "passPct": 21 },
     { "date": "2025-10-16", "inScope": 3146, "executedPct": 34, "passPct": 31 },
-    { "date": "2025-10-17", "inScope": 3142, "executedPct": 43, "passPct": 40 }
+    { "date": "2025-10-17", "inScope": 3142, "executedPct": 43, "passPct": 40 },
+    { "date": "2025-10-20", "inScope": 3099, "executedPct": 52, "passPct": 48 }
   ],
   "defectsDaily": [
     { "date": "2025-10-13", "openDefects": 21 },
     { "date": "2025-10-14", "openDefects": 63 },
     { "date": "2025-10-15", "openDefects": 92 },
     { "date": "2025-10-16", "openDefects": 120 },
-    { "date": "2025-10-17", "openDefects": 124 }
+    { "date": "2025-10-17", "openDefects": 124 },
+    { "date": "2025-10-20", "openDefects": 131 }
   ],
   "issues": [
     {
-      "key": "NGEUIT-24035",
+      "key": "NGEUIT-24085",
       "priority": "Critical",
-      "summary": "PT invoice - Get order event not processed",
-      "reporter": "Jose Luis Garcia",
-      "team": "Technology",
-      "platform": "Web",
-      "status": "On Hold",
-      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-24035"
+      "summary": "ES/PT: Attachments are missing on easy dms",
+      "reporter": "Olga Paciorek",
+      "team": "Customer Service",
+      "platform": "BOSS",
+      "status": "Open",
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-24085"
+    },
+    {
+      "key": "NGEUIT-24047",
+      "priority": "Critical",
+      "summary": "FI: EDMS - Contract does not show the SSN or tax ID number. DK - EDMS - Contract does not show the SSN",
+      "reporter": "Angelina Kaczowka",
+      "team": "Customer Service",
+      "platform": "BOSS",
+      "status": "In Analysis",
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-24047"
     },
     {
       "key": "NGEUIT-23986",
@@ -36,7 +48,7 @@
       "reporter": "Angelina Kaczowka",
       "team": "Customer Service",
       "platform": "Web",
-      "status": "Missing Information",
+      "status": "In Analysis",
       "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23986"
     },
     {
@@ -45,7 +57,7 @@
       "summary": "BE./UK/IE: International Sponsor not visible in BOSS but visible on the contract ",
       "reporter": "Paulina Swierczyna",
       "team": "Customer Service",
-      "platform": "Partner System",
+      "platform": "BOSS",
       "status": "Open",
       "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23794"
     },
