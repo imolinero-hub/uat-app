@@ -172,13 +172,6 @@
            x-text="fmtPct(kpis.executedPct)"></div>
       <div class="text-xs text-slate-400 mt-1 flex items-center gap-2">
         Planned:
-        <button type="button" class="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-200 text-slate-600 text-[10px] leading-none focus:outline-none focus:ring-2 focus:ring-slate-300" aria-describedby="tip-exec">
-          i
-        </button>
-        <div id="tip-exec" class="absolute hidden group-hover:block group-focus-within:block bottom-full mb-1 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] rounded-md px-2 py-1 w-max max-w-[220px] shadow-lg z-10">
-          Updated daily at 17:00 CET — planned values are end-of-day targets.
-        </div>
-        
         <span class="kpi-planned" x-text="fmtPct(kpis.plannedExecutedPct||0)"></span>
         <span class="kpi-delta" x-text="kpis.execDelta>=0 ? ('▲ '+kpis.execDelta+'pp') : ('▼ '+Math.abs(kpis.execDelta)+'pp')"></span>
       </div>
