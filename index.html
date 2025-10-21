@@ -171,7 +171,7 @@
            :class="(kpis.execColorClass||kpiColor(kpis.executedPct))"
            x-text="fmtPct(kpis.executedPct)"></div>
       <div class="text-xs text-slate-400 mt-1 flex items-center gap-2">
-        Planned today (EoD):
+        Planned EoD:
         <span class="kpi-planned" x-text="fmtPct(kpis.plannedExecutedPct||0)"></span>
         <span class="kpi-delta" x-text="kpis.execDelta>=0 ? ('▲ '+kpis.execDelta+'pp') : ('▼ '+Math.abs(kpis.execDelta)+'pp')"></span>
       </div>
@@ -184,7 +184,7 @@
            :class="(kpis.passColorClass||kpiColor(kpis.passPct))"
            x-text="fmtPct(kpis.passPct)"></div>
       <div class="text-xs text-slate-400 mt-1 flex items-center gap-2">
-        Planned today (EoD):
+        Planned EoD:
         <span class="kpi-planned" x-text="fmtPct(kpis.plannedPassPct||0)"></span>
         <span class="kpi-delta" x-text="kpis.passDelta>=0 ? ('▲ '+kpis.passDelta+'pp') : ('▼ '+Math.abs(kpis.passDelta)+'pp')"></span>
       </div>
