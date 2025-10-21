@@ -172,6 +172,11 @@
            x-text="fmtPct(kpis.executedPct)"></div>
       <div class="text-xs text-slate-400 mt-1 flex items-center gap-2">
         Planned EoD:
+        <span class="text-slate-400 cursor-pointer select-none">ⓘ</span>
+        <div class="absolute hidden group-hover:block bottom-full mb-1 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] rounded-md px-2 py-1 w-max max-w-[200px] shadow-lg z-10">
+          Updated daily at 17:00 CET – planned values are end-of-day targets.
+        </div>
+        
         <span class="kpi-planned" x-text="fmtPct(kpis.plannedExecutedPct||0)"></span>
         <span class="kpi-delta" x-text="kpis.execDelta>=0 ? ('▲ '+kpis.execDelta+'pp') : ('▼ '+Math.abs(kpis.execDelta)+'pp')"></span>
       </div>
