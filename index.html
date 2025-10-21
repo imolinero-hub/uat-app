@@ -171,7 +171,7 @@
            :class="(kpis.execColorClass||kpiColor(kpis.executedPct))"
            x-text="fmtPct(kpis.executedPct)"></div>
       <div class="text-xs text-slate-400 mt-1 flex items-center gap-2">
-        Planned EoD:
+        Planned:
         <span class="text-slate-400 cursor-pointer select-none">ⓘ</span>
         <div class="absolute hidden group-hover:block bottom-full mb-1 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] rounded-md px-2 py-1 w-max max-w-[200px] shadow-lg z-10">
           Updated daily at 17:00 CET – planned values are end-of-day targets.
@@ -189,7 +189,7 @@
            :class="(kpis.passColorClass||kpiColor(kpis.passPct))"
            x-text="fmtPct(kpis.passPct)"></div>
       <div class="text-xs text-slate-400 mt-1 flex items-center gap-2">
-        Planned EoD:
+        Planned:
         <span class="kpi-planned" x-text="fmtPct(kpis.plannedPassPct||0)"></span>
         <span class="kpi-delta" x-text="kpis.passDelta>=0 ? ('▲ '+kpis.passDelta+'pp') : ('▼ '+Math.abs(kpis.passDelta)+'pp')"></span>
       </div>
