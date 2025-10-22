@@ -1,8 +1,8 @@
 {
-  "asOf": "2025-10-21 17:15",
+  "asOf": "2025-10-22 16:56",
   "health": {
     "status": "amber",
-    "comment": "Execution and quality remain strong, with excellent collaboration driving steady progress — overall pace is improving but still slightly behind plan"
+    "comment": "Execution and quality remain strong, with steady improvement — overall progress is solid but still slightly behind plan"
   },
   "progressDaily": [
     { "date": "2025-10-13", "inScope": 3143, "executedPct": 3, "passPct": 2 },
@@ -11,7 +11,8 @@
     { "date": "2025-10-16", "inScope": 3146, "executedPct": 34, "passPct": 31 },
     { "date": "2025-10-17", "inScope": 3142, "executedPct": 43, "passPct": 40 },
     { "date": "2025-10-20", "inScope": 3099, "executedPct": 52, "passPct": 48 },
-    { "date": "2025-10-21", "inScope": 3095, "executedPct": 60, "passPct": 56 }
+    { "date": "2025-10-21", "inScope": 3095, "executedPct": 60, "passPct": 56 },
+    { "date": "2025-10-22", "inScope": 3093, "executedPct": 68, "passPct": 63 }
   ],
   "defectsDaily": [
     { "date": "2025-10-13", "openDefects": 21 },
@@ -20,19 +21,10 @@
     { "date": "2025-10-16", "openDefects": 120 },
     { "date": "2025-10-17", "openDefects": 124 },
     { "date": "2025-10-20", "openDefects": 131 },
-    { "date": "2025-10-21", "openDefects": 135 }
+    { "date": "2025-10-21", "openDefects": 135 },
+    { "date": "2025-10-22", "openDefects": 146 }
   ],
   "issues": [
-    {
-      "key": "NGEUIT-24132",
-      "priority": "Critical",
-      "summary": "ES: No possibility to buy Starter Kit",
-      "reporter": "Olga Paciorek",
-      "team": "Customer Service",
-      "platform": "Web",
-      "status": "Open",
-      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-24132"
-    },
     {
       "key": "NGEUIT-24085",
       "priority": "Critical",
