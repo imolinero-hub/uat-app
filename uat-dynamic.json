@@ -1,5 +1,5 @@
 {
-  "asOf": "2025-10-22 16:56",
+  "asOf": "2025-10-22 21:00",
   "health": {
     "status": "amber",
     "comment": "Execution and quality remain strong, with steady improvement — overall progress is solid but still slightly behind plan"
@@ -12,7 +12,7 @@
     { "date": "2025-10-17", "inScope": 3142, "executedPct": 43, "passPct": 40 },
     { "date": "2025-10-20", "inScope": 3099, "executedPct": 52, "passPct": 48 },
     { "date": "2025-10-21", "inScope": 3095, "executedPct": 60, "passPct": 56 },
-    { "date": "2025-10-22", "inScope": 3093, "executedPct": 68, "passPct": 63 }
+    { "date": "2025-10-22", "inScope": 3080, "executedPct": 70, "passPct": 65 }
   ],
   "defectsDaily": [
     { "date": "2025-10-13", "openDefects": 21 },
@@ -22,7 +22,7 @@
     { "date": "2025-10-17", "openDefects": 124 },
     { "date": "2025-10-20", "openDefects": 131 },
     { "date": "2025-10-21", "openDefects": 135 },
-    { "date": "2025-10-22", "openDefects": 146 }
+    { "date": "2025-10-22", "openDefects": 149 }
   ],
   "issues": [
     {
