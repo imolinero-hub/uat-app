@@ -1,8 +1,8 @@
 {
-  "asOf": "2025-10-22 21:00",
+  "asOf": "2025-10-23 20:35",
   "health": {
     "status": "amber",
-    "comment": "Execution and quality remain strong, with steady improvement — overall progress is solid but still slightly behind plan"
+    "comment": "Execution and quality are excellent, with all teams Green — overall progress nearly on plan but held Amber due to a few open Blockers"
   },
   "progressDaily": [
     { "date": "2025-10-13", "inScope": 3143, "executedPct": 3, "passPct": 2 },
@@ -12,7 +12,8 @@
     { "date": "2025-10-17", "inScope": 3142, "executedPct": 43, "passPct": 40 },
     { "date": "2025-10-20", "inScope": 3099, "executedPct": 52, "passPct": 48 },
     { "date": "2025-10-21", "inScope": 3095, "executedPct": 60, "passPct": 56 },
-    { "date": "2025-10-22", "inScope": 3080, "executedPct": 70, "passPct": 65 }
+    { "date": "2025-10-22", "inScope": 3080, "executedPct": 70, "passPct": 65 },
+    { "date": "2025-10-23", "inScope": 3073, "executedPct": 80, "passPct": 75 }
   ],
   "defectsDaily": [
     { "date": "2025-10-13", "openDefects": 21 },
@@ -22,12 +23,23 @@
     { "date": "2025-10-17", "openDefects": 124 },
     { "date": "2025-10-20", "openDefects": 131 },
     { "date": "2025-10-21", "openDefects": 135 },
-    { "date": "2025-10-22", "openDefects": 149 }
+    { "date": "2025-10-22", "openDefects": 149 },
+    { "date": "2025-10-23", "openDefects": 150 }
   ],
   "issues": [
     {
+      "key": "NGEUIT-24233",
+      "priority": "Blocker",
+      "summary": "Europe BOSS QA application is not working.",
+      "reporter": "Bhavana Mc",
+      "team": "Technology",
+      "platform": "Partner Systems",
+      "status": "Open",
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-24233"
+    },
+    {
       "key": "NGEUIT-24085",
-      "priority": "Critical",
+      "priority": "Blocker",
       "summary": "ES/PT: Attachments are missing on easy dms",
       "reporter": "Olga Paciorek",
       "team": "Customer Service",
@@ -37,8 +49,8 @@
     },
     {
       "key": "NGEUIT-24047",
-      "priority": "Critical",
-      "summary": "FI: EDMS - Contract does not show the SSN or tax ID number. DK - EDMS - Contract does not show the SSN",
+      "priority": "Blocker",
+      "summary": "FI/ DK/ NO / SE: EDMS - Contract does not show the SSN or tax ID number. DK - EDMS - Contract does not show the SSN",
       "reporter": "Angelina Kaczowka",
       "team": "Customer Service",
       "platform": "BOSS",
@@ -52,7 +64,7 @@
       "reporter": "Angelina Kaczowka",
       "team": "Customer Service",
       "platform": "Web",
-      "status": "In Analysis",
+      "status": "Not Reproducible",
       "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23986"
     },
     {
