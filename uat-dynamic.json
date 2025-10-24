@@ -1,8 +1,7 @@
 {
-  "asOf": "2025-10-23 20:35",
+  "asOf": "2025-10-24 17:19",
   "health": {
-    "status": "amber",
-    "comment": "Execution and quality are excellent, with all teams Green — overall progress nearly on plan but held Amber due to a few open Blockers"
+    "status": "green"
   },
   "progressDaily": [
     { "date": "2025-10-13", "inScope": 3143, "executedPct": 3, "passPct": 2 },
@@ -13,7 +12,8 @@
     { "date": "2025-10-20", "inScope": 3099, "executedPct": 52, "passPct": 48 },
     { "date": "2025-10-21", "inScope": 3095, "executedPct": 60, "passPct": 56 },
     { "date": "2025-10-22", "inScope": 3080, "executedPct": 70, "passPct": 65 },
-    { "date": "2025-10-23", "inScope": 3073, "executedPct": 80, "passPct": 75 }
+    { "date": "2025-10-23", "inScope": 3073, "executedPct": 80, "passPct": 75 },
+    { "date": "2025-10-24", "inScope": 3073, "executedPct": 85, "passPct": 80 }
   ],
   "defectsDaily": [
     { "date": "2025-10-13", "openDefects": 21 },
@@ -24,19 +24,10 @@
     { "date": "2025-10-20", "openDefects": 131 },
     { "date": "2025-10-21", "openDefects": 135 },
     { "date": "2025-10-22", "openDefects": 149 },
-    { "date": "2025-10-23", "openDefects": 150 }
+    { "date": "2025-10-23", "openDefects": 150 },
+    { "date": "2025-10-24", "openDefects": 151 }
   ],
   "issues": [
-    {
-      "key": "NGEUIT-24233",
-      "priority": "Blocker",
-      "summary": "Europe BOSS QA application is not working.",
-      "reporter": "Bhavana Mc",
-      "team": "Technology",
-      "platform": "Partner Systems",
-      "status": "Open",
-      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-24233"
-    },
     {
       "key": "NGEUIT-24085",
       "priority": "Blocker",
@@ -66,16 +57,6 @@
       "platform": "Web",
       "status": "Not Reproducible",
       "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23986"
-    },
-    {
-      "key": "NGEUIT-23794",
-      "priority": "Critical",
-      "summary": "BE./UK/IE: International Sponsor not visible in BOSS but visible on the contract ",
-      "reporter": "Paulina Swierczyna",
-      "team": "Customer Service",
-      "platform": "BOSS",
-      "status": "Open",
-      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23794"
     },
     {
       "key": "NGEUIT-23765",
