@@ -1,31 +1,32 @@
 # UAT Daily Status – RI-4  
-**Date:** 2025-10-23  - 20:30
+**Date:** 2025-10-24  - 17:00
 
 ---
 
 ### 🔹 Key Highlights
-- **Approval rate remains above plan**, confirming solid test quality and focus.  
-- **Execution reached 80 %** and **approval 75 %**, demonstrating strong progress across all areas.  
-- **Defect volume stable** and significantly lower than in the previous UAT (275 vs. 446 at Day 9), confirming improved solution maturity.  
-- **All teams report Green**, with continued smooth coordination and no major issues.  
+- **Approval rate remains above plan**, confirming high test quality and focus.  
+- **Execution reached 85 %** and **approval 80 %**, reflecting strong overall performance.  
+- **Defect volume stable (~150 open)** — a clear indicator of solution maturity during final testing stages.  
+- **Onsite testing in Krakow** successfully accelerated execution and strengthened collaboration across teams.  
 
 ---
 
 ### 📊 Status Summary
-- **Executed:** 80 % (Planned: 90 % · Δ 🟠🔻–10 pp)  
-- **Approved:** 75 % (Planned: 57 % · Δ 🟢 ▲ +18 pp)  
-- **Open defects:** 150 → 3 Blocker / 3 Critical / 24 High / 111 Medium / 9 Low  
-- **Trend:** 🟠 Excellent progress and quality – overall slightly behind cumulative plan  
+- **Executed:** 85 % (Planned: 100 % · Δ 🟠🔻–15 pp)  
+- **Approved:** 80 % (Planned: 63 % ·  Δ 🟢 ▲ +17 pp)  
+- **Open defects:** 151 → 2 Blocker / 2 Critical / 24 High / 112 Medium / 11 Low  
+- **Trend:** 🟠 Stable and high-quality progress – execution nearing completion, slightly behind cumulative plan  
 
 ---
 
 ### ⚠️ Challenges / Risks
-- **Two defects escalated to Blocker** by Customer Service, impacting new contract processing.  
-- **Magic DMS** temporarily unavailable today; a new Blocker defect raised to track the issue.  
-- **Cumulative progress** still slightly below plan, despite strong recovery and execution pace.  
+- **Execution behind plan**, requiring additional days next week to complete remaining tests. 
 
 ---
 
 ### ✅ Next Steps
-- Continue **execution and approval momentum** into the final test phase.  
-- Monitor and resolve **Blocker defects**.  
+- **Continue execution** next week alongside **defect resolution and retesting** activities.  
+- Prioritize **Blocker and Critical defect closures** to support readiness for final validation.  
+- Maintain **cross-team coordination** to ensure balanced workload and consistent progress.
+
+---
