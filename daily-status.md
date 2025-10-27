@@ -1,32 +1,33 @@
 # UAT Daily Status – RI-4  
-**Date:** 2025-10-24  - 17:00
+**Date:** 2025-10-27  - 17:20
 
 ---
 
 ### 🔹 Key Highlights
-- **Approval rate remains above plan**, confirming high test quality and focus.  
-- **Execution reached 85 %** and **approval 80 %**, reflecting strong overall performance.  
-- **Defect volume stable (~150 open)** — a clear indicator of solution maturity during final testing stages.  
-- **Onsite testing in Krakow** successfully accelerated execution and strengthened collaboration across teams.  
+- **Approval rate remains above plan**, confirming continued test quality and focus.  
+- **Defect reduction achieved:** total open defects dropped from 151 to 113, reflecting strong progress in defect management.  
+- **One Blocker defect closed**, further improving defect status health.  
+- **Overall trend positive**, as focus shifts toward completing execution and accelerating retesting.  
 
 ---
 
 ### 📊 Status Summary
-- **Executed:** 85 % (Planned: 100 % · Δ 🟠🔻–15 pp)  
-- **Approved:** 80 % (Planned: 63 % ·  Δ 🟢 ▲ +17 pp)  
-- **Open defects:** 151 → 2 Blocker / 2 Critical / 24 High / 112 Medium / 11 Low  
-- **Trend:** 🟠 Stable and high-quality progress – execution nearing completion, slightly behind cumulative plan  
+- **Executed:** 88 % (Planned: 100 % · Δ 🟠🔻–12 pp)  
+- **Approved:** 83 % (Planned: 70 %  · Δ 🟢 ▲ +13 pp)  
+- **Open defects:** 113 → 1 Blocker / 2 Critical / 23 High / 79 Medium / 8 Low  
+- **Trend:** 🟠 Improving quality and stability – execution nearing completion but still slightly behind plan  
 
 ---
 
 ### ⚠️ Challenges / Risks
-- **Execution behind plan**, requiring additional days next week to complete remaining tests. 
+- **Execution pace lower than expected** today (3 %), making milestone completion more difficult.  
+- **Final execution gap** must be closed before shifting fully to retesting and defect resolution.  
 
 ---
 
 ### ✅ Next Steps
-- **Continue execution** next week alongside **defect resolution and retesting** activities.  
-- Prioritize **Blocker and Critical defect closures** to support readiness for final validation.  
-- Maintain **cross-team coordination** to ensure balanced workload and consistent progress.
+- Maintain **focus on completing remaining execution** across all functions.  
+- Continue **defect triage and retesting** to sustain quality improvement.  
+- Reinforce **team collaboration** to ensure milestone completion within the week.  
 
 ---
