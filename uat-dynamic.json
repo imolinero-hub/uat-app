@@ -1,7 +1,8 @@
 {
-  "asOf": "2025-10-24 17:19",
+  "asOf": "2025-10-27 17:18",
   "health": {
-    "status": "green"
+    "status": "amber",
+    "comment": "Quality and defect reduction are strong, but execution remains slightly behind plan and requires continued focus to close the gap"
   },
   "progressDaily": [
     { "date": "2025-10-13", "inScope": 3143, "executedPct": 3, "passPct": 2 },
@@ -13,7 +14,8 @@
     { "date": "2025-10-21", "inScope": 3095, "executedPct": 60, "passPct": 56 },
     { "date": "2025-10-22", "inScope": 3080, "executedPct": 70, "passPct": 65 },
     { "date": "2025-10-23", "inScope": 3073, "executedPct": 80, "passPct": 75 },
-    { "date": "2025-10-24", "inScope": 3073, "executedPct": 85, "passPct": 80 }
+    { "date": "2025-10-24", "inScope": 3073, "executedPct": 85, "passPct": 80 },
+    { "date": "2025-10-27", "inScope": 3071, "executedPct": 88, "passPct": 83 }
   ],
   "defectsDaily": [
     { "date": "2025-10-13", "openDefects": 21 },
@@ -25,19 +27,10 @@
     { "date": "2025-10-21", "openDefects": 135 },
     { "date": "2025-10-22", "openDefects": 149 },
     { "date": "2025-10-23", "openDefects": 150 },
-    { "date": "2025-10-24", "openDefects": 151 }
+    { "date": "2025-10-24", "openDefects": 151 },
+    { "date": "2025-10-27", "openDefects": 113 }
   ],
   "issues": [
-    {
-      "key": "NGEUIT-24085",
-      "priority": "Blocker",
-      "summary": "ES/PT: Attachments are missing on easy dms",
-      "reporter": "Olga Paciorek",
-      "team": "Customer Service",
-      "platform": "BOSS",
-      "status": "Open",
-      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-24085"
-    },
     {
       "key": "NGEUIT-24047",
       "priority": "Blocker",
