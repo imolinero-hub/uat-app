@@ -1,5 +1,5 @@
 {
-  "asOf": "2025-10-28 17:15",
+  "asOf": "2025-10-28 17:30",
   "health": {
     "status": "amber",
     "comment": "Quality and stability remain strong, with execution nearly complete and final focus shifting to retesting and defect closure"
@@ -16,7 +16,7 @@
     { "date": "2025-10-23", "inScope": 3073, "executedPct": 80, "passPct": 75 },
     { "date": "2025-10-24", "inScope": 3073, "executedPct": 85, "passPct": 80 },
     { "date": "2025-10-27", "inScope": 3071, "executedPct": 88, "passPct": 83 },
-    { "date": "2025-10-28", "inScope": 3082, "executedPct": 91, "passPct": 86 }
+    { "date": "2025-10-28", "inScope": 3080, "executedPct": 91, "passPct": 87 }
   ],
   "defectsDaily": [
     { "date": "2025-10-13", "openDefects": 21 },
