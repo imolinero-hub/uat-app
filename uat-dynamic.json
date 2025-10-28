@@ -1,8 +1,8 @@
 {
-  "asOf": "2025-10-27 17:18",
+  "asOf": "2025-10-28 17:15",
   "health": {
     "status": "amber",
-    "comment": "Quality and defect reduction are strong, but execution remains slightly behind plan and requires continued focus to close the gap"
+    "comment": "Quality and stability remain strong, with execution nearly complete and final focus shifting to retesting and defect closure"
   },
   "progressDaily": [
     { "date": "2025-10-13", "inScope": 3143, "executedPct": 3, "passPct": 2 },
@@ -15,7 +15,8 @@
     { "date": "2025-10-22", "inScope": 3080, "executedPct": 70, "passPct": 65 },
     { "date": "2025-10-23", "inScope": 3073, "executedPct": 80, "passPct": 75 },
     { "date": "2025-10-24", "inScope": 3073, "executedPct": 85, "passPct": 80 },
-    { "date": "2025-10-27", "inScope": 3071, "executedPct": 88, "passPct": 83 }
+    { "date": "2025-10-27", "inScope": 3071, "executedPct": 88, "passPct": 83 },
+    { "date": "2025-10-28", "inScope": 3082, "executedPct": 91, "passPct": 86 }
   ],
   "defectsDaily": [
     { "date": "2025-10-13", "openDefects": 21 },
@@ -28,7 +29,8 @@
     { "date": "2025-10-22", "openDefects": 149 },
     { "date": "2025-10-23", "openDefects": 150 },
     { "date": "2025-10-24", "openDefects": 151 },
-    { "date": "2025-10-27", "openDefects": 113 }
+    { "date": "2025-10-27", "openDefects": 113 },
+    { "date": "2025-10-28", "openDefects": 101 }
   ],
   "issues": [
     {
@@ -60,6 +62,16 @@
       "platform": "Web",
       "status": "In Analysis",
       "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23765"
+    },
+    {
+      "key": "NGEUIT-24308",
+      "priority": "Critical",
+      "summary": "Mobile IOS Unable to do registration for ABO Greece or Netherlands",
+      "reporter": "Nathan Arockiaswamy",
+      "team": "Technology",
+      "platform": "App",
+      "status": "In Analysis",
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-24308"
     }
   ]
 }
