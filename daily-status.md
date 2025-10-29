@@ -15,7 +15,7 @@
 ### 📊 Status Summary
 - **Executed:** 96 % (Planned: 100 % · Δ 🔻–4 pp)  
 - **Approved:** 91 % (Planned: 82 %  · Δ ▲ +9 pp)  
-- **Open defects:** 97 → 1 Blocker / 1 Critical / 21 High / 68 Medium / 6 Low  
+- **Open defects:** 98 → 1 Blocker / 1 Critical / 22 High / 68 Medium / 6 Low  
 - **Trend:** 🟠 Excellent progress and control – UAT nearing closure with final execution and defect reduction ongoing  
 
 ---
@@ -31,3 +31,4 @@
 - Maintain **focus on high-priority defects** to ensure readiness for Go Live.  
 
 ---
+
