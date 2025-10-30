@@ -1,8 +1,8 @@
 {
-  "asOf": "2025-10-29 17:08",
+  "asOf": "2025-10-30 17:34",
   "health": {
     "status": "amber",
-    "comment": "UAT remains fully on track with strong quality and control — status kept Amber as final execution and defect closure continue over the coming days"
+    "comment": "UAT remains fully on track with high quality and stability — status kept Amber as final execution and defect resolution continue before closure"
   },
   "progressDaily": [
     { "date": "2025-10-13", "inScope": 3143, "executedPct": 3, "passPct": 2 },
@@ -17,7 +17,8 @@
     { "date": "2025-10-24", "inScope": 3073, "executedPct": 85, "passPct": 80 },
     { "date": "2025-10-27", "inScope": 3071, "executedPct": 88, "passPct": 83 },
     { "date": "2025-10-28", "inScope": 3080, "executedPct": 91, "passPct": 87 },
-    { "date": "2025-10-29", "inScope": 3079, "executedPct": 96, "passPct": 91 }
+    { "date": "2025-10-29", "inScope": 3079, "executedPct": 96, "passPct": 91 },
+    { "date": "2025-10-30", "inScope": 3078, "executedPct": 98, "passPct": 94 }
   ],
   "defectsDaily": [
     { "date": "2025-10-13", "openDefects": 21 },
@@ -32,7 +33,8 @@
     { "date": "2025-10-24", "openDefects": 151 },
     { "date": "2025-10-27", "openDefects": 113 },
     { "date": "2025-10-28", "openDefects": 101 },
-    { "date": "2025-10-29", "openDefects": 97 }
+    { "date": "2025-10-29", "openDefects": 97 },
+    { "date": "2025-10-30", "openDefects": 94 }
   ],
   "issues": [
     {
@@ -54,6 +56,16 @@
       "platform": "Web",
       "status": "In Analysis",
       "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-23765"
+    },
+    {
+      "key": "NGEUIT-24378",
+      "priority": "Critical",
+      "summary": "After adding Chinese language in the basestore and in the index, Spain does not work anylonger",
+      "reporter": "George Popescu",
+      "team": "Technology",
+      "platform": "Content",
+      "status": "Re-Opened",
+      "link": "https://amwaycloud.atlassian.net/browse/NGEUIT-24378"
     }
   ]
 }
