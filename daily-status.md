@@ -14,7 +14,7 @@
 ### 📊 Status Summary
 - **Executed:** 99 % (Planned: 100 % · Δ 🔻–1 pp)  
 - **Approved:** 95 % (Planned: 95 % · Δ 0 pp)  
-- **Open defects:** 70 → 1 Critical / 12 High / 53 Medium / 4 Low  
+- **Open defects:** 69→ 1 Critical / 12 High / 52 Medium / 4 Low  
 - **Trend:** 🟢 UAT targets achieved – strong quality, stable performance, and execution close to full completion  
 
 ---
@@ -30,3 +30,4 @@
 - Maintain **cross-team alignment** as UAT transitions into final validation.  
 
 ---
+
