@@ -1,34 +1,35 @@
 # UAT Daily Status – RI-4  
-**Date:** 2025-11-03  - 17:20
+**Date:** 2025-11-04  - 16:40
 
 ---
 
 ### 🔹 Key Highlights
-- **Execution rate near 100 %**, with only 20 scenarios remaining.  
-- **Approval rate KPI achieved** at 95 %, meeting the final UAT target.  
-- **No Blockers open** and only **one Critical defect pending closure**.  
-- **Invoices for Portugal now downloadable**, facilitating Finance’s conditional approval.  
-- **Deployment with fixes completed** and **new App build delivered**, further improving stability.  
-- **All teams Green** and aligned as UAT enters final validation.  
+- **KPI 1 – Execution rate:** 99.7 %, technically achieved.  
+- **KPI 2 – Approval rate:** Achieved at 96 % (target: 95 %).  
+- **KPI 3 – Defects:** Still pending full achievement, with one Critical defect open.  
+- **Defect volume reduced** from 51 to 41, confirming steady progress and quality stability.  
+- **Alpha testing with ABOs** ongoing as planned.  
+- **All teams Green**, focusing on retesting and closure of remaining issues.  
 
 ---
 
 ### 📊 Status Summary
-- **Executed:** 99 % (Planned: 100 % · Δ 🔻–1 pp)  
-- **Approved:** 95 % (Planned: 95 % · Δ 0 pp)  
-- **Open defects:** 51 → 1 Critical / 9 High / 37 Medium / 4 Low  
-- **Trend:** 🟢 KPIs achieved – strong quality, stable performance, and readiness for Alpha testing  
+- **Executed:** 99.7 % (Planned: 100 % · Δ 🔻–0.3 pp)  
+- **Approved:** 96 % (Planned: 95 % · Δ 🟢▲ +1 pp)  
+- **Open defects:** 41 → 1 Critical / 9 High / 30 Medium / 1 Low  
+- **Trend:** 🟠 Two KPIs achieved – overall quality strong, with one Critical defect delaying full Green status  
 
 ---
 
 ### ⚠️ Challenges / Risks
-- **One Critical defect** and **one email-related issue** remain to be closed, as the latter affects several dependent defects.  
+- **One Critical defect** and the **email-related issue** remain open.  
+- **Email functionality intermittent**, though expected to stabilize in production.  
 
 ---
 
 ### ✅ Next Steps
-- Finalize **closure of remaining Critical and email-related defects**.  
-- Maintain **environment stability** during **Alpha testing with ABOs** over the next two days.  
-- Continue **retesting and defect closure** to ensure full readiness for UAT completion.  
+- **Close remaining Critical and email-related defects.**  
+- **Continue Alpha testing** and monitor stability.  
+- **Prepare for UAT closure** and transition to Go Live readiness.  
 
 ---
