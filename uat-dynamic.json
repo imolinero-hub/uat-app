@@ -1,5 +1,5 @@
 {
-  "asOf": "2025-11-04 16:43",
+  "asOf": "2025-11-04 17:15",
   "health": {
     "status": "amber",
     "comment": "Two KPIs achieved and UAT quality strong — status remains Amber until the remaining Critical defect is closed"
