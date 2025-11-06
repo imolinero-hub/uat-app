@@ -1,5 +1,5 @@
 {
-  "asOf": "2025-11-06 16:28",
+  "asOf": "2025-11-06 17:30",
   "health": {
     "status": "approved"
   },
@@ -43,6 +43,6 @@
     { "date": "2025-11-03", "openDefects": 51 },
     { "date": "2025-11-04", "openDefects": 38 },
     { "date": "2025-11-05", "openDefects": 34 },
-    { "date": "2025-11-06", "openDefects": 24 }
+    { "date": "2025-11-06", "openDefects": 23 }
   ]
 }
