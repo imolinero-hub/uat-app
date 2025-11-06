@@ -372,6 +372,19 @@ html.modal-open, body.modal-open { overflow: hidden !important; }
   .header-v2 .hdr-row { gap: 6px; }
 }
 
+/* Pastel RAG badge — Approved */
+.header-v2 .rag.is-approved{
+  background:#e0f2fe;     /* sky-100 */
+  border-color:#bae6fd;   /* sky-200 */
+  color:#0369a1;          /* sky-700 */
+}
+
+/* Optional dark-mode tweak for contrast */
+.theme-dark .header-v2 .rag.is-approved{
+  color:rgba(248,250,252,.92);
+  background:rgba(12,74,110,.70);  /* sky-900 w/ alpha */
+  border-color:rgba(56,189,248,.75);/* sky-400-ish */
+}
 
 /* ===== Issues list polish (mobile-first, works in light/dark) ===== */
 .issue-card{
