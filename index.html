@@ -95,6 +95,7 @@
       
         <span class="rag"
               :class="{
+                'is-approved': (healthBadge.class||'').includes('rag-approved'),
                 'is-green': (healthBadge.class||'').includes('rag-green'),
                 'is-amber': (healthBadge.class||'').includes('rag-amber'),
                 'is-red'  : (healthBadge.class||'').includes('rag-red')
