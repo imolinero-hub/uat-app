@@ -1,7 +1,7 @@
 {
   "asOf": "2025-11-06 16:28",
   "health": {
-    "status": "Approved"
+    "status": "green"
   },
   "progressDaily": [
     { "date": "2025-10-13", "inScope": 3143, "executedPct": 3, "passPct": 2 },
