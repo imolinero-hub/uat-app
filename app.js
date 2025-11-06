@@ -169,19 +169,22 @@ function app(){
      * ===================================================== */
 
     healthEmoji(status){
-      return status==='green' ? '🟢'
-           : status==='amber' ? '🟠'
-           : status==='red'   ? '🔴'
+      return status==='approved' ? '✅'
+           : status==='green'    ? '🟢'
+           : status==='amber'    ? '🟠'
+           : status==='red'      ? '🔴'
            : '🟢';
     },
     healthLabelClass(status){
-      return status==='green' ? 'rag-green'
-           : status==='amber' ? 'rag-amber'
+      return status==='approved' ? 'rag-approved'
+           : status==='green'    ? 'rag-green'
+           : status==='amber'    ? 'rag-amber'
            : 'rag-red';
     },
     healthText(statusClass){
-      if(statusClass==='rag-green') return 'On Track';
-      if(statusClass==='rag-amber') return 'Watch';
+      if (statusClass==='rag-approved') return 'Approved';
+      if (statusClass==='rag-green')    return 'On Track';
+      if (statusClass==='rag-amber')    return 'Watch';
       return 'Off Track';
     },
 
