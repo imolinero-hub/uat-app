@@ -194,8 +194,9 @@ function app(){
         ? this.autoHealthClass()
         : this.healthLabelClass(rawStatus);
 
-      const emoji = (klass === 'rag-green') ? '🟢'
-                  : (klass === 'rag-amber') ? '🟠'
+      const emoji = (klass === 'rag-approved') ? '✅'
+                  : (klass === 'rag-green')    ? '🟢'
+                  : (klass === 'rag-amber')    ? '🟠'
                   : '🔴';
       const label = this.healthText(klass);
       const comment = (this.raw.health?.comment || '').trim();
