@@ -1,5 +1,5 @@
 {
-  "asOf": "2025-11-05 17:15",
+  "asOf": "2025-11-06 16:28",
   "health": {
     "status": "green"
   },
@@ -21,7 +21,8 @@
     { "date": "2025-10-31", "inScope": 3078, "executedPct": 99, "passPct": 95 },
     { "date": "2025-11-03", "inScope": 3078, "executedPct": 99, "passPct": 95 },
     { "date": "2025-11-04", "inScope": 3077, "executedPct": 100, "passPct": 96 },
-    { "date": "2025-11-05", "inScope": 3077, "executedPct": 100, "passPct": 96 }
+    { "date": "2025-11-05", "inScope": 3077, "executedPct": 100, "passPct": 96 },
+    { "date": "2025-11-06", "inScope": 3077, "executedPct": 100, "passPct": 97 }
   ],
   "defectsDaily": [
     { "date": "2025-10-13", "openDefects": 21 },
@@ -41,6 +42,7 @@
     { "date": "2025-10-31", "openDefects": 69 },
     { "date": "2025-11-03", "openDefects": 51 },
     { "date": "2025-11-04", "openDefects": 38 },
-    { "date": "2025-11-05", "openDefects": 33 }
+    { "date": "2025-11-05", "openDefects": 34 },
+    { "date": "2025-11-06", "openDefects": 24 }
   ]
 }
